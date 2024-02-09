@@ -29,4 +29,8 @@ public class Bill implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_fk",referencedColumnName = "user_ID")
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "premium_fk",referencedColumnName = "premium_ID")
+    private Premium premium;
 }
