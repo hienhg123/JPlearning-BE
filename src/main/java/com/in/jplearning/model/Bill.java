@@ -20,7 +20,7 @@ public class Bill implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "bill_ID")
-    private Integer billID;
+    private Long billID;
     private String billNumber;
     private Integer total;
     private Date createdAt;

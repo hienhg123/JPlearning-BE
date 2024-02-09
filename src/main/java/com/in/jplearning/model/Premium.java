@@ -20,7 +20,7 @@ public class Premium implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "premium_ID")
-    private Integer premiumID;
+    private Long premiumID;
     private String premiumType;
     private Integer duration;
     @ManyToOne(fetch = FetchType.LAZY)

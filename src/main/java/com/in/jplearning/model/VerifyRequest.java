@@ -1,6 +1,5 @@
 package com.in.jplearning.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,6 +8,7 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 @Entity
 @Data
@@ -16,15 +16,18 @@ import java.io.Serializable;
 @NoArgsConstructor
 @DynamicUpdate
 @DynamicInsert
-public class Chapter implements Serializable {
+public class VerifyRequest implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name ="chapter_ID")
-    private Long chapterID;
-    private String chapterTitle;
-    private String chapterDescription;
+    @Column(name = "request_ID")
+    private Long requestID;
+    @Enumerated(EnumType.STRING)
+    private VerificationType verificationType;
+    private String url;
+    private boolean approved;
+    private LocalDateTime requestTimestamp;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_fk", nullable = false, referencedColumnName = "course_ID")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-    private Course course;
+    @JoinColumn(name = "trainee_fk",referencedColumnName = "trainee_ID")
+    private Trainee trainee;
 }
