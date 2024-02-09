@@ -21,7 +21,7 @@ public class Lesson implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "lesson_ID")
-    private Integer lessonID;
+    private Long lessonID;
     private String lessonTitle;
     private String lessonDescription;
     private String vocabularyMaterial;

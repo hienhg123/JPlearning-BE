@@ -8,7 +8,7 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.util.*;
 
 @Entity
 @Data
@@ -21,7 +21,7 @@ public class User implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_ID")
-    private Integer userID;
+    private Long userID;
     private String firstName;
     private String lastName;
     private String phoneNumber;
@@ -31,5 +31,11 @@ public class User implements Serializable {
     @Enumerated(EnumType.STRING)
     private Role role;
     private boolean isActive;
+
+    @OneToMany(mappedBy = "user")
+    private List<UserJLPTExercise> userJLPTExerciseList;
+
+    @ManyToMany(mappedBy = "userSet")
+    private Set<FlashCardSet> cardSets = new HashSet<>();
 
 }

@@ -1,4 +1,37 @@
 package com.in.jplearning.model;
 
-public class FlashCardSet {
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
+
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+@Entity
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@DynamicUpdate
+@DynamicInsert
+public class FlashCardSet implements Serializable {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "flashCardSet_ID")
+    private Long flashCardSetID;
+    private String flashCardSetName;
+
+    @ManyToMany
+    @JoinTable(name = "user_flashcard_set",
+            joinColumns = @JoinColumn(name = "flashCardSet_fk",referencedColumnName = "flashCardSet_ID"),
+            inverseJoinColumns = @JoinColumn(name = "user_fk",referencedColumnName = "user_ID")
+    )
+    private Set<User> userSet = new HashSet<>();
+
+
 }

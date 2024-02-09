@@ -20,7 +20,7 @@ public class Course implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "course_ID")
-    private Integer courseID;
+    private Long courseID;
     private String courseName;
     private String courseDescription;
     private String courseLevel;
