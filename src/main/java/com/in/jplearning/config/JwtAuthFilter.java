@@ -77,8 +77,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     }
 
     //check if manager
-    public boolean isManager(){
-        return String.valueOf(Role.MANAGER).equalsIgnoreCase(String.valueOf(claims.get("role")));
+    public boolean isManager(){return String.valueOf(Role.MANAGER).equalsIgnoreCase(String.valueOf(claims.get("role")));
     }
     public String getCurrentUser(){
         return userName;
