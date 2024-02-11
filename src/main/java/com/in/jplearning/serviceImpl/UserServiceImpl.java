@@ -1,5 +1,6 @@
 package com.in.jplearning.serviceImpl;
 
+
 import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.config.JwtUtil;
 import com.in.jplearning.constants.JPConstants;
@@ -24,10 +25,16 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 
+import com.in.jplearning.service.UserService;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
 @Service
 @Slf4j
 @AllArgsConstructor
 public class UserServiceImpl implements UserService {
+
     private final UserDAO userDAO;
     private final PasswordEncoder passwordEncoder;
     private final JwtAuthFilter jwtAuthFilter;
