@@ -22,6 +22,7 @@ public class Chapter implements Serializable {
     @Column(name ="chapter_ID")
     private Long chapterID;
     private String chapterTitle;
+    @Column(columnDefinition = "NVARCHAR(255)")
     private String chapterDescription;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_fk", nullable = false, referencedColumnName = "course_ID")

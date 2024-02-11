@@ -1,4 +1,4 @@
-package com.in.jplearning.model;
+package com.in.jplearning.enums;
 
 public enum VerificationType {
     ID_VERIFICATION,

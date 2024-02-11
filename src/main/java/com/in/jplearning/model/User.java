@@ -1,5 +1,7 @@
 package com.in.jplearning.model;
 
+import com.in.jplearning.enums.JLPTLevel;
+import com.in.jplearning.enums.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,7 +11,6 @@ import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.io.Serializable;
 import java.util.*;
 
 @Entity
@@ -24,7 +25,9 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_ID")
     private Long userID;
+    @Column(columnDefinition = "NVARCHAR(255)")
     private String firstName;
+    @Column(columnDefinition = "NVARCHAR(255)")
     private String lastName;
     private String phoneNumber;
     private Date dob;
@@ -32,6 +35,8 @@ public class User implements UserDetails {
     private String password;
     @Enumerated(EnumType.STRING)
     private Role role;
+    @Enumerated(EnumType.STRING)
+    private JLPTLevel level;
     private boolean isActive;
 
     @OneToMany(mappedBy = "user")

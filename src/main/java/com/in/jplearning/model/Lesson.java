@@ -23,6 +23,7 @@ public class Lesson implements Serializable {
     @Column(name = "lesson_ID")
     private Long lessonID;
     private String lessonTitle;
+    @Column(columnDefinition = "NVARCHAR(255)")
     private String lessonDescription;
     private String vocabularyMaterial;
     private String listeningMaterial;
