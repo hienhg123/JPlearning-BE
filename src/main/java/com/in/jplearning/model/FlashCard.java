@@ -20,7 +20,9 @@ public class FlashCard implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "flashCard_ID")
     private Long flashCardID;
+    @Column(columnDefinition = "NVARCHAR(255)")
     private String question;
+    @Column(columnDefinition = "NVARCHAR(255)")
     private String answer;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -3,7 +3,8 @@ package com.in.jplearning.serviceImpl;
 import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.config.JwtUtil;
 import com.in.jplearning.constants.JPConstants;
-import com.in.jplearning.model.Role;
+
+import com.in.jplearning.enums.Role;
 import com.in.jplearning.model.User;
 import com.in.jplearning.repo.UserDAO;
 import com.in.jplearning.service.UserService;

@@ -1,5 +1,6 @@
 package com.in.jplearning.model;
 
+import com.in.jplearning.enums.JLPTLevel;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -20,4 +21,6 @@ public class Category implements Serializable {
     @Column(name = "category_ID")
     private Long categoryID;
     private String categoryName;
+    @Enumerated(EnumType.STRING)
+    private JLPTLevel level;
 }

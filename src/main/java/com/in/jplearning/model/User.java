@@ -1,5 +1,6 @@
 package com.in.jplearning.model;
 
+import com.in.jplearning.enums.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

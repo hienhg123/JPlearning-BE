@@ -1,5 +1,6 @@
 package com.in.jplearning.model;
 
+import com.in.jplearning.enums.VerificationType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
