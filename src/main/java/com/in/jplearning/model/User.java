@@ -4,6 +4,7 @@ import com.in.jplearning.enums.JLPTLevel;
 import com.in.jplearning.enums.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
@@ -19,6 +20,7 @@ import java.util.*;
 @NoArgsConstructor
 @DynamicUpdate
 @DynamicInsert
+@Builder
 public class User implements UserDetails {
 
     @Id

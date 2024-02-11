@@ -21,7 +21,9 @@ public class SecurityConfig implements WebMvcConfigurer {
     private final JwtAuthFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
 
-    private static final String[] WHITE_LIST = {"/user/signup", "/user/login","/user/forgotPassword"};
+
+    private static final String[] WHITE_LIST = {"/user/register", "/user/login","/user/forgotPassword"};
+
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
