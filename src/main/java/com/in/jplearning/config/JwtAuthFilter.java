@@ -1,6 +1,6 @@
 package com.in.jplearning.config;
 
-import com.in.jplearning.model.Role;
+import com.in.jplearning.enums.Role;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

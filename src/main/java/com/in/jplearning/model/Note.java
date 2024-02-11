@@ -22,6 +22,7 @@ public class Note implements Serializable {
     @Column(name = "note_id")
     private Long noteID;
     private int timePoint; //in second
+    @Column(columnDefinition = "NVARCHAR(500)")
     private String note;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lesson_fk",referencedColumnName = "lesson_ID")
