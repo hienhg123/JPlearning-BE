@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -63,5 +64,17 @@ public class UserController {
             ex.printStackTrace();
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @PostMapping(path = "/forgetPassword")
+    public ResponseEntity<Map<String,String>> forgetPassword(@RequestBody Map<String,String> requestMap){
+        Map<String,String> response = new HashMap<>();
+        try {
+            response.put("message","Something went wrong");
+            return userService.forgetPassword(requestMap);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
