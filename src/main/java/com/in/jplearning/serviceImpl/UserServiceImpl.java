@@ -1,5 +1,6 @@
 package com.in.jplearning.serviceImpl;
 
+
 import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.config.JwtUtil;
 import com.in.jplearning.constants.JPConstants;
@@ -8,6 +9,7 @@ import com.in.jplearning.enums.Role;
 import com.in.jplearning.model.User;
 import com.in.jplearning.repo.UserDAO;
 import com.in.jplearning.service.UserService;
+import com.in.jplearning.utils.EmailUtils;
 import com.in.jplearning.utils.JPLearningUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,15 +26,23 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 
+import com.in.jplearning.service.UserService;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
 @Service
 @Slf4j
 @AllArgsConstructor
 public class UserServiceImpl implements UserService {
+
     private final UserDAO userDAO;
     private final PasswordEncoder passwordEncoder;
     private final JwtAuthFilter jwtAuthFilter;
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
+
+    private final EmailUtils emailUtils;
 
     @Override
     public ResponseEntity<String> register(Map<String, String> requestMap) {
@@ -195,8 +205,37 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public ResponseEntity<String> forgetPassword(Map<String, String> requestMap) {
-        return null;
+    public ResponseEntity<Map<String,String>> forgetPassword(Map<String, String> requestMap) {
+        Map<String, String> response = new HashMap<>();
+        response.put("message","Something went wrong");
+        try{
+            User user = userDAO.findByEmail(requestMap.get("email")).get();
+            //check if user exist
+            if(!user.equals(null)){
+                response.put("message","Check your email for verification code");
+                //create verify code
+                String code = generateVerifyCode();
+                //set expire time
+                long expirationTime = System.currentTimeMillis() + 10 * 60 * 1000;
+                //send verify code to email
+                emailUtils.sendVerifyCode(user.getEmail(),"Verification Code",code);
+                response.put("expirationTime",String.valueOf(expirationTime));
+            }
+            return new ResponseEntity<>(response,HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return new ResponseEntity<>(response,HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    private String generateVerifyCode() {
+        String code ="";
+         Random random = new Random();
+         //loop go generate 6 number
+        for (int i =0;i < 6 ; i++){
+            code += String.valueOf(random.nextInt(10));
+        }
+        return code;
     }
 
 
