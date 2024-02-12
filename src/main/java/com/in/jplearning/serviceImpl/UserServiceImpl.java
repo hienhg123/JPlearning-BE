@@ -28,10 +28,6 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 
-import com.in.jplearning.service.UserService;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
@@ -108,7 +104,7 @@ public class UserServiceImpl implements UserService {
                     return new ResponseEntity<String>("{\"token\":\"" +
                             jwtUtil.generateToken(user.getUsername(), user.getRole()) + "\"}", HttpStatus.OK);
                 } else {
-                    return new ResponseEntity<String>("Wait for admin approval", HttpStatus.BAD_REQUEST);
+                    return new ResponseEntity<String>("Account do not exist", HttpStatus.BAD_REQUEST);
                 }
             }
         } catch (Exception ex) {
