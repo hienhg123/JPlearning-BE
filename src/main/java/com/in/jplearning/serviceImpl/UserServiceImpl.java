@@ -162,6 +162,8 @@ public class UserServiceImpl implements UserService {
 
 
 
+
+
     @Override
     public ResponseEntity<String> checkToken() {
         return JPLearningUtils.getResponseEntity("true", HttpStatus.OK);
@@ -208,6 +210,15 @@ public class UserServiceImpl implements UserService {
                 .password(passwordEncoder.encode(requestMap.get("password")))
                 .role(Role.USER)
                 .isActive(true)
+                .build();
+    }
+
+    private User getUserDetail(Map<String, String> requestMap) {
+        return User.builder()
+                .firstName(requestMap.get("firstName"))
+                .lastName(requestMap.get("lastName"))
+                .phoneNumber(requestMap.get("phoneNumber"))
+                .dob(parseDate(requestMap.get("dob")))
                 .build();
     }
 
