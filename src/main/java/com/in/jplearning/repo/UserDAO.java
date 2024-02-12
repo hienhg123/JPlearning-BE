@@ -26,4 +26,6 @@ public interface UserDAO extends JpaRepository<User,Long> {
     @Transactional
     @Modifying
     Integer updateStatus(@Param("isActive") boolean isActive, @Param("id") Long userID);
+
+    Optional<User> findByPhoneNumber(String phoneNumber);
 }

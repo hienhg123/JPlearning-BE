@@ -1,5 +1,6 @@
 package com.in.jplearning.controllers;
 
+import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.constants.JPConstants;
 import com.in.jplearning.model.User;
 import com.in.jplearning.service.UserService;
@@ -20,6 +21,7 @@ import java.util.Map;
 public class UserController {
 
     private final UserService userService;
+    private final JwtAuthFilter jwtAuthFilter;
 
     @PostMapping(path = "/register")
     public ResponseEntity<String> register(@RequestBody Map<String, String> requestMap) {
@@ -61,5 +63,23 @@ public class UserController {
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+
+    @GetMapping(path = "/profile")
+    public ResponseEntity<String> getUserProfile() {
+        return userService.getUserProfile();
+    }
+    @PutMapping(path = "/Profile")
+    public ResponseEntity<String> updateProfile(@RequestBody Map<String, String> requestMap) {
+        try {
+            return userService.updateProfile(requestMap);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+
+
 
 }

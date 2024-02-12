@@ -1,5 +1,6 @@
 package com.in.jplearning.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.in.jplearning.enums.JLPTLevel;
 import com.in.jplearning.enums.Role;
 import jakarta.persistence.*;
@@ -21,6 +22,7 @@ import java.util.*;
 @DynamicUpdate
 @DynamicInsert
 @Builder
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class User implements UserDetails {
 
     @Id
@@ -76,4 +78,5 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
 }
