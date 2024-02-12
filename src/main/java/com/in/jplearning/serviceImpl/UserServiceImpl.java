@@ -1,10 +1,12 @@
 package com.in.jplearning.serviceImpl;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.config.JwtUtil;
 import com.in.jplearning.constants.JPConstants;
 
+import com.in.jplearning.enums.JLPTLevel;
 import com.in.jplearning.enums.Role;
 import com.in.jplearning.model.User;
 import com.in.jplearning.repo.UserDAO;
@@ -48,22 +50,28 @@ public class UserServiceImpl implements UserService {
     public ResponseEntity<String> register(Map<String, String> requestMap) {
         log.info("Inside sign up {}", requestMap);
         try {
-            //check xem co null hay khong
+            // Check if email and phone number are provided in the registration request
             if (validateSignUpMap(requestMap)) {
-                //check email co hay khong
-                if (!userDAO.findByEmail(requestMap.get("email")).isPresent()) {
-                    userDAO.save(getUserFromMap(requestMap));
-                    return JPLearningUtils.getResponseEntity("Successfully register", HttpStatus.OK);
-                } else {
-                    return JPLearningUtils.getResponseEntity("Email already exist", HttpStatus.BAD_REQUEST);
+                // Check if email already exists
+                if (userDAO.findByEmail(requestMap.get("email")).isPresent()) {
+                    return JPLearningUtils.getResponseEntity("Email already exists", HttpStatus.BAD_REQUEST);
                 }
+
+                // Check if phone number already exists
+                if (userDAO.findByPhoneNumber(requestMap.get("phoneNumber")).isPresent()) {
+                    return JPLearningUtils.getResponseEntity("Phone number already exists", HttpStatus.BAD_REQUEST);
+                }
+
+                // Save the user if email and phone number are unique
+                userDAO.save(getUserFromMap(requestMap));
+                return JPLearningUtils.getResponseEntity("Successfully registered", HttpStatus.OK);
             } else {
                 return JPLearningUtils.getResponseEntity(JPConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.BAD_REQUEST);
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
@@ -150,7 +158,11 @@ public class UserServiceImpl implements UserService {
                         user.setPassword(requestMap.get("password"));
                     }
 
-                    // Add more fields to update as needed
+                    if (requestMap.containsKey("level")) {
+                        String levelString = requestMap.get("level");
+                        JLPTLevel level = JLPTLevel.valueOf(levelString); // Assuming level names match the enum values
+                        user.setLevel(level);
+                    }
 
                     // Save the updated user
                     userDAO.save(user);
@@ -168,6 +180,8 @@ public class UserServiceImpl implements UserService {
             return ResponseEntity.status(500).body("Something went wrong");
         }
     }
+
+
 
 
 
@@ -226,6 +240,104 @@ public class UserServiceImpl implements UserService {
         return new ResponseEntity<>(response,HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+
+    @Override
+    public ResponseEntity<String> getUserProfile() {
+        try {
+            // Get the currently logged-in user's email (you might need to adjust this based on your authentication mechanism)
+            String userEmail = jwtAuthFilter.getCurrentUser();
+
+            // Retrieve the user by email
+            Optional<User> userOptional = userDAO.findByEmail(userEmail);
+
+            // Check if the user exists
+            if (userOptional.isPresent()) {
+                User user = userOptional.get();
+
+                // Create a Map with desired fields
+                Map<String, Object> userProfile = new HashMap<>();
+                userProfile.put("firstName", user.getFirstName());
+                userProfile.put("lastName", user.getLastName());
+                userProfile.put("phoneNumber", user.getPhoneNumber());
+
+                // Format date of birth
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                String formattedDob = dateFormat.format(user.getDob());
+                userProfile.put("dob", formattedDob);
+
+                userProfile.put("level", user.getLevel());
+
+                // Convert Map to JSON and return it
+                ObjectMapper objectMapper = new ObjectMapper();
+                String jsonProfile = objectMapper.writeValueAsString(userProfile);
+
+                return ResponseEntity.ok(jsonProfile);
+            } else {
+                return ResponseEntity.badRequest().body(JPConstants.USER_NOT_FOUND);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return ResponseEntity.badRequest().body(JPConstants.SOMETHING_WENT_WRONG);
+        }
+    }
+
+    @Override
+    public ResponseEntity<String> updateProfile(Map<String, String> requestMap) {
+        log.info("Inside updateProfile {}", requestMap);
+        try {
+            // Check if 'id' is present and not null
+            if (requestMap.containsKey("id") && requestMap.get("id") != null) {
+                Long userId = Long.parseLong(requestMap.get("id"));
+                Optional<User> userOptional = userDAO.findById(userId);
+
+                // Check if the user exists
+                if (userOptional.isPresent()) {
+                    User user = userOptional.get();
+
+                    // Update user information based on the request
+                    if (requestMap.containsKey("firstName")) {
+                        user.setFirstName(requestMap.get("firstName"));
+                    }
+
+                    if (requestMap.containsKey("lastName")) {
+                        user.setLastName(requestMap.get("lastName"));
+                    }
+
+                    if (requestMap.containsKey("phoneNumber")) {
+                        user.setPhoneNumber(requestMap.get("phoneNumber"));
+                    }
+
+                    if (requestMap.containsKey("dob")) {
+                        // Assuming 'dob' is a String in the format "yyyy-MM-dd"
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                        Date dob = dateFormat.parse(requestMap.get("dob"));
+                        user.setDob(dob);
+                    }
+
+                    if (requestMap.containsKey("level")) {
+                        // Assuming 'level' is a valid JLPTLevel string
+                        JLPTLevel level = JLPTLevel.valueOf(requestMap.get("level"));
+                        user.setLevel(level);
+                    }
+
+                    // Save the updated user
+                    userDAO.save(user);
+
+                    return ResponseEntity.ok("Profile Updated Successfully");
+                } else {
+                    return ResponseEntity.status(401).body("User not found");
+                }
+            } else {
+                // Handle the case where 'id' is null or not present
+                return ResponseEntity.badRequest().body("Invalid or missing 'id' parameter");
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(500).body("Something went wrong");
+        }
+    }
+
+
     private String generateVerifyCode() {
         String code ="";
          Random random = new Random();
@@ -238,6 +350,9 @@ public class UserServiceImpl implements UserService {
 
 
     private User getUserFromMap(Map<String, String> requestMap) {
+        String levelString = requestMap.get("level");
+        JLPTLevel level = JLPTLevel.valueOf(levelString); // Assuming level names match the enum values
+
         return User.builder()
                 .firstName(requestMap.get("firstName"))
                 .lastName(requestMap.get("lastName"))
@@ -246,9 +361,11 @@ public class UserServiceImpl implements UserService {
                 .email(requestMap.get("email"))
                 .password(passwordEncoder.encode(requestMap.get("password")))
                 .role(Role.USER)
+                .level(level)
                 .isActive(true)
                 .build();
     }
+
 
     private Date parseDate(String dob) {
         try {
@@ -269,4 +386,8 @@ public class UserServiceImpl implements UserService {
             return false;
         }
     }
+
+
 }
+
+
