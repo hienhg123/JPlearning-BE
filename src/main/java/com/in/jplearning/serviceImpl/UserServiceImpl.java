@@ -178,10 +178,6 @@ public class UserServiceImpl implements UserService {
     }
 
 
-
-
-
-
     @Override
     public ResponseEntity<String> checkToken() {
         return JPLearningUtils.getResponseEntity("true", HttpStatus.OK);
@@ -226,8 +222,9 @@ public class UserServiceImpl implements UserService {
                 //set expire time
                 long expirationTime = System.currentTimeMillis() + 10 * 60 * 1000;
                 //send verify code to email
-                emailUtils.sendVerifyCode(user.getEmail(),"Verification Code",code);
+//                emailUtils.sendVerifyCode(user.getEmail(),"Verification Code",code);
                 response.put("expirationTime",String.valueOf(expirationTime));
+                response.put("code",code);
             }
             return new ResponseEntity<>(response,HttpStatus.OK);
         }catch (Exception ex){

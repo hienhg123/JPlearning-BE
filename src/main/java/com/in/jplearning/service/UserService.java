@@ -1,6 +1,7 @@
 package com.in.jplearning.service;
 
 import com.in.jplearning.model.User;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;

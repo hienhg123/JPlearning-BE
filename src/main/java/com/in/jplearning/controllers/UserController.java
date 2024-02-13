@@ -11,10 +11,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@CrossOrigin("http://localhost:4200")
+@CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping(path = "/user")
 @AllArgsConstructor
@@ -77,6 +78,17 @@ public class UserController {
             ex.printStackTrace();
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    @PostMapping(path = "/forgetPassword")
+    public ResponseEntity<Map<String,String>> forgetPassword(@RequestBody  Map<String, String> requestMap){
+        Map<String, String> response = new HashMap<>();
+        response.put("message","Something went wrong");
+        try{
+            return userService.forgetPassword(requestMap);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return new ResponseEntity<>(response,HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
 
