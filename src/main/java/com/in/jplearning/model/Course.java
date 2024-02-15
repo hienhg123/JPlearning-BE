@@ -1,7 +1,10 @@
 package com.in.jplearning.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.in.jplearning.enums.JLPTLevel;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
@@ -15,6 +18,8 @@ import java.io.Serializable;
 @NoArgsConstructor
 @DynamicUpdate
 @DynamicInsert
+@Builder
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Course implements Serializable {
 
     @Id
@@ -22,6 +27,8 @@ public class Course implements Serializable {
     @Column(name = "course_ID")
     private Long courseID;
     @Column(columnDefinition = "NVARCHAR(255)")
+    private String courseName;
     private String courseDescription;
-    private String courseLevel;
+    @Enumerated(EnumType.STRING)
+    private JLPTLevel courseLevel;
 }
