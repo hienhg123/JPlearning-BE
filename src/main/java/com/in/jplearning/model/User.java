@@ -35,16 +35,19 @@ public class User implements UserDetails {
     private String lastName;
     private String phoneNumber;
     private Date dob;
+    @Column(nullable = false)
     private String email;
+    @Column(nullable = false)
     private String password;
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Role role;
     @Enumerated(EnumType.STRING)
     private JLPTLevel level;
     private boolean isActive;
 
     @OneToMany(mappedBy = "user")
-    private List<UserJLPTExercise> userJLPTExerciseList;
+    private List<User_Exercise> user_exercises;
 
     @ManyToMany(mappedBy = "userSet")
     private Set<FlashCardSet> cardSets = new HashSet<>();

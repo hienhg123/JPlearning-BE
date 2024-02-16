@@ -24,6 +24,7 @@ public class VerifyRequest implements Serializable {
     private Long requestID;
     @Enumerated(EnumType.STRING)
     private VerificationType verificationType;
+    @Column(nullable = false)
     private String url;
     private boolean approved;
     private LocalDateTime requestTimestamp;
