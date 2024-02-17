@@ -1,4 +1,4 @@
-package com.in.jplearning.repo;
+package com.in.jplearning.repositories;
 
 
 import com.in.jplearning.enums.Role;

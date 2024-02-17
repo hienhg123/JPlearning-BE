@@ -9,7 +9,7 @@ import com.in.jplearning.constants.JPConstants;
 import com.in.jplearning.enums.JLPTLevel;
 import com.in.jplearning.enums.Role;
 import com.in.jplearning.model.User;
-import com.in.jplearning.repo.UserDAO;
+import com.in.jplearning.repositories.UserDAO;
 import com.in.jplearning.service.UserService;
 import com.in.jplearning.utils.EmailUtils;
 import com.in.jplearning.utils.JPLearningUtils;

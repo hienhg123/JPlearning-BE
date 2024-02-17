@@ -1,8 +1,7 @@
-package com.in.jplearning.repo;
+package com.in.jplearning.repositories;
 
 import com.in.jplearning.model.Course;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 import java.util.Optional;
