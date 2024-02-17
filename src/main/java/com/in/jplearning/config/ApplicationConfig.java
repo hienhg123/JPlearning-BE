@@ -2,7 +2,7 @@ package com.in.jplearning.config;
 
 
 import com.in.jplearning.model.User;
-import com.in.jplearning.repo.UserDAO;
+import com.in.jplearning.repositories.UserDAO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

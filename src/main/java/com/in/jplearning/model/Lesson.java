@@ -30,7 +30,9 @@ public class Lesson implements Serializable {
     private String grammarMaterial;
     private String exerciseMaterial;
     private String videoMaterial;
+    private Boolean isStudy;
 
+    
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "chapter_fk",nullable = false,referencedColumnName = "chapter_ID")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
