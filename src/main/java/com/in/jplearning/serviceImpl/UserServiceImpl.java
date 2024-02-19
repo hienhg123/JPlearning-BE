@@ -91,6 +91,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public ResponseEntity<String> login(Map<String, String> requestMap) {
         User user = userDAO.findByEmail(requestMap.get("email")).get();
+        //check if user exist
+        if(user == null){
+            return new ResponseEntity<String>("Account do not exist", HttpStatus.BAD_REQUEST);
+        }
         log.info("Inside login");
         try {
             Authentication auth = authenticationManager.authenticate(
@@ -104,7 +108,7 @@ public class UserServiceImpl implements UserService {
                     return new ResponseEntity<String>("{\"token\":\"" +
                             jwtUtil.generateToken(user.getUsername(), user.getRole()) + "\"}", HttpStatus.OK);
                 } else {
-                    return new ResponseEntity<String>("Account do not exist", HttpStatus.BAD_REQUEST);
+                    return new ResponseEntity<String>("Your account have been banned", HttpStatus.BAD_REQUEST);
                 }
             }
         } catch (Exception ex) {
@@ -343,8 +347,6 @@ public class UserServiceImpl implements UserService {
 
 
     private User getUserFromMap(Map<String, String> requestMap) {
-        String levelString = requestMap.get("level");
-        JLPTLevel level = JLPTLevel.valueOf(levelString); // Assuming level names match the enum values
 
         return User.builder()
                 .firstName(requestMap.get("firstName"))
@@ -354,7 +356,7 @@ public class UserServiceImpl implements UserService {
                 .email(requestMap.get("email"))
                 .password(passwordEncoder.encode(requestMap.get("password")))
                 .role(Role.USER)
-                .level(level)
+                .level(JLPTLevel.None)
                 .isActive(true)
                 .build();
     }
@@ -365,9 +367,8 @@ public class UserServiceImpl implements UserService {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             return sdf.parse(dob);
         } catch (ParseException e) {
-            // Xử lý ngoại lệ (có thể in log, thông báo lỗi, trả về giá trị mặc định, ...)
             e.printStackTrace();
-            return null;  // hoặc throw new RuntimeException("Không thể chuyển đổi ngày tháng", e);
+            return null;
         }
     }
 
