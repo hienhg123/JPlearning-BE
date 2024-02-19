@@ -1,5 +1,6 @@
 package com.in.jplearning.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -26,5 +27,9 @@ public class Answer implements Serializable {
     private boolean isCorrect;
     @Column(columnDefinition = "NVARCHAR(500)",nullable = false)
     private String description;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "question_fk",referencedColumnName = "question_ID")
+    private Question question;
 
 }
