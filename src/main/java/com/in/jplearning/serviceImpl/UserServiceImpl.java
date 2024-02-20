@@ -165,7 +165,7 @@ public class UserServiceImpl implements UserService {
 
                     return ResponseEntity.ok("User Updated Successfully");
                 } else {
-                    return ResponseEntity.status(401).body("User not found");
+                    return ResponseEntity.badRequest().body(JPConstants.USER_NOT_FOUND);
                 }
             } else {
                 // Handle the case where 'id' is null or not present
@@ -173,7 +173,7 @@ public class UserServiceImpl implements UserService {
             }
         } catch (Exception ex) {
             ex.printStackTrace();
-            return ResponseEntity.status(500).body("Something went wrong");
+            return ResponseEntity.badRequest().body(JPConstants.SOMETHING_WENT_WRONG);
         }
     }
 
@@ -318,7 +318,7 @@ public class UserServiceImpl implements UserService {
 
                     return ResponseEntity.ok("Profile Updated Successfully");
                 } else {
-                    return ResponseEntity.status(401).body("User not found");
+                    return ResponseEntity.badRequest().body(JPConstants.USER_NOT_FOUND);
                 }
             } else {
                 // Handle the case where 'id' is null or not present
@@ -326,7 +326,7 @@ public class UserServiceImpl implements UserService {
             }
         } catch (Exception ex) {
             ex.printStackTrace();
-            return ResponseEntity.status(500).body("Something went wrong");
+            return ResponseEntity.badRequest().body(JPConstants.SOMETHING_WENT_WRONG);
         }
     }
 
@@ -360,16 +360,19 @@ public class UserServiceImpl implements UserService {
     }
 
 
+
     private Date parseDate(String dob) {
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             return sdf.parse(dob);
         } catch (ParseException e) {
-            // Xử lý ngoại lệ (có thể in log, thông báo lỗi, trả về giá trị mặc định, ...)
+
             e.printStackTrace();
             return null;  // hoặc throw new RuntimeException("Không thể chuyển đổi ngày tháng", e);
         }
     }
+
+
 
     private boolean validateSignUpMap(Map<String, String> requestMap) {
         if (requestMap.containsKey("email") && requestMap.containsKey("password")
@@ -378,6 +381,11 @@ public class UserServiceImpl implements UserService {
         } else {
             return false;
         }
+    }
+
+    @Override
+    public Optional<User> getUserByEmail(String email) {
+        return userDAO.findByEmail(email);
     }
 
 

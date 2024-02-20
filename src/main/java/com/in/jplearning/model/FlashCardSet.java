@@ -2,6 +2,7 @@ package com.in.jplearning.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
@@ -9,7 +10,6 @@ import org.hibernate.annotations.DynamicUpdate;
 
 import java.io.Serializable;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -18,6 +18,7 @@ import java.util.Set;
 @NoArgsConstructor
 @DynamicUpdate
 @DynamicInsert
+@Builder
 public class FlashCardSet implements Serializable {
 
     @Id
@@ -28,10 +29,17 @@ public class FlashCardSet implements Serializable {
 
     @ManyToMany
     @JoinTable(name = "user_flashcard_set",
-            joinColumns = @JoinColumn(name = "flashCardSet_fk",referencedColumnName = "flashCardSet_ID"),
-            inverseJoinColumns = @JoinColumn(name = "user_fk",referencedColumnName = "user_ID")
+            joinColumns = @JoinColumn(name = "flashCardSet_fk", referencedColumnName = "flashCardSet_ID"),
+            inverseJoinColumns = @JoinColumn(name = "user_fk", referencedColumnName = "user_ID")
     )
     private Set<User> userSet = new HashSet<>();
+
+    @OneToMany(mappedBy = "flashCardSet", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<FlashCard> flashCards = new HashSet<>();
+
+    @Transient
+    private int flashCardCount;
+
 
 
 }
