@@ -1,5 +1,6 @@
 package com.in.jplearning.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.in.jplearning.enums.JLPTLevel;
 import com.in.jplearning.enums.Role;
@@ -46,6 +47,7 @@ public class User implements UserDetails {
     private JLPTLevel level;
     private boolean isActive;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "user")
     private List<User_Exercise> user_exercises;
 
