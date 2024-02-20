@@ -10,7 +10,10 @@ import java.util.List;
 
 public interface QuestionDAO extends JpaRepository<Question,Long> {
 
-    @Query("select new com.in.jplearning.dtos.QuestionDTO(q.content,q.exercises.exercisesID,a.answerID,a.answer,a.isCorrect,a.description) from Question q " +
-            "left join q.answerList a where q.exercises.exercisesID = ?1")
-    List<QuestionDTO> getByExerciseId(Long exerciseID);
+    @Query("select q from Question q where q.exercises.exercisesID =?1")
+    List<Question> getByExerciseId(Long exerciseID);
+
+
+
+
 }

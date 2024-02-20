@@ -1,6 +1,7 @@
 package com.in.jplearning.controllers;
 
 import com.in.jplearning.dtos.QuestionDTO;
+import com.in.jplearning.model.Question;
 import com.in.jplearning.service.QuestionService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,13 +22,21 @@ public class QuestionController {
 
 
     @GetMapping(path = "/getByExercise/{exerciseID}")
-    public ResponseEntity<List<QuestionDTO>> getExerciseQuestion(@PathVariable Long exerciseID){
+    public ResponseEntity<List<Question>> getExerciseQuestion(@PathVariable Long exerciseID){
         try{
             return questionService.getExerciseQuestion(exerciseID);
         }catch (Exception ex){
             ex.printStackTrace();
         }
         return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
-
+    }
+    @GetMapping(path = "/getAll")
+    public ResponseEntity<List<Question>> getAll(){
+        try{
+            return questionService.getAll();
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
