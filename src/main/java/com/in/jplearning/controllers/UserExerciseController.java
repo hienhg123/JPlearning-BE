@@ -13,7 +13,7 @@ import java.util.Map;
 @CrossOrigin("http://localhost:4200")
 @RestController
 @AllArgsConstructor
-@RequestMapping(path = "/exam")
+@RequestMapping(path = "/practice/submit")
 public class UserExerciseController {
 
     private final UserExerciseService userExerciseService;
