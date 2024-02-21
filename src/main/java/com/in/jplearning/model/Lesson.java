@@ -31,6 +31,7 @@ public class Lesson implements Serializable {
     private String exerciseMaterial;
     private String videoMaterial;
     private Boolean isStudy;
+    private Integer lessonOrder;
 
     
     @ManyToOne(fetch = FetchType.LAZY)
