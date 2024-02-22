@@ -28,4 +28,6 @@ public class FlashCard implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "flashcardset_fk",referencedColumnName = "flashCardSet_ID")
     private FlashCardSet flashCardSet;
+
+
 }
