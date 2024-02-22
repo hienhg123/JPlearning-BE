@@ -30,7 +30,8 @@ public class Lesson implements Serializable {
     private String grammarMaterial;
     private String exerciseMaterial;
     private String videoMaterial;
-    private Boolean isStudy;
+    private Boolean isFinished;
+    private Boolean isFree;
     private Integer lessonOrder;
 
     
