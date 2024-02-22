@@ -90,6 +90,24 @@ public class UserController {
         }
         return new ResponseEntity<>(response,HttpStatus.INTERNAL_SERVER_ERROR);
     }
+    @PostMapping(path = "/validateOtp")
+    public ResponseEntity<String> validateOtp(@RequestBody Map<String,String> requestMap){
+        try {
+            return userService.validateOtp(requestMap);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    @PutMapping(path = "/resetPassword")
+    public ResponseEntity<String> resetPassword(@RequestBody Map<String,String> requestMap){
+        try {
+            return userService.resetPassword(requestMap);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
 
 
