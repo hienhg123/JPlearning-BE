@@ -1,5 +1,7 @@
 package com.in.jplearning.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.in.jplearning.enums.ExerciseType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -9,6 +11,7 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -29,10 +32,17 @@ public class Exercises implements Serializable {
     @Enumerated(EnumType.STRING)
     private ExerciseType exerciseType;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "exercises")
     private List<User_Exercise> userExerciseList;
 
+    @JsonIgnore
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lesson_fk",referencedColumnName = "lesson_ID")
     private Lesson lesson;
+
+    @JsonIgnoreProperties("exercises")
+    @OneToMany(mappedBy = "exercises")
+    private List<Question> questions = new ArrayList<>();
+
 }

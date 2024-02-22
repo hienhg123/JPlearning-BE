@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -28,33 +29,75 @@ public class NoteServiceImpl implements NoteService {
     private final NoteDAO noteDAO;
     private final UserDAO userDAO;
     private final JwtAuthFilter jwtAuthFilter;
+
     @Override
     public ResponseEntity<List<Note>> getAllUserNote() {
-       try{
-           //get the current user
-           User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
-           log.info("id:" + user.getUserID());
-           //get note by user idlog.info();
-           return new ResponseEntity<>(noteDAO.getAllUserNote(user.getUserID()),HttpStatus.OK);
+        try {
+            //get the current user
+            User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
+            log.info("id:" + user.getUserID());
+            //get note by user idlog.info();
+            return new ResponseEntity<>(noteDAO.getAllUserNote(user.getUserID()), HttpStatus.OK);
 
-       }catch (Exception ex){
-           ex.printStackTrace();
-       }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
         return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
     @Transactional
     public ResponseEntity<String> saveNote(Map<String, String> requestMap) {
-        try{
+        try {
             //get note from map
             Note note = mapToNote(requestMap);
             noteDAO.save(note);
-            return JPLearningUtils.getResponseEntity("Save successfully",HttpStatus.OK);
-        }catch (Exception ex){
+            return JPLearningUtils.getResponseEntity("Save successfully", HttpStatus.OK);
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
-        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG,HttpStatus.INTERNAL_SERVER_ERROR);
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
+    public ResponseEntity<String> updateNote(Map<String, String> requestMap) {
+        try {
+            //get the note
+            Optional<Note> note = noteDAO.findById(Long.parseLong(requestMap.get("noteID")));
+            //check if note is exist
+            if (!note.isEmpty()) {
+                note.get().setNote(requestMap.get("note"));
+                noteDAO.save(note.get());
+                return JPLearningUtils.getResponseEntity("Update success fully", HttpStatus.OK);
+            } else {
+                return JPLearningUtils.getResponseEntity("Note not exist", HttpStatus.OK);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
+    public ResponseEntity<Note> goToLesson(Long noteID) {
+        try {
+            return new ResponseEntity<>(noteDAO.findById(noteID).get(), HttpStatus.OK);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return new ResponseEntity<>(new Note(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
+    public ResponseEntity<String> deleteNote(Long noteID) {
+        try {
+            noteDAO.deleteById(noteID);
+            return JPLearningUtils.getResponseEntity("Note deleted", HttpStatus.OK);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+
     }
 
     private Note mapToNote(Map<String, String> requestMap) {

@@ -11,4 +11,10 @@ public interface NoteService {
     ResponseEntity<List<Note>> getAllUserNote();
 
     ResponseEntity<String> saveNote(Map<String, String> requestMap);
+
+    ResponseEntity<String> updateNote(Map<String, String> requestMap);
+
+    ResponseEntity<Note> goToLesson(Long noteID);
+
+    ResponseEntity<String> deleteNote(Long noteID);
 }
