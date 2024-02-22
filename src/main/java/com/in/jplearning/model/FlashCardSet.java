@@ -1,5 +1,6 @@
 package com.in.jplearning.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,13 +33,18 @@ public class FlashCardSet implements Serializable {
             joinColumns = @JoinColumn(name = "flashCardSet_fk", referencedColumnName = "flashCardSet_ID"),
             inverseJoinColumns = @JoinColumn(name = "user_fk", referencedColumnName = "user_ID")
     )
+
+    @JsonIgnore
     private Set<User> userSet = new HashSet<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "flashCardSet", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<FlashCard> flashCards = new HashSet<>();
 
     @Transient
     private int flashCardCount;
+
+
 
 
 

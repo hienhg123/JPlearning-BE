@@ -13,7 +13,7 @@ import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
-@RequestMapping(path = "/flashcards")
+@RequestMapping(path = "/practice/flashcard")
 @AllArgsConstructor
 public class FlashCardController {
     private final FlashCardService flashCardService;

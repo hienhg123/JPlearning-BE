@@ -4,6 +4,7 @@ import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.model.FlashCardSet;
 import com.in.jplearning.model.User;
 import com.in.jplearning.repositories.FlashCardSetDAO;
+import com.in.jplearning.repositories.UserDAO;
 import com.in.jplearning.service.FlashCardSetService;
 import com.in.jplearning.service.UserService;
 import lombok.AllArgsConstructor;
@@ -20,7 +21,8 @@ import java.util.Optional;
 public class FlashCardSetServiceImpl implements FlashCardSetService {
     private final FlashCardSetDAO flashCardSetDAO;
     private final JwtAuthFilter jwtAuthFilter;
-    private final UserService userService;
+
+    private final UserDAO userDAO;
 
     @Override
     public FlashCardSet createFlashCardSet(FlashCardSet flashCardSet) {
@@ -29,7 +31,7 @@ public class FlashCardSetServiceImpl implements FlashCardSetService {
 
         if (userEmail != null) {
             // Fetch the corresponding User object from the database
-            Optional<User> userOptional = userService.getUserByEmail(userEmail);
+            Optional<User> userOptional = userDAO.findByEmail(userEmail);
 
             if (userOptional.isPresent()) {
                 User currentUser = userOptional.get();
@@ -69,7 +71,7 @@ public class FlashCardSetServiceImpl implements FlashCardSetService {
 
         if (userEmail != null) {
             // Fetch the corresponding User object from the database
-            Optional<User> userOptional = userService.getUserByEmail(userEmail);
+            Optional<User> userOptional = userDAO.findByEmail(userEmail);
 
             if (userOptional.isPresent()) {
                 User currentUser = userOptional.get();

@@ -11,7 +11,7 @@ import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
-@RequestMapping(path = "/flashcardSet")
+@RequestMapping(path = "/practice/flashcardSet")
 @AllArgsConstructor
 @Slf4j
 public class FlashCardSetController {
