@@ -52,13 +52,6 @@ public class UserServiceImpl implements UserService {
                 if (userDAO.findByEmail(requestMap.get("email")).isPresent()) {
                     return JPLearningUtils.getResponseEntity("Email already exists", HttpStatus.BAD_REQUEST);
                 }
-
-                // Check if phone number already exists
-                if (userDAO.findByPhoneNumber(requestMap.get("phoneNumber")).isPresent()) {
-                    return JPLearningUtils.getResponseEntity("Phone number already exists", HttpStatus.BAD_REQUEST);
-                }
-
-                // Save the user if email and phone number are unique
                 userDAO.save(getUserFromMap(requestMap));
                 return JPLearningUtils.getResponseEntity("Successfully registered", HttpStatus.OK);
             } else {
@@ -351,8 +344,6 @@ public class UserServiceImpl implements UserService {
         return User.builder()
                 .firstName(requestMap.get("firstName"))
                 .lastName(requestMap.get("lastName"))
-                .phoneNumber(requestMap.get("phoneNumber"))
-                .dob(parseDate(requestMap.get("dob")))
                 .email(requestMap.get("email"))
                 .password(passwordEncoder.encode(requestMap.get("password")))
                 .role(Role.USER)
@@ -373,8 +364,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private boolean validateSignUpMap(Map<String, String> requestMap) {
-        if (requestMap.containsKey("email") && requestMap.containsKey("password")
-                && requestMap.containsKey("phoneNumber")) {
+        if (requestMap.containsKey("email") && requestMap.containsKey("password")) {
             return true;
         } else {
             return false;
