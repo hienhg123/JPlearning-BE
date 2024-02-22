@@ -1,12 +1,10 @@
 package com.in.jplearning.serviceImpl;
 
 
-import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.constants.JPConstants;
 import com.in.jplearning.enums.JLPTLevel;
 import com.in.jplearning.model.Course;
 import com.in.jplearning.repositories.CourseDAO;
-import com.in.jplearning.repositories.UserDAO;
 import com.in.jplearning.service.CourseService;
 import com.in.jplearning.utils.JPLearningUtils;
 import lombok.AllArgsConstructor;
