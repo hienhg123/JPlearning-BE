@@ -45,6 +45,9 @@ public class User implements UserDetails {
     private Role role;
     @Enumerated(EnumType.STRING)
     private JLPTLevel level;
+    private String gender;
+    @Column(columnDefinition = "NVARCHAR(255)")
+    private String userPicture;
     private boolean isActive;
 
     @JsonIgnore
