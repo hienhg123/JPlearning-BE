@@ -13,19 +13,13 @@ public interface UserService {
 
     ResponseEntity<String> register(Map<String, String> requestMap);
     ResponseEntity<List<User>> getAllUser();
-
     ResponseEntity<String> login(Map<String, String> requestMap);
-
     ResponseEntity<String> updateUser(Map<String, String> requestMap);
-
-
     ResponseEntity<String> getUserProfile();
-
-
     ResponseEntity<String> checkToken();
-
     ResponseEntity<String> changePassword(Map<String, String> requestMap);
-
     ResponseEntity<Map<String,String>> forgetPassword(Map<String, String> requestMap);
     ResponseEntity<String> updateProfile(Long userId, MultipartFile userPicture, Map<String, String> requestMap);
+    ResponseEntity<String> validateOtp(Map<String, String> requestMap);
+    ResponseEntity<String> resetPassword(Map<String, String> requestMap);
 }

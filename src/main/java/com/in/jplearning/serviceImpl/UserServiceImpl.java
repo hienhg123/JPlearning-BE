@@ -90,11 +90,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ResponseEntity<String> login(Map<String, String> requestMap) {
-        User user = userDAO.findByEmail(requestMap.get("email")).get();
         //check if user exist
-        if(user == null){
+        if(userDAO.findByEmail(requestMap.get("email")).isEmpty()){
             return new ResponseEntity<String>("Account do not exist", HttpStatus.BAD_REQUEST);
         }
+        User user = userDAO.findByEmail(requestMap.get("email")).get();
         log.info("Inside login");
         try {
             Authentication auth = authenticationManager.authenticate(
@@ -230,20 +230,61 @@ public class UserServiceImpl implements UserService {
             //check if user exist
             if(!user.equals(null)){
                 response.put("message","Check your email for verification code");
+                response.put("email", user.getEmail());
                 //create verify code
-                String code = generateVerifyCode();
+                String otp = generateVerifyCode();
                 //set expire time
                 long expirationTime = System.currentTimeMillis() + 10 * 60 * 1000;
                 //send verify code to email
 //                emailUtils.sendVerifyCode(user.getEmail(),"Verification Code",code);
                 response.put("expirationTime",String.valueOf(expirationTime));
-                response.put("code",code);
+                response.put("generatedOtp",otp);
             }
             return new ResponseEntity<>(response,HttpStatus.OK);
         }catch (Exception ex){
             ex.printStackTrace();
         }
         return new ResponseEntity<>(response,HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
+    public ResponseEntity<String> validateOtp(Map<String, String> requestMap) {
+        try{
+            //get otp that user enter and generated otp
+            String otp = requestMap.get("otp");
+            String generatedOtp = requestMap.get("generatedOtp");
+            //check credentials
+            if(!otp.isEmpty()){
+                //validate otp
+                if(otp.equals(generatedOtp)){
+                    return JPLearningUtils.getResponseEntity("",HttpStatus.OK);
+                } else {
+                    return JPLearningUtils.getResponseEntity("Sai mã OTP",HttpStatus.OK);
+                }
+            } else {
+                return JPLearningUtils.getResponseEntity(JPConstants.INVALID_DATA,HttpStatus.BAD_REQUEST);
+            }
+
+
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG,HttpStatus.OK);
+    }
+
+    @Override
+    public ResponseEntity<String> resetPassword(Map<String, String> requestMap) {
+        try{
+            //get user
+            User user = userDAO.findByEmail(requestMap.get("email")).get();
+            //update new password
+            user.setPassword(passwordEncoder.encode(requestMap.get("password")));
+            userDAO.save(user);
+            return JPLearningUtils.getResponseEntity("Reset password thành công",HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG,HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
 
