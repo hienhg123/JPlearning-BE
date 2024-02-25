@@ -6,6 +6,7 @@ import com.in.jplearning.model.FlashCardSet;
 import com.in.jplearning.repositories.FlashCardDAO;
 import com.in.jplearning.repositories.FlashCardSetDAO;
 import com.in.jplearning.service.FlashCardService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -55,6 +56,27 @@ public class FlashCardServiceImpl implements FlashCardService {
             return Collections.emptyList();
         }
     }
+    public void updateFlashCardInSet(Long flashCardSetId, Long flashCardId, FlashCard updatedFlashCard) {
+        // Step 1: Load the FlashCardSet along with the associated FlashCard
+        FlashCardSet flashCardSet = flashCardSetDAO.findById(flashCardSetId)
+                .orElseThrow(() -> new EntityNotFoundException("FlashCardSet not found with id: " + flashCardSetId));
+
+        FlashCard flashCardToUpdate = flashCardDAO.findById(flashCardId)
+                .orElseThrow(() -> new EntityNotFoundException("FlashCard not found with id: " + flashCardId));
+
+        // Step 2: Make changes to the loaded FlashCard
+        flashCardToUpdate.setQuestion(updatedFlashCard.getQuestion());
+        flashCardToUpdate.setAnswer(updatedFlashCard.getAnswer());
+
+        // You can update other properties as needed...
+
+        // Step 3: Save the changes back to the database
+        flashCardDAO.save(flashCardToUpdate);
+
+        // Optionally, you can save the FlashCardSet if you made changes to it
+        flashCardSetDAO.save(flashCardSet);
+    }
+
 
 }
 

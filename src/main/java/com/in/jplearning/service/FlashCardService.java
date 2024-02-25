@@ -9,5 +9,7 @@ public interface FlashCardService {
     List<FlashCard> createMultipleFlashCardsInSet(List<FlashCard> flashCards, Long flashCardSetId);
 
     List<FlashCard> getFlashCardsByFlashCardSetId(Long flashCardSetId);
+    void updateFlashCardInSet(Long flashCardSetId, Long flashCardId, FlashCard updatedFlashCard);
+
 
 }

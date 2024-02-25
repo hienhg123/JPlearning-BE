@@ -4,6 +4,7 @@ package com.in.jplearning.serviceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.config.JwtUtil;
+import com.in.jplearning.config.S3Config;
 import com.in.jplearning.constants.JPConstants;
 
 import com.in.jplearning.enums.JLPTLevel;
@@ -22,7 +23,13 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -39,7 +46,7 @@ public class UserServiceImpl implements UserService {
     private final JwtAuthFilter jwtAuthFilter;
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
-
+    private final S3Config s3Config;
     private final EmailUtils emailUtils;
 
     @Override
@@ -184,11 +191,20 @@ public class UserServiceImpl implements UserService {
     public ResponseEntity<String> changePassword(Map<String, String> requestMap) {
         try {
             User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
-            //check user null or not
-            if (!user.equals(null)) {
-                //check old password
+            // check user null or not
+            if (user != null) {
+                // check old password
                 if (passwordEncoder.matches(requestMap.get("password"), user.getPassword())) {
-                    user.setPassword(requestMap.get("newPassword"));
+                    String newPassword = requestMap.get("newPassword");
+                    String encodedNewPassword = passwordEncoder.encode(newPassword);
+
+                    // Log statements for debugging
+                    System.out.println("Old Password: " + requestMap.get("password"));
+                    System.out.println("Stored Password: " + user.getPassword());
+                    System.out.println("New Password: " + newPassword);
+                    System.out.println("Encoded New Password: " + encodedNewPassword);
+
+                    user.setPassword(encodedNewPassword);
                     userDAO.save(user);
                     return JPLearningUtils.getResponseEntity("Password Update Successfully", HttpStatus.OK);
                 } else {
@@ -197,12 +213,12 @@ public class UserServiceImpl implements UserService {
             } else {
                 return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
             }
-
         } catch (Exception ex) {
             ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
 
 
     @Override
@@ -272,60 +288,99 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResponseEntity<String> updateProfile(Map<String, String> requestMap) {
-        log.info("Inside updateProfile {}", requestMap);
+    public ResponseEntity<String> updateProfile(Long userId, MultipartFile userPicture, Map<String, String> requestMap) {
         try {
-            // Check if 'id' is present and not null
-            if (requestMap.containsKey("id") && requestMap.get("id") != null) {
-                Long userId = Long.parseLong(requestMap.get("id"));
-                Optional<User> userOptional = userDAO.findById(userId);
+            // Retrieve the user by ID
+            Optional<User> userOptional = userDAO.findById(userId);
 
-                // Check if the user exists
-                if (userOptional.isPresent()) {
-                    User user = userOptional.get();
+            // Check if the user exists
+            if (userOptional.isPresent()) {
+                User user = userOptional.get();
 
-                    // Update user information based on the request
-                    if (requestMap.containsKey("firstName")) {
-                        user.setFirstName(requestMap.get("firstName"));
-                    }
-
-                    if (requestMap.containsKey("lastName")) {
-                        user.setLastName(requestMap.get("lastName"));
-                    }
-
-                    if (requestMap.containsKey("phoneNumber")) {
-                        user.setPhoneNumber(requestMap.get("phoneNumber"));
-                    }
-
-                    if (requestMap.containsKey("dob")) {
-                        // Assuming 'dob' is a String in the format "yyyy-MM-dd"
-                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-                        Date dob = dateFormat.parse(requestMap.get("dob"));
-                        user.setDob(dob);
-                    }
-
-                    if (requestMap.containsKey("level")) {
-                        // Assuming 'level' is a valid JLPTLevel string
-                        JLPTLevel level = JLPTLevel.valueOf(requestMap.get("level"));
-                        user.setLevel(level);
-                    }
-
-                    // Save the updated user
-                    userDAO.save(user);
-
-                    return ResponseEntity.ok("Profile Updated Successfully");
-                } else {
-                    return ResponseEntity.status(401).body("User not found");
+                // Update user information based on the request
+                if (requestMap.containsKey("firstName")) {
+                    user.setFirstName(requestMap.get("firstName"));
                 }
+
+                if (requestMap.containsKey("lastName")) {
+                    user.setLastName(requestMap.get("lastName"));
+                }
+
+                if (requestMap.containsKey("phoneNumber")) {
+                    user.setPhoneNumber(requestMap.get("phoneNumber"));
+                }
+
+                if (requestMap.containsKey("dob")) {
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                    Date dob = dateFormat.parse(requestMap.get("dob"));
+                    user.setDob(dob);
+                }
+
+                if (requestMap.containsKey("level")) {
+                    String levelString = requestMap.get("level");
+                    JLPTLevel level = JLPTLevel.valueOf(levelString);
+                    user.setLevel(level);
+                }
+
+                if (requestMap.containsKey("gender")) {
+                    user.setGender(requestMap.get("gender"));
+                }
+
+                // Check if userPicture is not null before interacting with AWS S3
+                if (userPicture != null && !userPicture.isEmpty()) {
+                    // Save user picture to AWS S3 and get the URL
+                    String userPictureUrl = saveUserPictureToS3(userId, userPicture); // Use userId here
+                    user.setUserPicture(userPictureUrl);
+                }
+
+                // Save the updated user
+                userDAO.save(user);
+
+                return ResponseEntity.ok("Profile Updated Successfully");
             } else {
-                // Handle the case where 'id' is null or not present
-                return ResponseEntity.badRequest().body("Invalid or missing 'id' parameter");
+                return ResponseEntity.badRequest().body("User not found with ID: " + userId);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
-            return ResponseEntity.status(500).body("Something went wrong");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Something went wrong");
         }
     }
+
+    private String saveUserPictureToS3(Long userId, MultipartFile userPicture) throws IOException {
+        try {
+            // Retrieve the user by ID
+            Optional<User> userOptional = userDAO.findById(userId);
+
+            // Check if the user exists
+            if (userOptional.isPresent()) {
+                User user = userOptional.get();
+
+
+                String email = user.getEmail();
+                String phoneNumber = user.getPhoneNumber();
+
+                // Generate a unique key for the picture in S3, incorporating email and phoneNumber
+                String key = "user-pictures/" + email + "_" + phoneNumber + "/" + "/" + userPicture.getOriginalFilename();
+
+                // Get S3 client bean from S3Config
+                S3Client s3Client = s3Config.s3Client();
+
+                // Upload the picture to S3
+                s3Client.putObject(PutObjectRequest.builder()
+                        .bucket("your-s3-bucket-name")
+                        .key(key)
+                        .build(), RequestBody.fromByteBuffer(ByteBuffer.wrap(userPicture.getBytes())));
+
+                // Return the URL of the uploaded picture
+                return "https://your-s3-bucket-name.s3.amazonaws.com/" + key;
+            } else {
+                throw new RuntimeException("User not found with ID: " + userId);
+            }
+        } catch (Exception ex) {
+            throw new IOException("Error saving user picture to S3", ex);
+        }
+    }
+
 
 
     private String generateVerifyCode() {
@@ -347,7 +402,7 @@ public class UserServiceImpl implements UserService {
                 .email(requestMap.get("email"))
                 .password(passwordEncoder.encode(requestMap.get("password")))
                 .role(Role.USER)
-                .level(JLPTLevel.None)
+//              .level(JLPTLevel.None)
                 .isActive(true)
                 .build();
     }
