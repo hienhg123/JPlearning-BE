@@ -26,7 +26,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private Claims claims;
     private final UserDetailsService userDetailsService;
-
     private String userName;
 
     @Override
