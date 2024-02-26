@@ -50,10 +50,10 @@ public class UserServiceImpl implements UserService {
             if (validateSignUpMap(requestMap)) {
                 // Check if email already exists
                 if (userDAO.findByEmail(requestMap.get("email")).isPresent()) {
-                    return JPLearningUtils.getResponseEntity("Email already exists", HttpStatus.BAD_REQUEST);
+                    return JPLearningUtils.getResponseEntity("Email đã tồn tại", HttpStatus.BAD_REQUEST);
                 }
                 userDAO.save(getUserFromMap(requestMap));
-                return JPLearningUtils.getResponseEntity("Successfully registered", HttpStatus.OK);
+                return JPLearningUtils.getResponseEntity("Đăng kí thành công", HttpStatus.OK);
             } else {
                 return JPLearningUtils.getResponseEntity(JPConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
             }
@@ -85,7 +85,7 @@ public class UserServiceImpl implements UserService {
     public ResponseEntity<String> login(Map<String, String> requestMap) {
         //check if user exist
         if(userDAO.findByEmail(requestMap.get("email")).isEmpty()){
-            return new ResponseEntity<String>("Account do not exist", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<String>("Tài khoản không tồn tại", HttpStatus.BAD_REQUEST);
         }
         User user = userDAO.findByEmail(requestMap.get("email")).get();
         log.info("Inside login");
@@ -101,13 +101,13 @@ public class UserServiceImpl implements UserService {
                     return new ResponseEntity<String>("{\"token\":\"" +
                             jwtUtil.generateToken(user.getUsername(), user.getRole()) + "\"}", HttpStatus.OK);
                 } else {
-                    return new ResponseEntity<String>("Your account have been banned", HttpStatus.BAD_REQUEST);
+                    return new ResponseEntity<String>("Tài khoản đã bị khóa", HttpStatus.BAD_REQUEST);
                 }
             }
         } catch (Exception ex) {
             log.error("{}", ex);
         }
-        return new ResponseEntity<String>("{\"message\":\"" + "Check Your Password" + "\"}"
+        return new ResponseEntity<String>("{\"message\":\"" + "Mật khẩu không đúng" + "\"}"
                 , HttpStatus.BAD_REQUEST);
     }
 
