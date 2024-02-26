@@ -9,4 +9,7 @@ public interface FlashCardSetService {
     FlashCardSet createFlashCardSet(FlashCardSet flashCardSet);
     List<FlashCardSet> getAllFlashCardSetsForCurrentUserWithFlashCardCount();
 
+
+    List<FlashCardSet> getAllFlashCardSets();
+
 }

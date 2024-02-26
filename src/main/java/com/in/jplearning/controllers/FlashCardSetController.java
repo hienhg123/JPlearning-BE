@@ -33,4 +33,10 @@ public class FlashCardSetController {
         return ResponseEntity.ok(flashCardSets);
     }
 
+    @GetMapping("/listAll")
+    public ResponseEntity<List<FlashCardSet>> getAllFlashCardSets() {
+        List<FlashCardSet> flashCardSets = flashCardSetService.getAllFlashCardSets();
+        return ResponseEntity.ok(flashCardSets);
+    }
+
 }

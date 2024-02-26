@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -70,14 +71,12 @@ public class UserController {
     public ResponseEntity<String> getUserProfile() {
         return userService.getUserProfile();
     }
-    @PutMapping(path = "/Profile")
-    public ResponseEntity<String> updateProfile(@RequestBody Map<String, String> requestMap) {
-        try {
-            return userService.updateProfile(requestMap);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    @PutMapping("/update-profile/{userId}")
+    public ResponseEntity<String> updateProfile(@PathVariable Long userId,
+                                                @RequestParam(name = "userPicture", required = false) MultipartFile userPicture,
+                                                @RequestParam Map<String, String> requestMap) {
+
+        return userService.updateProfile(userId, userPicture, requestMap);
     }
     @PostMapping(path = "/forgetPassword")
     public ResponseEntity<Map<String,String>> forgetPassword(@RequestBody  Map<String, String> requestMap){
@@ -90,6 +89,16 @@ public class UserController {
         }
         return new ResponseEntity<>(response,HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @PostMapping("/changePassword")
+    public ResponseEntity<String> changePassword(@RequestBody Map<String, String> requestMap) {
+        try {
+            return userService.changePassword(requestMap);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
     @PostMapping(path = "/validateOtp")
     public ResponseEntity<String> validateOtp(@RequestBody Map<String,String> requestMap){
         try {
