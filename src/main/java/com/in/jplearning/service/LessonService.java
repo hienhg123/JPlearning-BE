@@ -6,7 +6,6 @@ import org.springframework.http.ResponseEntity;
 import java.util.List;
 
 public interface LessonService {
-    ResponseEntity<List<Lesson>> getLessonByLessonOrderAndChapterID(Long chapterID);
 
-    ResponseEntity<Lesson> getLesson(Long chapterID, Integer lessonOrder);
+    ResponseEntity<Lesson> getLesson(Long lessonID);
 }

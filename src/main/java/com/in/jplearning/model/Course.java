@@ -11,6 +11,7 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.io.Serializable;
+import java.util.List;
 
 @Entity
 @Data
@@ -31,4 +32,8 @@ public class Course implements Serializable {
     private String courseDescription;
     @Enumerated(EnumType.STRING)
     private JLPTLevel courseLevel;
+
+    @JsonIgnoreProperties("course")
+    @OneToMany(mappedBy = "course")
+    private List<Chapter> chapterList;
 }

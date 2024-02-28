@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -40,9 +41,9 @@ public class UserExerciseImpl implements UserExerciseService {
             int numberOfAttempts = 0;
             //check if user have done this exercise or not
             log.info(requestMap.get("exerciseID"));
-            User_Exercise user_exercise = userExerciseDAO.getByUser(user.getUserID(),Long.parseLong(requestMap.get("exerciseID")));
+            List<User_Exercise> user_exercise = userExerciseDAO.getByUser(user.getUserID(),Long.parseLong(requestMap.get("exerciseID")));
             if( user_exercise!= null){
-                numberOfAttempts = user_exercise.getNumberOfAttempts() + 1;
+                numberOfAttempts = user_exercise.size() + 1;
             }
             //save in database
             userExerciseDAO.save(getDataFromMap(requestMap,user.getUserID(),numberOfAttempts));

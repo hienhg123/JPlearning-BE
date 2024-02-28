@@ -1,5 +1,6 @@
 package com.in.jplearning.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -9,6 +10,7 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.io.Serializable;
+import java.util.List;
 
 @Entity
 @Data
@@ -26,6 +28,10 @@ public class Chapter implements Serializable {
     private String chapterDescription;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_fk", nullable = false, referencedColumnName = "course_ID")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @JsonIgnore
     private Course course;
+
+    @OneToMany(mappedBy = "chapter")
+    @JsonIgnoreProperties("chapter")
+    private List<Lesson> lessonList;
 }

@@ -10,4 +10,7 @@ public interface CourseService {
     ResponseEntity<String> createCourse(Map<String, String> requestMap);
 
     ResponseEntity<List<Course>> getAllCourse();
+
+
+    ResponseEntity<Course> getByID(Long courseID);
 }
