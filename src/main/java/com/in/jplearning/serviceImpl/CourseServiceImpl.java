@@ -70,4 +70,14 @@ public class CourseServiceImpl implements CourseService {
             return new ResponseEntity<>(Collections.emptyList(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @Override
+    public ResponseEntity<Course> getByID(Long courseID) {
+        try{
+            return new ResponseEntity<>(courseDAO.findById(courseID).get(), HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return new ResponseEntity<>(new Course(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }

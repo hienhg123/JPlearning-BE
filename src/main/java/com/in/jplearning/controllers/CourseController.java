@@ -34,4 +34,13 @@ public class CourseController {
     public ResponseEntity<List<Course>> getAllCourses() {
         return courseService.getAllCourse();
     }
+    @GetMapping(path = "/getCourseByID/{courseID}")
+    public ResponseEntity<Course> getCourseById(@PathVariable Long courseID){
+        try{
+            return courseService.getByID(courseID);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return new ResponseEntity<>(new Course(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }

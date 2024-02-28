@@ -8,9 +8,4 @@ import java.util.List;
 
 public interface LessonDAO extends JpaRepository<Lesson,Long> {
 
-    @Query("select l from Lesson l where l.chapter.chapterID =?1 order by l.lessonOrder ASC ")
-    List<Lesson> getLessonByLessonOrderAndChapterID(Long chapterID);
-
-    @Query("select l from Lesson l where l.chapter.chapterID =?1 and l.lessonOrder = ?2")
-    Lesson getLesson(Long chapterID, Integer lessonOrder);
 }

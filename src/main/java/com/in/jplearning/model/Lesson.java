@@ -1,5 +1,6 @@
 package com.in.jplearning.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -37,6 +38,6 @@ public class Lesson implements Serializable {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "chapter_fk",nullable = false,referencedColumnName = "chapter_ID")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @JsonIgnore
     private Chapter chapter;
 }

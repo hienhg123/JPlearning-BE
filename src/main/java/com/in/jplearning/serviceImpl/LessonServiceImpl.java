@@ -1,7 +1,10 @@
 package com.in.jplearning.serviceImpl;
 
+import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.model.Lesson;
+import com.in.jplearning.model.User;
 import com.in.jplearning.repositories.LessonDAO;
+import com.in.jplearning.repositories.UserDAO;
 import com.in.jplearning.service.LessonService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,23 +24,28 @@ public class LessonServiceImpl implements LessonService {
 
     private final S3Client s3Client;
     private final LessonDAO lessonDAO;
-    @Override
-    public ResponseEntity<List<Lesson>> getLessonByLessonOrderAndChapterID(Long chapterID) {
-        try{
-            return new ResponseEntity<>(lessonDAO.getLessonByLessonOrderAndChapterID(chapterID),HttpStatus.OK);
-        }catch (Exception ex){
-            ex.printStackTrace();
-        }
-        return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+
+    private final UserDAO userDAO;
+
+    private final JwtAuthFilter jwtAuthFilter;
 
     @Override
-    public ResponseEntity<Lesson> getLesson(Long chapterID, Integer lessonOrder) {
+    public ResponseEntity<Lesson> getLesson(Long lessonID) {
         try{
             //get video
-            Lesson lesson = lessonDAO.getLesson(chapterID,lessonOrder);
+            Lesson lesson = lessonDAO.findById(lessonID).get();
+            User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
             log.info("hehe");
-            return new ResponseEntity<>(lessonDAO.getLesson(chapterID,lessonOrder), HttpStatus.OK);
+            //check if lesson is free
+            if (!lesson.getIsFree()){
+                //check if user has premium
+                if(!user.getPremiums().isEmpty()){
+                    return new ResponseEntity<>(lessonDAO.findById(lessonID).get(), HttpStatus.OK);
+                } else {
+                    return new ResponseEntity<>(new Lesson(),HttpStatus.BAD_REQUEST);
+                }
+            }
+            return new ResponseEntity<>(lessonDAO.findById(lessonID).get(), HttpStatus.OK);
         }catch (Exception ex){
             ex.printStackTrace();
         }

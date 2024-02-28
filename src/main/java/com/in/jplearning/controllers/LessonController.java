@@ -20,20 +20,10 @@ public class LessonController {
 
     private final LessonService lessonService;
 
-    @GetMapping(path = "/getByOrder/{chapterID}")
-    public ResponseEntity<List<Lesson>> getLessonByLessonOrderAndChapterID(@PathVariable Long chapterID){
+    @GetMapping(path = "/getLessonById/{lessonID}")
+    public ResponseEntity<Lesson> getLesson(@PathVariable Long lessonID){
         try{
-            return lessonService.getLessonByLessonOrderAndChapterID(chapterID);
-
-        }catch (Exception ex){
-            ex.printStackTrace();
-        }
-        return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-    @GetMapping(path = "/getByOrder/{chapterID}/{lessonOrder}")
-    public ResponseEntity<Lesson> getLesson(@PathVariable Long chapterID,@PathVariable Integer lessonOrder){
-        try{
-            return lessonService.getLesson(chapterID,lessonOrder);
+            return lessonService.getLesson(lessonID);
         } catch (Exception ex){
             ex.printStackTrace();
         }
