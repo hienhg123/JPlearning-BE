@@ -1,13 +1,19 @@
 package com.in.jplearning.controllers;
 
+
+import com.in.jplearning.dtos.FlashCardSetDTO;
+import com.in.jplearning.model.FlashCard;
 import com.in.jplearning.model.FlashCardSet;
 import com.in.jplearning.service.FlashCardSetService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
+
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -37,6 +43,17 @@ public class FlashCardSetController {
     public ResponseEntity<List<FlashCardSet>> getAllFlashCardSets() {
         List<FlashCardSet> flashCardSets = flashCardSetService.getAllFlashCardSets();
         return ResponseEntity.ok(flashCardSets);
+    }
+
+    @PostMapping("/createWithFlashCards")
+    public ResponseEntity<FlashCardSet> createFlashCardSetWithFlashCards(@RequestBody FlashCardSetDTO request) {
+        FlashCardSet createdFlashCardSet = flashCardSetService.createFlashCardSetWithFlashCards(request);
+
+        if (createdFlashCardSet != null) {
+            return new ResponseEntity<>(createdFlashCardSet, HttpStatus.CREATED);
+        } else {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
 }

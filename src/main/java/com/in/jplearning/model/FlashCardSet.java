@@ -27,6 +27,7 @@ public class FlashCardSet implements Serializable {
     @Column(name = "flashCardSet_ID")
     private Long flashCardSetID;
     private String flashCardSetName;
+    private String flashCardDescription;
 
     @ManyToMany
     @JoinTable(name = "user_flashcard_set",
@@ -43,9 +44,4 @@ public class FlashCardSet implements Serializable {
 
     @Transient
     private int flashCardCount;
-
-
-
-
-
 }
