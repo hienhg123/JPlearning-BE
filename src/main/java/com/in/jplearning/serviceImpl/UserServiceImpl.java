@@ -401,19 +401,19 @@ public class UserServiceImpl implements UserService {
                 String phoneNumber = user.getPhoneNumber();
 
                 // Generate a unique key for the picture in S3, incorporating email and phoneNumber
-                String key = "user-pictures/" + email + "_" + phoneNumber + "/" + "/" + userPicture.getOriginalFilename();
+                String key = "user-pictures/" + email + "_" + "/" + userPicture.getOriginalFilename();
 
                 // Get S3 client bean from S3Config
                 S3Client s3Client = s3Config.s3Client();
 
                 // Upload the picture to S3
                 s3Client.putObject(PutObjectRequest.builder()
-                        .bucket("your-s3-bucket-name")
+                        .bucket("jplearning-lesson")
                         .key(key)
                         .build(), RequestBody.fromByteBuffer(ByteBuffer.wrap(userPicture.getBytes())));
 
                 // Return the URL of the uploaded picture
-                return "https://your-s3-bucket-name.s3.amazonaws.com/" + key;
+                return "https://jplearning-lesson.s3.amazonaws.com/" + key;
             } else {
                 throw new RuntimeException("User not found with ID: " + userId);
             }
