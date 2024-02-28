@@ -53,7 +53,7 @@ public class UserServiceImpl implements UserService {
     public ResponseEntity<String> register(Map<String, String> requestMap) {
         log.info("Inside sign up {}", requestMap);
         try {
-            // Check if email and phone number are provided in the registration request
+            // Check if email and password are provided in the registration request
             if (validateSignUpMap(requestMap)) {
                 // Check if email already exists
                 if (userDAO.findByEmail(requestMap.get("email")).isPresent()) {

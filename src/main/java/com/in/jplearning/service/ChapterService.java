@@ -6,5 +6,6 @@ import org.springframework.http.ResponseEntity;
 import java.util.List;
 
 public interface ChapterService {
-    ResponseEntity<List<Chapter>> getAllChapterByCourseID(Long courseID);
+
+    ResponseEntity<Chapter> getChapterLesson(Long chapterID);
 }

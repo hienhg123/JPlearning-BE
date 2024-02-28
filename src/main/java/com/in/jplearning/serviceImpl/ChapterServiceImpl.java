@@ -21,12 +21,12 @@ public class ChapterServiceImpl implements ChapterService {
     private final ChapterDAO chapterDAO;
 
     @Override
-    public ResponseEntity<List<Chapter>> getAllChapterByCourseID(Long courseID) {
+    public ResponseEntity<Chapter> getChapterLesson(Long chapterID) {
         try{
-            return new ResponseEntity<>(chapterDAO.getAllChapterByCourseID(courseID), HttpStatus.OK);
+            return new ResponseEntity<>(chapterDAO.getChapterLessonByOrder(chapterID), HttpStatus.OK);
         }catch (Exception ex){
             ex.printStackTrace();
         }
-        return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(new Chapter(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

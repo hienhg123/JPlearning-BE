@@ -8,5 +8,5 @@ public class JPConstants {
 
     public static final String UNAUTHORIZED_ACCESS = "Unauthorized access";
 
-    public static final String USER_NOT_FOUND = "User is not exist";
+    public static final String USER_NOT_FOUND = "Tài khoản không tồn tại";
 }

@@ -57,6 +57,9 @@ public class User implements UserDetails {
     @ManyToMany(mappedBy = "userSet")
     private Set<FlashCardSet> cardSets = new HashSet<>();
 
+    @OneToMany(mappedBy = "user")
+    private List<Premium> premiums;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return null;

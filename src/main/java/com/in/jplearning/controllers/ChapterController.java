@@ -18,15 +18,14 @@ import java.util.List;
 public class ChapterController {
     private final ChapterService chapterService;
 
-    @GetMapping(path = "/getAllChapterByCourseID/{courseID}")
-    public ResponseEntity<List<Chapter>> getAllChapterByCourseID(@PathVariable Long courseID){
-        try{
-            return chapterService.getAllChapterByCourseID(courseID);
 
+    @GetMapping(path = "/getChapterLesson/{chapterID}")
+    public ResponseEntity<Chapter> getChapterLesson(@PathVariable Long chapterID){
+        try{
+            return chapterService.getChapterLesson(chapterID);
         }catch (Exception ex){
             ex.printStackTrace();
         }
-        return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
-
+        return new ResponseEntity<>(new Chapter(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
