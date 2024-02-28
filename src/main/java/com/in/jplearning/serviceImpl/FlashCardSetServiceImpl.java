@@ -96,5 +96,20 @@ public class FlashCardSetServiceImpl implements FlashCardSetService {
             return Collections.emptyList();
         }
     }
+
+    @Override
+    public List<FlashCardSet> getAllFlashCardSets() {
+        List<FlashCardSet> flashCardSets = flashCardSetDAO.findAll();
+
+        // Iterate through each FlashCardSet to fetch and set the flashcard count
+        for (FlashCardSet flashCardSet : flashCardSets) {
+            int flashCardCount = flashCardSetDAO.countFlashCardsByFlashCardSet(flashCardSet);
+            flashCardSet.setFlashCardCount(flashCardCount);
+        }
+
+        return flashCardSets;
     }
+
+
+}
 

@@ -36,4 +36,14 @@ public class FlashCardController {
         return ResponseEntity.ok(flashCards);
     }
 
+    @PutMapping("/update/{flashCardSetId}/cards/{flashCardId}")
+    public ResponseEntity<String> updateFlashCardInSet(
+            @PathVariable Long flashCardSetId,
+            @PathVariable Long flashCardId,
+            @RequestBody FlashCard updatedFlashCard
+    ) {
+        flashCardService.updateFlashCardInSet(flashCardSetId, flashCardId, updatedFlashCard);
+        return ResponseEntity.ok("FlashCard updated successfully");
+    }
+
 }

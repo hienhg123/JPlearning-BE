@@ -25,10 +25,8 @@ public class SecurityConfig implements WebMvcConfigurer {
     private static final String[] WHITE_LIST = {"/user/register", "/user/login","/user/forgetPassword","/user/validateOtp",
             "/user/resetPassword","/lesson/getByOrder/{chapterID}/{lessonOrder}"};
 
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> {
