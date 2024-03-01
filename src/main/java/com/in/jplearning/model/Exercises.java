@@ -31,6 +31,8 @@ public class Exercises implements Serializable {
     private int duration;
     @Enumerated(EnumType.STRING)
     private ExerciseType exerciseType;
+    private String listeningUrl;
+    private String readingUrl;
 
     @JsonIgnore
     @OneToMany(mappedBy = "exercises")
