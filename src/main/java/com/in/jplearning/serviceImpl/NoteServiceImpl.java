@@ -52,7 +52,7 @@ public class NoteServiceImpl implements NoteService {
             //get note from map
             Note note = mapToNote(requestMap);
             noteDAO.save(note);
-            return JPLearningUtils.getResponseEntity("Save successfully", HttpStatus.OK);
+            return JPLearningUtils.getResponseEntity("Lưu thành công", HttpStatus.OK);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
