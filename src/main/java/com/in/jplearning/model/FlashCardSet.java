@@ -44,4 +44,13 @@ public class FlashCardSet implements Serializable {
 
     @Transient
     private int flashCardCount;
+
+    @Override
+    public String toString() {
+        return "FlashCardSet{" +
+                "id=" + flashCardSetID +
+                ", flashCardSetName='" + flashCardSetName + '\'' +
+                ", flashCardDescription='" + flashCardDescription + '\'' +
+                '}';
+    }
 }

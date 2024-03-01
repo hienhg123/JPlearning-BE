@@ -1,6 +1,7 @@
 package com.in.jplearning.serviceImpl;
 
 import com.in.jplearning.config.JwtAuthFilter;
+import com.in.jplearning.constants.JPConstants;
 import com.in.jplearning.dtos.FlashCardSetDTO;
 import com.in.jplearning.model.FlashCard;
 import com.in.jplearning.model.FlashCardSet;
@@ -9,15 +10,16 @@ import com.in.jplearning.repositories.FlashCardDAO;
 import com.in.jplearning.repositories.FlashCardSetDAO;
 import com.in.jplearning.repositories.UserDAO;
 import com.in.jplearning.service.FlashCardSetService;
-import com.in.jplearning.service.UserService;
+import com.in.jplearning.utils.JPLearningUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -25,48 +27,9 @@ import java.util.Optional;
 public class FlashCardSetServiceImpl implements FlashCardSetService {
     private final FlashCardSetDAO flashCardSetDAO;
     private final JwtAuthFilter jwtAuthFilter;
-private final FlashCardDAO flashCardDAO;
+    private final FlashCardDAO flashCardDAO;
     private final UserDAO userDAO;
 
-    @Override
-    public FlashCardSet createFlashCardSet(FlashCardSet flashCardSet) {
-        // Get the logged-in user's email
-        String userEmail = jwtAuthFilter.getCurrentUser();
-
-        if (userEmail != null) {
-            // Fetch the corresponding User object from the database
-            Optional<User> userOptional = userDAO.findByEmail(userEmail);
-
-            if (userOptional.isPresent()) {
-                User currentUser = userOptional.get();
-
-                // Set the logged-in user to the User set in FlashCardSet
-                flashCardSet.getUserSet().add(currentUser);
-
-                // Set the FlashCards' FlashCardSet reference to the current FlashCardSet
-                if (flashCardSet.getFlashCards() != null) {
-                    flashCardSet.getFlashCards().forEach(flashCard -> flashCard.setFlashCardSet(flashCardSet));
-                }
-
-                // Save the FlashCardSet
-                FlashCardSet savedFlashCardSet = flashCardSetDAO.save(flashCardSet);
-
-                if (savedFlashCardSet != null) {
-                    return savedFlashCardSet;
-                } else {
-                    log.warn("Failed to save FlashCardSet.");
-                    return null;
-                }
-            } else {
-                log.warn("User not found with email: {}", userEmail);
-                return null;
-            }
-        } else {
-            // Handle the case where the user is not logged in
-            log.warn("User not logged in. Unable to create FlashCardSet.");
-            return null;
-        }
-    }
 
     @Override
     public List<FlashCardSet> getAllFlashCardSetsForCurrentUserWithFlashCardCount() {
@@ -116,46 +79,155 @@ private final FlashCardDAO flashCardDAO;
 
     @Override
     @Transactional
-    public FlashCardSet createFlashCardSetWithFlashCards(FlashCardSetDTO request) {
-        // Get the logged-in user's email
-        String userEmail = jwtAuthFilter.getCurrentUser();
+    public ResponseEntity<String> updateFlashcard(Long flashCardSetId, Map<String, Object> requestMap) {
+        try {
+            // Retrieve the existing FlashCardSet
+            Optional<FlashCardSet> flashCardSetOptional = flashCardSetDAO.findById(flashCardSetId);
+            if (flashCardSetOptional.isEmpty()) {
+                return JPLearningUtils.getResponseEntity("FlashCardSet not found", HttpStatus.NOT_FOUND);
+            }
 
-        if (userEmail != null) {
-            // Fetch the corresponding User object from the database
-            Optional<User> userOptional = userDAO.findByEmail(userEmail);
+            FlashCardSet flashCardSet = flashCardSetOptional.get();
 
-            if (userOptional.isPresent()) {
-                User currentUser = userOptional.get();
+            // Map form data to FlashCardSet
+            mapToFlashCardSet(requestMap, flashCardSet);
 
-                FlashCardSet flashCardSet = request.getFlashCardSet();
-                List<FlashCard> flashCards = request.getFlashCards();
+            // Map form data to List of FlashCards
+            List<Map<String, String>> flashCardDataList = (List<Map<String, String>>) requestMap.get("flashCards");
 
-                if (flashCardSet != null && flashCards != null) {
-                    flashCardSet.getUserSet().add(currentUser);
-                    flashCards.forEach(flashCard -> flashCard.setFlashCardSet(flashCardSet));
+            // Update existing FlashCards or add new ones
+            for (Map<String, String> flashCardData : flashCardDataList) {
+                String flashCardIdString = String.valueOf(flashCardData.get("flashCardID"));
 
-                    FlashCardSet savedFlashCardSet = flashCardSetDAO.save(flashCardSet);
+                if (flashCardIdString != null && !flashCardIdString.isEmpty()) {
+                    try {
+                        Long flashCardId = Long.parseLong(flashCardIdString);
 
-                    if (savedFlashCardSet != null) {
-                        flashCardDAO.saveAll(flashCards);
-                        return savedFlashCardSet;
-                    } else {
-                        log.warn("Failed to save FlashCardSet.");
-                        return null;
+                        // Check if the FlashCard exists in the FlashCardSet
+                        Optional<FlashCard> existingFlashCardOptional = flashCardDAO.findById(flashCardId);
+
+                        if (existingFlashCardOptional.isPresent()) {
+                            // If it exists, update the fields
+                            FlashCard existingFlashCard = existingFlashCardOptional.get();
+                            existingFlashCard.setQuestion(flashCardData.get("question"));
+                            existingFlashCard.setAnswer(flashCardData.get("answer"));
+
+                            // Update other fields as needed
+
+                            // Save the updated FlashCard
+                            flashCardDAO.save(existingFlashCard);
+                        } else {
+                            // If it doesn't exist, create a new FlashCard and associate it with the FlashCardSet
+                            FlashCard newFlashCard = mapToFlashCard(flashCardData);
+                            newFlashCard.setFlashCardSet(flashCardSet);
+                            flashCardDAO.save(newFlashCard);
+                        }
+                    } catch (NumberFormatException e) {
+                        // Handle the case where flashCardID is not a valid Long
+                        return JPLearningUtils.getResponseEntity("Invalid flashCardID format: " + flashCardIdString, HttpStatus.BAD_REQUEST);
                     }
                 } else {
-                    log.warn("FlashCardSet or FlashCards is null.");
-                    return null;
+                    // Handle the case where flashCardID is null or empty
+                    return JPLearningUtils.getResponseEntity("flashCardID is null or empty", HttpStatus.BAD_REQUEST);
                 }
-            } else {
-                log.warn("User not found with email: {}", userEmail);
-                return null;
             }
-        } else {
-            log.warn("User not logged in. Unable to create FlashCardSet with FlashCards.");
+            // Save the updated FlashCardSet
+            flashCardSetDAO.save(flashCardSet);
+
+            return JPLearningUtils.getResponseEntity("Update successfully", HttpStatus.OK);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+
+
+
+
+    @Override
+    @Transactional
+    public ResponseEntity<String> createFlashcard(Map<String, Object> requestMap) {
+        try {
+            // Map form data to FlashCardSet
+            FlashCardSet flashCardSet = new FlashCardSet();
+
+            // Map form data to FlashCardSet
+            mapToFlashCardSet(requestMap, flashCardSet);
+
+            // Save the FlashCardSet
+            flashCardSetDAO.save(flashCardSet);
+
+            // Map form data to List of FlashCards
+            List<Map<String, String>> flashCardDataList = (List<Map<String, String>>) requestMap.get("flashCards");
+            List<FlashCard> flashCards = flashCardDataList.stream()
+                    .map(this::mapToFlashCard)
+                    .collect(Collectors.toList());
+
+            // Set the FlashCardSet for each FlashCard
+            flashCards.forEach(flashCard -> flashCard.setFlashCardSet(flashCardSet));
+
+            // Set the current user to the FlashCardSet
+            String currentUserEmail = jwtAuthFilter.getCurrentUser();
+            Optional<User> currentUserOptional = userDAO.findByEmail(currentUserEmail);
+            currentUserOptional.ifPresent(user -> flashCardSet.getUserSet().add(user));
+
+            // Save the list of FlashCards
+            flashCardDAO.saveAll(flashCards);
+
+            return JPLearningUtils.getResponseEntity("Save successfully", HttpStatus.OK);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private void mapToFlashCardSet(Map<String, Object> formData, FlashCardSet flashCardSet) {
+        try {
+            // Check if the key "flashCardSet" exists and is not null
+            if (formData.containsKey("flashCardSet") && formData.get("flashCardSet") instanceof Map) {
+                Map<String, Object> flashCardSetData = (Map<String, Object>) formData.get("flashCardSet");
+
+                // Update existing FlashCardSet fields
+                flashCardSet.setFlashCardSetName(flashCardSetData.getOrDefault("flashCardSetName", "").toString());
+                flashCardSet.setFlashCardDescription(flashCardSetData.getOrDefault("flashCardDescription", "").toString());
+
+                // Log the values for debugging using SLF4J
+                log.debug("FlashCardSetName: {}", flashCardSet.getFlashCardSetName());
+                log.debug("FlashCardDescription: {}", flashCardSet.getFlashCardDescription());
+            } else {
+                // Handle the case where "flashCardSet" is missing or not an object
+                flashCardSet.setFlashCardSetName("");
+                flashCardSet.setFlashCardDescription("");
+            }
+        } catch (NullPointerException | ClassCastException e) {
+            log.error("Error mapping FlashCardSet: {}", e.getMessage());
+        }
+    }
+
+
+    private FlashCard mapToFlashCard(Map<String, String> flashCardData) {
+        try {
+            // Map form data to FlashCard
+            FlashCard flashCard = new FlashCard();
+            flashCard.setQuestion(flashCardData.get("question"));
+            flashCard.setAnswer(flashCardData.get("answer"));
+
+            // Assuming you might have other fields to map for the FlashCard
+
+            return flashCard;
+        } catch (Exception e) {
+            // Log the exception and other relevant information
+            e.printStackTrace();
+            System.out.println("Error mapping FlashCard: " + e.getMessage());
+            System.out.println("FlashCardData: " + flashCardData);
             return null;
         }
     }
+
+
+
 
 
 
