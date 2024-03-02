@@ -43,4 +43,13 @@ public class CourseController {
         }
         return new ResponseEntity<>(new Course(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
+    @PostMapping(path = "/enrollCourse")
+    public ResponseEntity<String> enrollCourse(@RequestBody Map<String,String> requestMap){
+        try{
+            return courseService.enroll(requestMap);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG,HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }

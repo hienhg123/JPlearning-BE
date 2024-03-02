@@ -3,6 +3,7 @@ package com.in.jplearning.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.in.jplearning.enums.ExerciseType;
+import com.in.jplearning.enums.JLPTLevel;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -31,6 +32,8 @@ public class Exercises implements Serializable {
     private int duration;
     @Enumerated(EnumType.STRING)
     private ExerciseType exerciseType;
+    @Enumerated(EnumType.STRING)
+    private JLPTLevel jlptLevel;
     private String listeningUrl;
     private String readingUrl;
 

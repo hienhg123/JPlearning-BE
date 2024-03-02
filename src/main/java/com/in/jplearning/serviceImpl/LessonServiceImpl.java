@@ -32,19 +32,6 @@ public class LessonServiceImpl implements LessonService {
     @Override
     public ResponseEntity<Lesson> getLesson(Long lessonID) {
         try{
-            //get video
-            Lesson lesson = lessonDAO.findById(lessonID).get();
-            User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
-            log.info("hehe");
-            //check if lesson is free
-            if (!lesson.getIsFree()){
-                //check if user has premium
-                if(!user.getPremiums().isEmpty()){
-                    return new ResponseEntity<>(lessonDAO.findById(lessonID).get(), HttpStatus.OK);
-                } else {
-                    return new ResponseEntity<>(new Lesson(),HttpStatus.BAD_REQUEST);
-                }
-            }
             return new ResponseEntity<>(lessonDAO.findById(lessonID).get(), HttpStatus.OK);
         }catch (Exception ex){
             ex.printStackTrace();
