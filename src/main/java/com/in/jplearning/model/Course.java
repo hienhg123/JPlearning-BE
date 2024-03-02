@@ -11,7 +11,10 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Data
@@ -32,8 +35,15 @@ public class Course implements Serializable {
     private String courseDescription;
     @Enumerated(EnumType.STRING)
     private JLPTLevel courseLevel;
-
+    private Boolean isFree;
     @JsonIgnoreProperties("course")
     @OneToMany(mappedBy = "course")
     private List<Chapter> chapterList;
+
+    @ManyToMany()
+    @JoinTable(name = "course_enroll",
+            joinColumns = @JoinColumn(name = "course_fk", referencedColumnName = "course_ID"),
+            inverseJoinColumns = @JoinColumn(name = "user_fk", referencedColumnName = "user_ID")
+    )
+    private Set<User> users = new HashSet<>();
 }

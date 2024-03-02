@@ -60,6 +60,9 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "user")
     private List<Premium> premiums;
 
+    @JsonIgnore
+    @ManyToMany(mappedBy = "users")
+    private Set<Course> courses = new HashSet<>();
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return null;
