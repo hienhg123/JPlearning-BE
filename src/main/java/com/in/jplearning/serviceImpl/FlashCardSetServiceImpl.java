@@ -111,9 +111,6 @@ public class FlashCardSetServiceImpl implements FlashCardSetService {
                             FlashCard existingFlashCard = existingFlashCardOptional.get();
                             existingFlashCard.setQuestion(flashCardData.get("question"));
                             existingFlashCard.setAnswer(flashCardData.get("answer"));
-
-                            // Update other fields as needed
-
                             // Save the updated FlashCard
                             flashCardDAO.save(existingFlashCard);
                         } else {

@@ -32,7 +32,6 @@ public class Course implements Serializable {
     private String courseDescription;
     @Enumerated(EnumType.STRING)
     private JLPTLevel courseLevel;
-
     @JsonIgnoreProperties("course")
     @OneToMany(mappedBy = "course")
     private List<Chapter> chapterList;

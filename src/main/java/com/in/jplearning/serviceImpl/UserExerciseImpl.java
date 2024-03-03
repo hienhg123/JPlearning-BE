@@ -2,6 +2,7 @@ package com.in.jplearning.serviceImpl;
 
 import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.constants.JPConstants;
+import com.in.jplearning.enums.ExerciseType;
 import com.in.jplearning.model.Exercises;
 import com.in.jplearning.model.User;
 import com.in.jplearning.model.User_Exercise;
@@ -17,9 +18,8 @@ import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -55,6 +55,41 @@ public class UserExerciseImpl implements UserExerciseService {
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
 
     }
+
+    @Override
+    public ResponseEntity<List<String>> getExerciseInfoByCurrentUser() {
+        try {
+            // Get the current user
+            User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).orElse(null);
+
+            if (user != null) {
+                List<Object[]> result = userExerciseDAO.getUserExerciseInfo(user.getUserID());
+
+                // Process the result and create the desired response
+                List<String> userExerciseJsonList = result.stream()
+                        .map(this::mapToUserExerciseJson)
+                        .collect(Collectors.toList());
+
+                return ResponseEntity.ok(userExerciseJsonList);
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.emptyList());
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
+        }
+    }
+
+    private String mapToUserExerciseJson(Object[] result) {
+        return String.format("{\"title\": \"%s\", \"mark\": %d, \"submittedAt\": %s, \"numberOfAttempts\": %d}",
+                (String) result[3], (int) result[0], formatDate((Date) result[1]), (int) result[2]);
+    }
+
+    private String formatDate(Date date) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        return sdf.format(date);
+    }
+
 
     private User_Exercise getDataFromMap(Map<String, String> requestMap, Long userID, int numberOfAttempts) {
         Exercises exercises = new Exercises();
