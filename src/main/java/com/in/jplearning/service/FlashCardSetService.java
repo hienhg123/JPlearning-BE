@@ -17,4 +17,5 @@ public interface FlashCardSetService {
 
     List<FlashCardSet> getAllFlashCardSets();
 
+    ResponseEntity<FlashCardSet> findByID(Long flashcardSetID);
 }

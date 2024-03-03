@@ -1,5 +1,6 @@
 package com.in.jplearning.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -25,6 +26,7 @@ public class FlashCard implements Serializable {
     @Column(columnDefinition = "NVARCHAR(255)")
     private String answer;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "flashcardset_fk",referencedColumnName = "flashCardSet_ID")
     private FlashCardSet flashCardSet;
