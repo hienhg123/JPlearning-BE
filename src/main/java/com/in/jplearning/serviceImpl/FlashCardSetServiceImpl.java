@@ -148,8 +148,9 @@ public class FlashCardSetServiceImpl implements FlashCardSetService {
             // Update existing FlashCards or add new ones
             for (Map<String, String> flashCardData : flashCardDataList) {
                 String flashCardIdString = String.valueOf(flashCardData.get("flashCardID"));
+                log.info(flashCardIdString);
 
-                if (flashCardIdString != null && !flashCardIdString.isEmpty()) {
+                if (!flashCardIdString.isEmpty() ) {
                     try {
                         Long flashCardId = Long.parseLong(flashCardIdString);
 
@@ -174,8 +175,10 @@ public class FlashCardSetServiceImpl implements FlashCardSetService {
                         return JPLearningUtils.getResponseEntity("Không tồn tại: " + flashCardIdString, HttpStatus.BAD_REQUEST);
                     }
                 } else {
-                    // Handle the case where flashCardID is null or empty
-                    return JPLearningUtils.getResponseEntity("fKhông tồn tại", HttpStatus.BAD_REQUEST);
+                    // Generate a new ID and create a new FlashCard
+                    FlashCard newFlashCard = mapToFlashCard(flashCardData);
+                    newFlashCard.setFlashCardSet(flashCardSet);
+                    flashCardDAO.save(newFlashCard);
                 }
             }
             // Save the updated FlashCardSet

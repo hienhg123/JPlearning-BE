@@ -30,7 +30,7 @@ public class UserExerciseController {
     }
 
     @GetMapping("/examHistory")
-    public ResponseEntity<List<String>> getExerciseInfoByCurrentUser() {
+    public ResponseEntity<List<Map<String, Object>>> getExerciseInfoByCurrentUser() {
         return userExerciseService.getExerciseInfoByCurrentUser();
     }
 
