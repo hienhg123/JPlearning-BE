@@ -14,6 +14,7 @@ public interface FlashCardSetService {
 //    FlashCardSet createFlashCardSetWithFlashCards(FlashCardSetDTO request);
     ResponseEntity<String> updateFlashcard(Long flashCardSetId, Map<String, Object> requestMap);
     ResponseEntity<String> createFlashcard(Map<String, Object> requestMap);
+    Map<String, Object> getFlashCardsByFlashCardSetId(Long flashCardSetId);
 
     List<FlashCardSet> getAllFlashCardSets();
 

@@ -63,5 +63,21 @@ public class FlashCardSetController {
         return flashCardSetService.createFlashcard(requestMap);
     }
 
+    @GetMapping("/getList")
+    public ResponseEntity<List<FlashCardSet>> getAllFlashCardSetsForCurrentUserWithFlashCardCount() {
+        List<FlashCardSet> flashCardSets = flashCardSetService.getAllFlashCardSetsForCurrentUserWithFlashCardCount();
+        if (!flashCardSets.isEmpty()) {
+            return ResponseEntity.ok(flashCardSets);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
+
+    @GetMapping("/{flashCardSetId}")
+    public ResponseEntity<Map<String, Object>> getFlashCardsByFlashCardSetId(@PathVariable Long flashCardSetId) {
+        Map<String, Object> flashCards = flashCardSetService.getFlashCardsByFlashCardSetId(flashCardSetId);
+        return new ResponseEntity<>(flashCards, HttpStatus.OK);
+    }
+
 
 }
