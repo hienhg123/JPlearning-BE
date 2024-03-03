@@ -13,4 +13,6 @@ public interface CourseService {
 
 
     ResponseEntity<Course> getByID(Long courseID);
+
+    ResponseEntity<String> enroll(Map<String, String> requestMap);
 }

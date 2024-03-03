@@ -78,13 +78,23 @@ public class FlashCardSetServiceImpl implements FlashCardSetService {
     }
 
     @Override
+    public ResponseEntity<FlashCardSet> findByID(Long flashcardSetID) {
+        try{
+            return new ResponseEntity<>(flashCardSetDAO.findById(flashcardSetID).get(), HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return new ResponseEntity<>(new FlashCardSet(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
     @Transactional
     public ResponseEntity<String> updateFlashcard(Long flashCardSetId, Map<String, Object> requestMap) {
         try {
             // Retrieve the existing FlashCardSet
             Optional<FlashCardSet> flashCardSetOptional = flashCardSetDAO.findById(flashCardSetId);
             if (flashCardSetOptional.isEmpty()) {
-                return JPLearningUtils.getResponseEntity("FlashCardSet not found", HttpStatus.NOT_FOUND);
+                return JPLearningUtils.getResponseEntity("Không tồn tại", HttpStatus.NOT_FOUND);
             }
 
             FlashCardSet flashCardSet = flashCardSetOptional.get();
@@ -121,17 +131,17 @@ public class FlashCardSetServiceImpl implements FlashCardSetService {
                         }
                     } catch (NumberFormatException e) {
                         // Handle the case where flashCardID is not a valid Long
-                        return JPLearningUtils.getResponseEntity("Invalid flashCardID format: " + flashCardIdString, HttpStatus.BAD_REQUEST);
+                        return JPLearningUtils.getResponseEntity("Không tồn tại: " + flashCardIdString, HttpStatus.BAD_REQUEST);
                     }
                 } else {
                     // Handle the case where flashCardID is null or empty
-                    return JPLearningUtils.getResponseEntity("flashCardID is null or empty", HttpStatus.BAD_REQUEST);
+                    return JPLearningUtils.getResponseEntity("fKhông tồn tại", HttpStatus.BAD_REQUEST);
                 }
             }
             // Save the updated FlashCardSet
             flashCardSetDAO.save(flashCardSet);
 
-            return JPLearningUtils.getResponseEntity("Update successfully", HttpStatus.OK);
+            return JPLearningUtils.getResponseEntity("Cập nhật thành công", HttpStatus.OK);
         } catch (Exception ex) {
             ex.printStackTrace();
             return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);

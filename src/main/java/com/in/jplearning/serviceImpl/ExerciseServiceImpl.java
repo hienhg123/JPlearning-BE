@@ -39,12 +39,33 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
 
     @Override
-    public ResponseEntity<Exercises> getJLPTExerciseByID(Long exerciseID) {
+    public ResponseEntity<Exercises> getExerciseByIdWithGrammarQuestion(Long exerciseID) {
         try{
-            return new ResponseEntity<>(exerciseDAO.getJLPTExerciseByID(exerciseID), HttpStatus.OK);
+            return new ResponseEntity<>(exerciseDAO.getExerciseByIdWithGrammarQuestion(exerciseID), HttpStatus.OK);
         }catch (Exception ex){
             ex.printStackTrace();
         }
         return new ResponseEntity<>(new Exercises(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @Override
+    public ResponseEntity<Exercises> getExerciseByIdWithReadingQuestion(Long exerciseID) {
+        try{
+            return new ResponseEntity<>(exerciseDAO.getExerciseByIdWithReadingQuestion(exerciseID), HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return new ResponseEntity<>(new Exercises(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
+    public ResponseEntity<Exercises> getExerciseByIdWithListeningQuestion(Long exerciseID) {
+        try{
+            return new ResponseEntity<>(exerciseDAO.getExerciseByIdWithListeningQuestion(exerciseID), HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return new ResponseEntity<>(new Exercises(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
 }

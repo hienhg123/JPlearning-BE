@@ -37,10 +37,30 @@ public class ExerciseController {
         }
         return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
-    @GetMapping("/getJLPTExercise/{exerciseID}")
-    public ResponseEntity<Exercises> getExerciseByID(@PathVariable Long exerciseID){
+    @GetMapping("/getJLPTExercise/{exerciseID}/grammar")
+    public ResponseEntity<Exercises> getExerciseByIdWithGrammarQuestion(@PathVariable Long exerciseID){
         try{
-            return exerciseService.getJLPTExerciseByID(exerciseID);
+            return exerciseService.getExerciseByIdWithGrammarQuestion(exerciseID);
+
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return new ResponseEntity<>(new Exercises(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    @GetMapping(path = "/getJLPTExercise/{exerciseID}/reading")
+    public ResponseEntity<Exercises> getExerciseByIdWithReadingQuestion(@PathVariable Long exerciseID){
+        try{
+            return exerciseService.getExerciseByIdWithReadingQuestion(exerciseID);
+
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return new ResponseEntity<>(new Exercises(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    @GetMapping(path = "/getJLPTExercise/{exerciseID}/listening")
+    public ResponseEntity<Exercises> getExerciseByIdWithListeningQuestion(@PathVariable Long exerciseID){
+        try{
+            return exerciseService.getExerciseByIdWithListeningQuestion(exerciseID);
 
         }catch (Exception ex){
             ex.printStackTrace();

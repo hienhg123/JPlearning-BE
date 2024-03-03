@@ -32,7 +32,6 @@ public class Lesson implements Serializable {
     private String exerciseMaterial;
     private String videoMaterial;
     private Boolean isFinished;
-    private Boolean isFree;
     private Integer lessonOrder;
 
     
