@@ -1,6 +1,7 @@
 package com.in.jplearning.controllers;
 
 
+import com.in.jplearning.constants.JPConstants;
 import com.in.jplearning.dtos.FlashCardSetDTO;
 import com.in.jplearning.model.FlashCard;
 import com.in.jplearning.model.FlashCardSet;
@@ -46,6 +47,15 @@ public class FlashCardSetController {
         List<FlashCardSet> flashCardSets = flashCardSetService.getAllFlashCardSets();
         return ResponseEntity.ok(flashCardSets);
     }
+    @GetMapping("/getFlashCardSetByID")
+    public ResponseEntity<FlashCardSet> getFlashCardSetByID(@RequestParam Long flashcardSetID){
+        try{
+            return flashCardSetService.findByID(flashcardSetID);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return new ResponseEntity<>(new FlashCardSet(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
 //    @PostMapping("/createWithFlashCards")
 //    public ResponseEntity<FlashCardSet> createFlashCardSetWithFlashCards(@RequestBody FlashCardSetDTO request) {
@@ -61,7 +71,12 @@ public class FlashCardSetController {
     @PutMapping("/update/{flashCardSetId}")
     public ResponseEntity<String> updateFlashcardSet(@PathVariable Long flashCardSetId,
                                                      @RequestBody Map<String, Object> requestMap) {
-        return flashCardSetService.updateFlashcard(flashCardSetId, requestMap);
+        try{
+            return flashCardSetService.updateFlashcard(flashCardSetId, requestMap);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @PostMapping("/createFlashCard")

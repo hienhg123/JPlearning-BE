@@ -38,13 +38,15 @@ public class FlashCardSet implements Serializable {
     @JsonIgnore
     private Set<User> userSet = new HashSet<>();
 
-    @JsonIgnore
     @OneToMany(mappedBy = "flashCardSet", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<FlashCard> flashCards = new HashSet<>();
 
     @Transient
     private int flashCardCount;
 
+    public void addFlashCard(FlashCard flashCard){
+        flashCards.add(flashCard);
+    }
     @Override
     public String toString() {
         return "FlashCardSet{" +
