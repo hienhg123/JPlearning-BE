@@ -53,6 +53,7 @@ public class FlashCardSet implements Serializable {
                 "id=" + flashCardSetID +
                 ", flashCardSetName='" + flashCardSetName + '\'' +
                 ", flashCardDescription='" + flashCardDescription + '\'' +
+                ", flashCards=" + flashCards +
                 '}';
     }
 }

@@ -1,6 +1,7 @@
 package com.in.jplearning.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.in.jplearning.enums.ExerciseType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,12 +30,14 @@ public class User_Exercise implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_fk",referencedColumnName = "user_ID")
     private User user;
-    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exercise_fk",referencedColumnName = "exercises_ID")
     private Exercises exercises;
     private int mark;
     private Date submittedAt;
     private int numberOfAttempts;
+    public String getTitle() {
+        return this.exercises != null ? this.exercises.getTitle() : null;
+    }
 
 }

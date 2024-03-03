@@ -26,16 +26,6 @@ import java.util.Map;
 public class FlashCardSetController {
     private final FlashCardSetService flashCardSetService;
 
-//    @PostMapping("/create")
-//    public ResponseEntity<FlashCardSet> createFlashCardSet(@RequestBody FlashCardSet flashCardSet) {
-//        FlashCardSet createdFlashCardSet = flashCardSetService.createFlashCardSet(flashCardSet);
-//        if (createdFlashCardSet != null) {
-//            return ResponseEntity.ok(createdFlashCardSet);
-//        } else {
-//            return ResponseEntity.badRequest().build();
-//        }
-//    }
-
     @GetMapping("/list")
     public ResponseEntity<List<FlashCardSet>> getAllFlashCardSetsForCurrentUser() {
         List<FlashCardSet> flashCardSets = flashCardSetService.getAllFlashCardSetsForCurrentUserWithFlashCardCount();
@@ -57,17 +47,6 @@ public class FlashCardSetController {
         return new ResponseEntity<>(new FlashCardSet(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-//    @PostMapping("/createWithFlashCards")
-//    public ResponseEntity<FlashCardSet> createFlashCardSetWithFlashCards(@RequestBody FlashCardSetDTO request) {
-//        FlashCardSet createdFlashCardSet = flashCardSetService.createFlashCardSetWithFlashCards(request);
-//
-//        if (createdFlashCardSet != null) {
-//            return new ResponseEntity<>(createdFlashCardSet, HttpStatus.CREATED);
-//        } else {
-//            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
-//    }
-
     @PutMapping("/update/{flashCardSetId}")
     public ResponseEntity<String> updateFlashcardSet(@PathVariable Long flashCardSetId,
                                                      @RequestBody Map<String, Object> requestMap) {
@@ -82,6 +61,22 @@ public class FlashCardSetController {
     @PostMapping("/createFlashCard")
     public ResponseEntity<String> createFlashcard(@RequestBody Map<String, Object> requestMap) {
         return flashCardSetService.createFlashcard(requestMap);
+    }
+
+    @GetMapping("/getList")
+    public ResponseEntity<List<FlashCardSet>> getAllFlashCardSetsForCurrentUserWithFlashCardCount() {
+        List<FlashCardSet> flashCardSets = flashCardSetService.getAllFlashCardSetsForCurrentUserWithFlashCardCount();
+        if (!flashCardSets.isEmpty()) {
+            return ResponseEntity.ok(flashCardSets);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
+
+    @GetMapping("/{flashCardSetId}")
+    public ResponseEntity<Map<String, Object>> getFlashCardsByFlashCardSetId(@PathVariable Long flashCardSetId) {
+        Map<String, Object> flashCards = flashCardSetService.getFlashCardsByFlashCardSetId(flashCardSetId);
+        return new ResponseEntity<>(flashCards, HttpStatus.OK);
     }
 
 

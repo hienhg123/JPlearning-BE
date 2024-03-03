@@ -313,6 +313,7 @@ public class UserServiceImpl implements UserService {
                 userProfile.put("dob", formattedDob);
 
                 userProfile.put("level", user.getLevel());
+                userProfile.put("gender", user.getGender());
 
                 // Convert Map to JSON and return it
                 ObjectMapper objectMapper = new ObjectMapper();

@@ -64,6 +64,46 @@ public class FlashCardSetServiceImpl implements FlashCardSetService {
         }
     }
 
+
+    @Override
+    public Map<String, Object> getFlashCardsByFlashCardSetId(Long flashCardSetId) {
+        Optional<FlashCardSet> flashCardSetOptional = flashCardSetDAO.findById(flashCardSetId);
+        if (flashCardSetOptional.isPresent()) {
+            FlashCardSet flashCardSet = flashCardSetOptional.get();
+
+            // Retrieve all flashcards associated with the current flashCardSet
+            List<FlashCard> flashCards = flashCardDAO.findByFlashCardSet_FlashCardSetID(flashCardSetId);
+
+            // Set the flashCardCount in the flashCardSet
+            flashCardSet.setFlashCardCount(flashCards.size());
+
+            // Build the response map
+            Map<String, Object> response = new HashMap<>();
+            response.put("flashCardSetName", flashCardSet.getFlashCardSetName());
+            response.put("flashCardDescription", flashCardSet.getFlashCardDescription());
+
+            List<Map<String, Object>> flashCardList = flashCards.stream()
+                    .map(flashCard -> {
+                        Map<String, Object> flashCardMap = new HashMap<>();
+                        flashCardMap.put("flashCardID", flashCard.getFlashCardID());
+                        flashCardMap.put("question", flashCard.getQuestion());
+                        flashCardMap.put("answer", flashCard.getAnswer());
+                        return flashCardMap;
+                    })
+                    .collect(Collectors.toList());
+
+            response.put("flashCards", flashCardList);
+
+            return response;
+        } else {
+            log.warn("FlashCardSet with ID {} not found.", flashCardSetId);
+            return Collections.emptyMap(); // Or throw an exception or handle as needed
+        }
+    }
+
+
+
+
     @Override
     public List<FlashCardSet> getAllFlashCardSets() {
         List<FlashCardSet> flashCardSets = flashCardSetDAO.findAll();
@@ -121,9 +161,6 @@ public class FlashCardSetServiceImpl implements FlashCardSetService {
                             FlashCard existingFlashCard = existingFlashCardOptional.get();
                             existingFlashCard.setQuestion(flashCardData.get("question"));
                             existingFlashCard.setAnswer(flashCardData.get("answer"));
-
-                            // Update other fields as needed
-
                             // Save the updated FlashCard
                             flashCardDAO.save(existingFlashCard);
                         } else {

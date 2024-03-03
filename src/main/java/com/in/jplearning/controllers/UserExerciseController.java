@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @CrossOrigin("http://localhost:4200")
@@ -26,6 +27,11 @@ public class UserExerciseController {
             ex.printStackTrace();
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @GetMapping("/examHistory")
+    public ResponseEntity<List<String>> getExerciseInfoByCurrentUser() {
+        return userExerciseService.getExerciseInfoByCurrentUser();
     }
 
 
