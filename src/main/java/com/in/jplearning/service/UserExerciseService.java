@@ -8,5 +8,5 @@ import java.util.Map;
 public interface UserExerciseService {
 
     ResponseEntity<String> submitExercise(Map<String, String> requestMap);
-    ResponseEntity<List<String>> getExerciseInfoByCurrentUser();
+    ResponseEntity<List<Map<String, Object>>> getExerciseInfoByCurrentUser();
 }
