@@ -57,7 +57,7 @@ public class UserExerciseImpl implements UserExerciseService {
     }
 
     @Override
-    public ResponseEntity<List<String>> getExerciseInfoByCurrentUser() {
+    public ResponseEntity<List<Map<String, Object>>> getExerciseInfoByCurrentUser() {
         try {
             // Get the current user
             User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).orElse(null);
@@ -66,11 +66,18 @@ public class UserExerciseImpl implements UserExerciseService {
                 List<Object[]> result = userExerciseDAO.getUserExerciseInfo(user.getUserID());
 
                 // Process the result and create the desired response
-                List<String> userExerciseJsonList = result.stream()
-                        .map(this::mapToUserExerciseJson)
+                List<Map<String, Object>> userExerciseList = result.stream()
+                        .map(entry -> {
+                            Map<String, Object> userExerciseInfo = new HashMap<>();
+                            userExerciseInfo.put("title", (String) entry[3]);
+                            userExerciseInfo.put("mark", (int) entry[0]);
+                            userExerciseInfo.put("submittedAt", (Date) entry[1]);
+                            userExerciseInfo.put("numberOfAttempts", (int) entry[2]);
+                            return userExerciseInfo;
+                        })
                         .collect(Collectors.toList());
 
-                return ResponseEntity.ok(userExerciseJsonList);
+                return ResponseEntity.ok(userExerciseList);
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.emptyList());
             }
@@ -78,16 +85,6 @@ public class UserExerciseImpl implements UserExerciseService {
             ex.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
         }
-    }
-
-    private String mapToUserExerciseJson(Object[] result) {
-        return String.format("{\"title\": \"%s\", \"mark\": %d, \"submittedAt\": %s, \"numberOfAttempts\": %d}",
-                (String) result[3], (int) result[0], formatDate((Date) result[1]), (int) result[2]);
-    }
-
-    private String formatDate(Date date) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        return sdf.format(date);
     }
 
 
