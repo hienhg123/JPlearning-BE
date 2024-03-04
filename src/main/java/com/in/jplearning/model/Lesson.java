@@ -29,7 +29,6 @@ public class Lesson implements Serializable {
     private String vocabularyMaterial;
     private String listeningMaterial;
     private String grammarMaterial;
-    private String exerciseMaterial;
     private String videoMaterial;
     private Boolean isFinished;
     private Integer lessonOrder;
@@ -39,4 +38,5 @@ public class Lesson implements Serializable {
     @JoinColumn(name = "chapter_fk",nullable = false,referencedColumnName = "chapter_ID")
     @JsonIgnore
     private Chapter chapter;
+
 }
