@@ -73,7 +73,7 @@ public class FlashCardSetController {
         }
     }
 
-    @GetMapping("/{flashCardSetId}")
+    @GetMapping("getFlashCardSet/{flashCardSetId}")
     public ResponseEntity<Map<String, Object>> getFlashCardsByFlashCardSetId(@PathVariable Long flashCardSetId) {
         Map<String, Object> flashCards = flashCardSetService.getFlashCardsByFlashCardSetId(flashCardSetId);
         return new ResponseEntity<>(flashCards, HttpStatus.OK);

@@ -88,10 +88,6 @@ public class CourseServiceImpl implements CourseService {
             Course course = courseDAO.findById(Long.parseLong(requestMap.get("courseID"))).get();
             //get user
             User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
-
-            List<Premium> premiums = user.getPremiums();
-            //check if user login or not
-            if(user!= null){
                 //check if course is free
                 if(course.getIsFree() == true){
                     //enroll
@@ -100,16 +96,13 @@ public class CourseServiceImpl implements CourseService {
                 } else {
                     //check if user is vip account
                     if(isPremiumExpire(user)){
-                        //enroll couse
+                        //enroll course
                         enrollCourse(course,user);
                         return JPLearningUtils.getResponseEntity("Thành công", HttpStatus.OK);
                     } else {
                         return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
                     }
                 }
-            } else {
-                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
-            }
 
         }catch (Exception ex){
             ex.printStackTrace();
@@ -118,7 +111,7 @@ public class CourseServiceImpl implements CourseService {
     }
 
     private void enrollCourse(Course course, User user) {
-        course.getUsers().add(user);
+        course.enroll(user);
         courseDAO.save(course);
     }
 

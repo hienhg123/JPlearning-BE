@@ -1,5 +1,6 @@
 package com.in.jplearning.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.in.jplearning.enums.JLPTLevel;
 import jakarta.persistence.*;
@@ -40,10 +41,15 @@ public class Course implements Serializable {
     @OneToMany(mappedBy = "course")
     private List<Chapter> chapterList;
 
+    @JsonIgnore
     @ManyToMany()
     @JoinTable(name = "course_enroll",
             joinColumns = @JoinColumn(name = "course_fk", referencedColumnName = "course_ID"),
             inverseJoinColumns = @JoinColumn(name = "user_fk", referencedColumnName = "user_ID")
     )
     private Set<User> users = new HashSet<>();
+
+    public void enroll(User user){
+        users.add(user);
+    }
 }
