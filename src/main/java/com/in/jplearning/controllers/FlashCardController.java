@@ -31,7 +31,7 @@ public class FlashCardController {
     }
 
     @GetMapping("/bySet/{flashCardSetId}")
-    public ResponseEntity<List<FlashCard>> getFlashCardsByFlashCardSetId(@PathVariable Long flashCardSetId) {
+    public ResponseEntity<List<FlashCard>> getFlashCardsBySetId(@PathVariable Long flashCardSetId) {
         List<FlashCard> flashCards = flashCardService.getFlashCardsByFlashCardSetId(flashCardSetId);
         return ResponseEntity.ok(flashCards);
     }

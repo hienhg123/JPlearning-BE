@@ -47,7 +47,7 @@ public class FlashCardSetController {
         return new ResponseEntity<>(new FlashCardSet(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    @PutMapping("/update/{flashCardSetId}")
+    @PostMapping ("/update/{flashCardSetId}")
     public ResponseEntity<String> updateFlashcardSet(@PathVariable Long flashCardSetId,
                                                      @RequestBody Map<String, Object> requestMap) {
         try{
@@ -73,7 +73,7 @@ public class FlashCardSetController {
         }
     }
 
-    @GetMapping("getFlashCardSet/{flashCardSetId}")
+    @GetMapping("/getFlashCardSet/{flashCardSetId}")
     public ResponseEntity<Map<String, Object>> getFlashCardsByFlashCardSetId(@PathVariable Long flashCardSetId) {
         Map<String, Object> flashCards = flashCardSetService.getFlashCardsByFlashCardSetId(flashCardSetId);
         return new ResponseEntity<>(flashCards, HttpStatus.OK);
