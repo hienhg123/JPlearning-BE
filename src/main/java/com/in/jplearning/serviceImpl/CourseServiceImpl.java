@@ -117,13 +117,17 @@ public class CourseServiceImpl implements CourseService {
 
     private boolean isPremiumExpire(User user) {
         //get user latest premium
-        if(user.getPremiums().isEmpty()){
+        if(user.getPremium() == null){
             return false;
         }
-        Premium premium = user.getPremiums().get(user.getPremiums().size()-1);
+        Premium premium = user.getPremium();
         //get the bill
         List<Bill> bill = billDAO.getbyUser(user.getEmail());
         //get the latest bill
+        //check if size
+        if(bill.size() == 1){
+            Bill lastBill = bill.get(bill.size());
+        }
         Bill lastBill = bill.get(bill.size() - 1);
         LocalDate startDate = lastBill.getCreatedAt().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         LocalDate expirationDate = startDate.plusMonths(premium.getDuration());

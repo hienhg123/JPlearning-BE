@@ -9,6 +9,8 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Data
@@ -23,9 +25,9 @@ public class Premium implements Serializable {
     @Column(name = "premium_ID")
     private Long premiumID;
     private String premiumType;
+    private Long price;
     private Integer duration;
     @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_fk",referencedColumnName = "user_ID")
-    private User user;
+    @OneToMany(fetch = FetchType.LAZY,mappedBy = "premium")
+    private Set<User> users = new HashSet<>();
 }

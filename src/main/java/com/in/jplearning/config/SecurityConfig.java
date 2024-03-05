@@ -22,7 +22,7 @@ public class SecurityConfig implements WebMvcConfigurer {
     private final AuthenticationProvider authenticationProvider;
 
     private static final String[] WHITE_LIST = {"/user/register", "/user/login","/user/forgetPassword","/user/validateOtp"
-            ,"/user/resetPassword","course/getAllCourses","course/getCourseByID/{courseID}"};
+            ,"/user/resetPassword","course/getAllCourses","course/getCourseByID/{courseID}","/payment/vnpay/paymentCallback"};
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
