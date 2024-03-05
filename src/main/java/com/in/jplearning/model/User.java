@@ -57,8 +57,9 @@ public class User implements UserDetails {
     @ManyToMany(mappedBy = "userSet")
     private Set<FlashCardSet> cardSets = new HashSet<>();
 
-    @OneToMany(mappedBy = "user")
-    private List<Premium> premiums;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "premium_fk",referencedColumnName = "premium_ID")
+    private Premium premium;
 
     @JsonIgnore
     @ManyToMany(mappedBy = "users")

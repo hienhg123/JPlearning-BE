@@ -2,6 +2,7 @@ package com.in.jplearning.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
@@ -16,13 +17,14 @@ import java.util.Date;
 @NoArgsConstructor
 @DynamicUpdate
 @DynamicInsert
+@Builder
 public class Bill implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "bill_ID")
     private Long billID;
     private String billNumber;
-    private Integer total;
+    private Long total;
     private Date createdAt;
     private String paymentMethod;
 
