@@ -90,17 +90,25 @@ public class CourseServiceImpl implements CourseService {
             User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
                 //check if course is free
                 if(course.getIsFree() == true){
-                    //enroll
-                    enrollCourse(course,user);
-                    return JPLearningUtils.getResponseEntity("Thành công", HttpStatus.OK);
+                    //check if user enroll in the course
+                    if(!course.getUsers().contains(user)) {
+                        //enroll
+                        enrollCourse(course, user);
+                        return JPLearningUtils.getResponseEntity("Thành công", HttpStatus.OK);
+                    }
+                    return JPLearningUtils.getResponseEntity("Bạn đã tham gia khóa học này",HttpStatus.BAD_REQUEST);
                 } else {
                     //check if user is vip account
                     if(isPremiumExpire(user)){
-                        //enroll course
-                        enrollCourse(course,user);
-                        return JPLearningUtils.getResponseEntity("Thành công", HttpStatus.OK);
+                        //check if user enroll in the course
+                        if(!course.getUsers().contains(user)){
+                            //enroll course
+                            enrollCourse(course,user);
+                            return JPLearningUtils.getResponseEntity("Thành công", HttpStatus.OK);
+                        }
+                        return JPLearningUtils.getResponseEntity("Bạn đã tham gia khóa học này",HttpStatus.BAD_REQUEST);
                     } else {
-                        return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
+                        return JPLearningUtils.getResponseEntity("Tài khoản của bạn chưa nâng cấp", HttpStatus.BAD_REQUEST);
                     }
                 }
 

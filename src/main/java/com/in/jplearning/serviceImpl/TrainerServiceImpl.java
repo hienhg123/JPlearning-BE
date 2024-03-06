@@ -104,6 +104,29 @@ public class TrainerServiceImpl implements TrainerService {
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @Transactional
+    @Override
+    public ResponseEntity<String> updateStatus(Map<String, String> requestMap) {
+        try{
+            log.info(String.valueOf(jwtAuthFilter.isManager()));
+
+            //check if user is manager
+            if(jwtAuthFilter.isManager()){
+                Trainer trainer = trainerDAO.findById(Long.parseLong(requestMap.get("traineeID"))).get();
+                //check if user empty
+                if(trainer != null){
+                    trainerDAO.updateStatus(Boolean.parseBoolean(requestMap.get("isVerify")),trainer.getTraineeID());
+                    return JPLearningUtils.getResponseEntity("Thay đổi thành công", HttpStatus.OK);
+                }
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.UNAUTHORIZED);
+            }
+            return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
+        } catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     private boolean checkExist(User user) {
         if(trainerDAO.getByUserId(user.getUserID()) != null){
             return true;

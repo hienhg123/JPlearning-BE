@@ -30,4 +30,13 @@ public class TrainerController {
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+    @PutMapping("/updateStatus")
+    public ResponseEntity<String> updateStatus(@RequestBody Map<String,String> requestMap){
+        try{
+            return trainerService.updateStatus(requestMap);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }
