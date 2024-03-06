@@ -7,4 +7,6 @@ import java.util.Map;
 
 public interface TrainerService {
     ResponseEntity<String> registerAsTrainer(MultipartFile pictureFiles, Map<String, String> requestMap);
+
+    ResponseEntity<String> updateStatus(Map<String, String> requestMap);
 }
