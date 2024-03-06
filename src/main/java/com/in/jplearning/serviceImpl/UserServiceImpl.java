@@ -119,70 +119,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResponseEntity<String> updateUser(Map<String, String> requestMap) {
-        try {
-            // Check if 'id' is present and not null
-            if (requestMap.containsKey("id") && requestMap.get("id") != null) {
-                Optional<User> userOptional = userDAO.findById(Long.parseLong(requestMap.get("id")));
-
-                // Check if the user exists
-                if (userOptional.isPresent()) {
-                    User user = userOptional.get();
-
-                    // Update user information based on the request
-                    if (requestMap.containsKey("firstName")) {
-                        user.setFirstName(requestMap.get("firstName"));
-                    }
-
-                    if (requestMap.containsKey("lastName")) {
-                        user.setLastName(requestMap.get("lastName"));
-                    }
-
-                    if (requestMap.containsKey("phoneNumber")) {
-                        user.setPhoneNumber(requestMap.get("phoneNumber"));
-                    }
-
-                    if (requestMap.containsKey("dob")) {
-                        // Assuming 'dob' is a String in the format "yyyy-MM-dd"
-                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-                        Date dob = dateFormat.parse(requestMap.get("dob"));
-                        user.setDob(dob);
-                    }
-
-                    if (requestMap.containsKey("email")) {
-                        user.setEmail(requestMap.get("email"));
-                    }
-
-                    if (requestMap.containsKey("password")) {
-                        // You might want to hash the password before setting it
-                        user.setPassword(requestMap.get("password"));
-                    }
-
-                    if (requestMap.containsKey("level")) {
-                        String levelString = requestMap.get("level");
-                        JLPTLevel level = JLPTLevel.valueOf(levelString); // Assuming level names match the enum values
-                        user.setLevel(level);
-                    }
-
-                    // Save the updated user
-                    userDAO.save(user);
-
-                    return ResponseEntity.ok("User Updated Successfully");
-                } else {
-                    return ResponseEntity.status(401).body("User not found");
-                }
-            } else {
-                // Handle the case where 'id' is null or not present
-                return ResponseEntity.badRequest().body("Invalid or missing 'id' parameter");
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(500).body("Something went wrong");
-        }
-    }
-
-
-    @Override
     public ResponseEntity<String> checkToken() {
         return JPLearningUtils.getResponseEntity("true", HttpStatus.OK);
     }
@@ -409,7 +345,7 @@ public class UserServiceImpl implements UserService {
 
                 // Upload the picture to S3
                 s3Client.putObject(PutObjectRequest.builder()
-                        .bucket("jplearning-lesson")
+                        .bucket("jplearning-user-profile")
                         .key(key)
                         .build(), RequestBody.fromByteBuffer(ByteBuffer.wrap(userPicture.getBytes())));
 

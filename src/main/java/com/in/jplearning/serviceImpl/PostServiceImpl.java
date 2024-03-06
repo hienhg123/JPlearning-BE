@@ -2,6 +2,7 @@ package com.in.jplearning.serviceImpl;
 
 import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.constants.JPConstants;
+import com.in.jplearning.dtos.PostDetailsDTO;
 import com.in.jplearning.model.Post;
 import com.in.jplearning.model.User;
 import com.in.jplearning.repositories.PostDAO;
@@ -10,6 +11,7 @@ import com.in.jplearning.service.PostService;
 import com.in.jplearning.utils.JPLearningUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -23,8 +25,11 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -34,6 +39,41 @@ public class PostServiceImpl implements PostService {
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDAO userDAO;
 
+
+    @Override
+    public ResponseEntity<List<PostDetailsDTO>> getAllPostDetails() {
+        try {
+            User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
+            log.info("id: " + user.getUserID());
+
+            List<Object[]> postDetailsList = postDAO.findUserPostsDetails(user);
+
+            List<PostDetailsDTO> postDetailsDTOList = new ArrayList<>();
+
+            for (Object[] postDetails : postDetailsList) {
+                Post post = (Post) postDetails[0];
+                String commentContent = (String) postDetails[1];
+                Long numberOfLikes = (Long) postDetails[2];
+
+                PostDetailsDTO postDetailsDTO = new PostDetailsDTO(
+                        post.getTitle(),
+                        post.getPostContent(),
+                        post.getCreatedAt(),
+                        post.getFileUrl(),
+                        commentContent,
+                        numberOfLikes
+                );
+
+                postDetailsDTOList.add(postDetailsDTO);
+            }
+
+            return new ResponseEntity<>(postDetailsDTOList, HttpStatus.OK);
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
 
 
@@ -116,6 +156,7 @@ public class PostServiceImpl implements PostService {
         // Return an empty string or null if no file was provided
         return null;
     }
+
 
 
 }

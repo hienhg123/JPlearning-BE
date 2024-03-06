@@ -23,12 +23,11 @@ public class Post implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "post_ID")
     private Long postID;
+    private String title;
     private String postContent;
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;
-
     private String fileUrl;
-    private String title;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_fk",referencedColumnName = "user_ID")
