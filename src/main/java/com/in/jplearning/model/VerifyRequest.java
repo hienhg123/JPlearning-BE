@@ -3,6 +3,7 @@ package com.in.jplearning.model;
 import com.in.jplearning.enums.VerificationType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
@@ -10,6 +11,7 @@ import org.hibernate.annotations.DynamicUpdate;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.Date;
 
 @Entity
 @Data
@@ -17,6 +19,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @DynamicUpdate
 @DynamicInsert
+@Builder
 public class VerifyRequest implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,9 +30,9 @@ public class VerifyRequest implements Serializable {
     @Column(nullable = false)
     private String url;
     private boolean approved;
-    private LocalDateTime requestTimestamp;
+    private Date requestTimestamp;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "trainee_fk",referencedColumnName = "trainee_ID")
-    private Trainee trainee;
+    private Trainer trainee;
 }

@@ -158,6 +158,5 @@ public class VNPayServiceImpl implements VNPayService {
     private Date getDate() {
         LocalDate currentDate = LocalDate.now();
         return Date.from(currentDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
-
     }
 }

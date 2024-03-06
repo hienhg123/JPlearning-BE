@@ -24,7 +24,7 @@ public class Premium implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "premium_ID")
     private Long premiumID;
-    private String premiumType;
+    private String premiumDescription;
     private Long price;
     private Integer duration;
     @JsonIgnore
