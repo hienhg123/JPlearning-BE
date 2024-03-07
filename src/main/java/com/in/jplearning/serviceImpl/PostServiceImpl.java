@@ -2,7 +2,6 @@ package com.in.jplearning.serviceImpl;
 
 import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.constants.JPConstants;
-import com.in.jplearning.dtos.PostDetailsDTO;
 import com.in.jplearning.model.Post;
 import com.in.jplearning.model.User;
 import com.in.jplearning.repositories.PostDAO;
@@ -11,7 +10,6 @@ import com.in.jplearning.service.PostService;
 import com.in.jplearning.utils.JPLearningUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -25,11 +23,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -41,39 +35,45 @@ public class PostServiceImpl implements PostService {
 
 
     @Override
-    public ResponseEntity<List<PostDetailsDTO>> getAllPostDetails() {
+    public ResponseEntity<List<Map<String, Object>>> getByUser() {
         try {
             User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
-            log.info("id: " + user.getUserID());
 
-            List<Object[]> postDetailsList = postDAO.findUserPostsDetails(user);
+            if (user != null) {
+                log.info("id: " + user.getUserID());
 
-            List<PostDetailsDTO> postDetailsDTOList = new ArrayList<>();
+                List<Post> posts = postDAO.findByUser(user);
 
-            for (Object[] postDetails : postDetailsList) {
-                Post post = (Post) postDetails[0];
-                String commentContent = (String) postDetails[1];
-                Long numberOfLikes = (Long) postDetails[2];
+                List<Map<String, Object>> postsList = new ArrayList<>();
 
-                PostDetailsDTO postDetailsDTO = new PostDetailsDTO(
-                        post.getTitle(),
-                        post.getPostContent(),
-                        post.getCreatedAt(),
-                        post.getFileUrl(),
-                        commentContent,
-                        numberOfLikes
-                );
+                for (Post post : posts) {
+                    Map<String, Object> postMap = mapPostToDto(post);
+                    postsList.add(postMap);
+                }
 
-                postDetailsDTOList.add(postDetailsDTO);
+                return new ResponseEntity<>(postsList, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
             }
-
-            return new ResponseEntity<>(postDetailsDTOList, HttpStatus.OK);
-
         } catch (Exception ex) {
             ex.printStackTrace();
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    private Map<String, Object> mapPostToDto(Post post) {
+        Map<String, Object> postMap = new HashMap<>();
+        postMap.put("title", post.getTitle());
+        postMap.put("postContent", post.getPostContent());
+        postMap.put("createdAt", post.getCreatedAt());
+        postMap.put("fileUrl", (post.getFileUrl() != null) ? post.getFileUrl() : "");
+        postMap.put("numberOfComments", post.getNumberOfComments());
+        postMap.put("numberOfLikes", post.getNumberOfLikes());
+        return postMap;
+    }
+
+
+
 
 
 

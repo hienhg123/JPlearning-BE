@@ -342,7 +342,7 @@ public class UserServiceImpl implements UserService {
 
                 // Get S3 client bean from S3Config
                 S3Client s3Client = s3Config.s3Client();
-
+               // https://ddzgswoq4gt6i.cloudfront.net/
                 // Upload the picture to S3
                 s3Client.putObject(PutObjectRequest.builder()
                         .bucket("jplearning-user-profile")
@@ -383,17 +383,6 @@ public class UserServiceImpl implements UserService {
 //              .level(JLPTLevel.None)
                 .isActive(true)
                 .build();
-    }
-
-
-    private Date parseDate(String dob) {
-        try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            return sdf.parse(dob);
-        } catch (ParseException e) {
-            e.printStackTrace();
-            return null;
-        }
     }
 
     private boolean validateSignUpMap(Map<String, String> requestMap) {

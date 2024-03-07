@@ -1,9 +1,8 @@
 package com.in.jplearning.controllers;
 
-import com.in.jplearning.dtos.PostDetailsDTO;
+import com.in.jplearning.model.Post;
 import com.in.jplearning.service.PostService;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,8 +23,8 @@ public class PostController {
         return postService.createPost(requestMap, file);
     }
 
-    @GetMapping("/details")
-    public ResponseEntity<List<PostDetailsDTO>> getAllPostDetails() {
-        return postService.getAllPostDetails();
+    @GetMapping("/getByUser")
+    public ResponseEntity<List<Map<String, Object>>> getByUser() {
+        return postService.getByUser();
     }
 }

@@ -11,11 +11,24 @@ import java.util.Optional;
 
 public interface PostDAO extends JpaRepository<Post,Long> {
     Optional<Post> findById(Long postID );
+    List<Post> findByUser(User user);
+
     @Query("SELECT p, pc.commentContent, COUNT(pl) " +
             "FROM Post p " +
-            "LEFT JOIN PostComment pc ON p.postID = pc.post.postID " +
-            "LEFT JOIN PostLike pl ON p.postID = pl.post.postID " +
+            "LEFT JOIN p.postComments pc " +
+            "LEFT JOIN PostLike pl ON pl.post = p " +
             "WHERE p.user = :user " +
-            "GROUP BY p.postID, pc.commentID")
-    List<Object[]> findUserPostsDetails(@Param("user") User user);
+            "GROUP BY p")
+    List<Object[]> findUserPostsDetails(User user);
+
+    // Custom query to retrieve comments and likes for a specific post
+    @Query("SELECT pc.commentContent, COUNT(pl) " +
+            "FROM PostComment pc " +
+            "LEFT JOIN PostLike pl ON pl.post = pc.post " +
+            "WHERE pc.post.postID = :postId " +
+            "GROUP BY pc")
+    List<Object[]> getCommentsAndLikesForPost(Long postId);
+
+
+
 }
