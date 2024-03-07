@@ -2,6 +2,7 @@ package com.in.jplearning.serviceImpl;
 
 import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.constants.JPConstants;
+import com.in.jplearning.enums.JLPTLevel;
 import com.in.jplearning.enums.VerificationType;
 import com.in.jplearning.model.Trainer;
 import com.in.jplearning.model.User;
@@ -22,16 +23,12 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Path;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -54,7 +51,7 @@ public class TrainerServiceImpl implements TrainerService {
     private final VerifyRequestDAO verifyRequestDAO;
     @Override
     @Transactional
-    public ResponseEntity<String> registerAsTrainer(MultipartFile pictureFiles) {
+    public ResponseEntity<String> registerAsTrainer(MultipartFile pictureFiles, Map<String, String> requestMap) {
         try{
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             //get current user
@@ -70,6 +67,10 @@ public class TrainerServiceImpl implements TrainerService {
             Trainer trainer = Trainer.builder()
                     .isVerify(false)
                     .user(user)
+                    .currentJob(requestMap.get("currentJob"))
+                    .jlptLevel(JLPTLevel.valueOf(requestMap.get("jlptLevel")))
+                    .fullName(requestMap.get("fullName"))
+                    .dob(parseDate(requestMap.get("dob")))
                     .build();
             //get the certificate picture and push to aws s3
             if(pictureFiles == null || pictureFiles.isEmpty()){
@@ -96,8 +97,31 @@ public class TrainerServiceImpl implements TrainerService {
                     .requestTimestamp(currentDate)
                     .build();
             verifyRequestDAO.save(verifyRequest);
-            return JPLearningUtils.getResponseEntity("Đăng kí thành công", HttpStatus.OK);
+            return JPLearningUtils.getResponseEntity("Đăng kí thành công, yêu cầu của bạn sẽ được xử lí trong vòng 24 giờ", HttpStatus.OK);
         }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Transactional
+    @Override
+    public ResponseEntity<String> updateStatus(Map<String, String> requestMap) {
+        try{
+            log.info(String.valueOf(jwtAuthFilter.isManager()));
+
+            //check if user is manager
+            if(jwtAuthFilter.isManager()){
+                Trainer trainer = trainerDAO.findById(Long.parseLong(requestMap.get("traineeID"))).get();
+                //check if user empty
+                if(trainer != null){
+                    trainerDAO.updateStatus(Boolean.parseBoolean(requestMap.get("isVerify")),trainer.getTraineeID());
+                    return JPLearningUtils.getResponseEntity("Thay đổi thành công", HttpStatus.OK);
+                }
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.UNAUTHORIZED);
+            }
+            return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
+        } catch (Exception ex){
             ex.printStackTrace();
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -108,6 +132,16 @@ public class TrainerServiceImpl implements TrainerService {
             return true;
         }
         return false;
+    }
+
+    private Date parseDate(String dob) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            return sdf.parse(dob);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
     private Date getDate() {
         LocalDate currentDate = LocalDate.now();

@@ -1,5 +1,6 @@
 package com.in.jplearning.model;
 
+import com.in.jplearning.enums.JLPTLevel;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,6 +24,13 @@ public class Trainer implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "trainee_ID")
     private Long traineeID;
+    @Column(columnDefinition = "NVARCHAR(255)")
+    private String fullName;
+    @Column(columnDefinition = "NVARCHAR(255)")
+    private String currentJob;
+    @Enumerated(EnumType.STRING)
+    private JLPTLevel jlptLevel;
+    private Date dob;
     private boolean isVerify;
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_fk", referencedColumnName = "user_id")
