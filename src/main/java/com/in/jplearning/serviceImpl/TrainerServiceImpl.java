@@ -116,6 +116,7 @@ public class TrainerServiceImpl implements TrainerService {
                 //check if user empty
                 if(trainer != null){
                     trainerDAO.updateStatus(Boolean.parseBoolean(requestMap.get("isVerify")),trainer.getTraineeID());
+                    verifyRequestDAO.updateStatus(Boolean.parseBoolean(requestMap.get("approved")),Long.parseLong(requestMap.get("requestID")));
                     return JPLearningUtils.getResponseEntity("Thay đổi thành công", HttpStatus.OK);
                 }
                 return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.UNAUTHORIZED);
