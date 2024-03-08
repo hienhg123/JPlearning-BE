@@ -1,5 +1,7 @@
 package com.in.jplearning.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.in.jplearning.enums.VerificationType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -20,6 +22,7 @@ import java.util.Date;
 @DynamicUpdate
 @DynamicInsert
 @Builder
+
 public class VerifyRequest implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,7 +35,7 @@ public class VerifyRequest implements Serializable {
     private boolean approved;
     private Date requestTimestamp;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "trainee_fk",referencedColumnName = "trainee_ID")
     private Trainer trainee;
 }
