@@ -23,8 +23,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -33,6 +32,98 @@ public class PostServiceImpl implements PostService {
     private final PostDAO postDAO;
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDAO userDAO;
+
+
+
+    @Override
+    public ResponseEntity<String> updatePost(Long postId, Map<String, String> requestMap) {
+        try {
+            // Fetch the post from the database
+            Optional<Post> optionalPost = postDAO.findById(postId);
+            if (optionalPost.isPresent()) {
+                Post post = optionalPost.get();
+
+                // Check if the logged-in user is the owner of the post
+                String currentUserEmail = jwtAuthFilter.getCurrentUser();
+                if (post.getUser().getEmail().equals(currentUserEmail)) {
+                    // Update post properties
+                    post.setTitle(requestMap.get("title"));
+                    post.setPostContent(requestMap.get("postContent"));
+
+                    // Save the updated post
+                    postDAO.save(post);
+
+                    return JPLearningUtils.getResponseEntity("Post successfully updated", HttpStatus.OK);
+                } else {
+                    return JPLearningUtils.getResponseEntity("Unauthorized user", HttpStatus.UNAUTHORIZED);
+                }
+            } else {
+                return JPLearningUtils.getResponseEntity("Post not found", HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @Override
+    public ResponseEntity<List<Map<String, Object>>> getByUser() {
+        try {
+            User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
+
+            if (user != null) {
+                log.info("id: " + user.getUserID());
+
+                List<Post> posts = postDAO.findByUser(user);
+
+                List<Map<String, Object>> postsList = new ArrayList<>();
+
+                for (Post post : posts) {
+                    Map<String, Object> postMap = mapPostToDto(post);
+                    postsList.add(postMap);
+                }
+
+                return new ResponseEntity<>(postsList, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public ResponseEntity<String> deletePost(Long postId) {
+        try {
+            Optional<Post> optionalPost = postDAO.findById(postId);
+            if (optionalPost.isPresent()) {
+                postDAO.deleteById(postId);
+                return JPLearningUtils.getResponseEntity("Post successfully deleted", HttpStatus.OK);
+            } else {
+                return JPLearningUtils.getResponseEntity("Post not found", HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+
+    private Map<String, Object> mapPostToDto(Post post) {
+        Map<String, Object> postMap = new HashMap<>();
+        postMap.put("title", post.getTitle());
+        postMap.put("postContent", post.getPostContent());
+        postMap.put("createdAt", post.getCreatedAt());
+        postMap.put("fileUrl", (post.getFileUrl() != null) ? post.getFileUrl() : "");
+        postMap.put("numberOfComments", post.getNumberOfComments());
+        postMap.put("numberOfLikes", post.getNumberOfLikes());
+        return postMap;
+    }
+
+
 
 
 
@@ -116,6 +207,7 @@ public class PostServiceImpl implements PostService {
         // Return an empty string or null if no file was provided
         return null;
     }
+
 
 
 }

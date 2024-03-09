@@ -14,7 +14,6 @@ public interface UserService {
     ResponseEntity<String> register(Map<String, String> requestMap);
     ResponseEntity<List<User>> getAllUser();
     ResponseEntity<String> login(Map<String, String> requestMap);
-    ResponseEntity<String> updateUser(Map<String, String> requestMap);
     ResponseEntity<String> getUserProfile();
     ResponseEntity<String> checkToken();
     ResponseEntity<String> changePassword(Map<String, String> requestMap);

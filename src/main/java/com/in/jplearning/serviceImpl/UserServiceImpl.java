@@ -48,7 +48,7 @@ public class UserServiceImpl implements UserService {
     private final AuthenticationManager authenticationManager;
     private final S3Config s3Config;
     private final EmailUtils emailUtils;
-
+    private final String cloudFront = "https://ddzgswoq4gt6i.cloudfront.net/";
     @Override
     public ResponseEntity<String> register(Map<String, String> requestMap) {
         log.info("Inside sign up {}", requestMap);
@@ -117,70 +117,6 @@ public class UserServiceImpl implements UserService {
         return new ResponseEntity<String>("{\"message\":\"" + "Mật khẩu không đúng" + "\"}"
                 , HttpStatus.BAD_REQUEST);
     }
-
-    @Override
-    public ResponseEntity<String> updateUser(Map<String, String> requestMap) {
-        try {
-            // Check if 'id' is present and not null
-            if (requestMap.containsKey("id") && requestMap.get("id") != null) {
-                Optional<User> userOptional = userDAO.findById(Long.parseLong(requestMap.get("id")));
-
-                // Check if the user exists
-                if (userOptional.isPresent()) {
-                    User user = userOptional.get();
-
-                    // Update user information based on the request
-                    if (requestMap.containsKey("firstName")) {
-                        user.setFirstName(requestMap.get("firstName"));
-                    }
-
-                    if (requestMap.containsKey("lastName")) {
-                        user.setLastName(requestMap.get("lastName"));
-                    }
-
-                    if (requestMap.containsKey("phoneNumber")) {
-                        user.setPhoneNumber(requestMap.get("phoneNumber"));
-                    }
-
-                    if (requestMap.containsKey("dob")) {
-                        // Assuming 'dob' is a String in the format "yyyy-MM-dd"
-                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-                        Date dob = dateFormat.parse(requestMap.get("dob"));
-                        user.setDob(dob);
-                    }
-
-                    if (requestMap.containsKey("email")) {
-                        user.setEmail(requestMap.get("email"));
-                    }
-
-                    if (requestMap.containsKey("password")) {
-                        // You might want to hash the password before setting it
-                        user.setPassword(requestMap.get("password"));
-                    }
-
-                    if (requestMap.containsKey("level")) {
-                        String levelString = requestMap.get("level");
-                        JLPTLevel level = JLPTLevel.valueOf(levelString); // Assuming level names match the enum values
-                        user.setLevel(level);
-                    }
-
-                    // Save the updated user
-                    userDAO.save(user);
-
-                    return ResponseEntity.ok("User Updated Successfully");
-                } else {
-                    return ResponseEntity.status(401).body("User not found");
-                }
-            } else {
-                // Handle the case where 'id' is null or not present
-                return ResponseEntity.badRequest().body("Invalid or missing 'id' parameter");
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(500).body("Something went wrong");
-        }
-    }
-
 
     @Override
     public ResponseEntity<String> checkToken() {
@@ -300,11 +236,12 @@ public class UserServiceImpl implements UserService {
             // Check if the user exists
             if (userOptional.isPresent()) {
                 User user = userOptional.get();
+                String fullName = user.getFirstName() + " " + user.getLastName();
+
 
                 // Create a Map with desired fields
                 Map<String, Object> userProfile = new HashMap<>();
-                userProfile.put("firstName", user.getFirstName());
-                userProfile.put("lastName", user.getLastName());
+                userProfile.put("fullName", fullName);
                 userProfile.put("phoneNumber", user.getPhoneNumber());
 
                 // Format date of birth
@@ -314,6 +251,7 @@ public class UserServiceImpl implements UserService {
 
                 userProfile.put("level", user.getLevel());
                 userProfile.put("gender", user.getGender());
+                userProfile.put("userPicture", user.getUserPicture());
 
                 // Convert Map to JSON and return it
                 ObjectMapper objectMapper = new ObjectMapper();
@@ -371,6 +309,9 @@ public class UserServiceImpl implements UserService {
                 // Check if userPicture is not null before interacting with AWS S3
                 if (userPicture != null && !userPicture.isEmpty()) {
                     // Save user picture to AWS S3 and get the URL
+                    if (!isValidImageFormat(userPicture.getOriginalFilename())) {
+                        return ResponseEntity.badRequest().body("Invalid file format. Only PNG or JPG allowed.");
+                    }
                     String userPictureUrl = saveUserPictureToS3(userId, userPicture); // Use userId here
                     user.setUserPicture(userPictureUrl);
                 }
@@ -402,25 +343,40 @@ public class UserServiceImpl implements UserService {
                 String phoneNumber = user.getPhoneNumber();
 
                 // Generate a unique key for the picture in S3, incorporating email and phoneNumber
-                String key = "user-pictures/" + email + "_" + "/" + userPicture.getOriginalFilename();
+                String key = "user-pictures/" + email + "/"  + userPicture.getOriginalFilename();
 
                 // Get S3 client bean from S3Config
                 S3Client s3Client = s3Config.s3Client();
-
                 // Upload the picture to S3
                 s3Client.putObject(PutObjectRequest.builder()
-                        .bucket("jplearning-lesson")
+                        .bucket("jplearning-user-profile")
                         .key(key)
                         .build(), RequestBody.fromByteBuffer(ByteBuffer.wrap(userPicture.getBytes())));
 
                 // Return the URL of the uploaded picture
-                return "https://jplearning-lesson.s3.amazonaws.com/" + key;
+                return cloudFront + key;
             } else {
                 throw new RuntimeException("User not found with ID: " + userId);
             }
         } catch (Exception ex) {
             throw new IOException("Error saving user picture to S3", ex);
         }
+    }
+
+    private boolean isValidImageFormat(String fileName) {
+        String[] allowedFormats = {"png", "jpg", "jpeg"};
+
+        // Get the file extension
+        String fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
+
+        // Check if the file format is allowed
+        for (String format : allowedFormats) {
+            if (fileExtension.equals(format)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 
@@ -447,17 +403,6 @@ public class UserServiceImpl implements UserService {
 //              .level(JLPTLevel.None)
                 .isActive(true)
                 .build();
-    }
-
-
-    private Date parseDate(String dob) {
-        try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            return sdf.parse(dob);
-        } catch (ParseException e) {
-            e.printStackTrace();
-            return null;
-        }
     }
 
     private boolean validateSignUpMap(Map<String, String> requestMap) {
