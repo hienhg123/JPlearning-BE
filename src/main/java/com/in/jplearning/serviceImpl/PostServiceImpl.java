@@ -34,6 +34,39 @@ public class PostServiceImpl implements PostService {
     private final UserDAO userDAO;
 
 
+
+    @Override
+    public ResponseEntity<String> updatePost(Long postId, Map<String, String> requestMap) {
+        try {
+            // Fetch the post from the database
+            Optional<Post> optionalPost = postDAO.findById(postId);
+            if (optionalPost.isPresent()) {
+                Post post = optionalPost.get();
+
+                // Check if the logged-in user is the owner of the post
+                String currentUserEmail = jwtAuthFilter.getCurrentUser();
+                if (post.getUser().getEmail().equals(currentUserEmail)) {
+                    // Update post properties
+                    post.setTitle(requestMap.get("title"));
+                    post.setPostContent(requestMap.get("postContent"));
+
+                    // Save the updated post
+                    postDAO.save(post);
+
+                    return JPLearningUtils.getResponseEntity("Post successfully updated", HttpStatus.OK);
+                } else {
+                    return JPLearningUtils.getResponseEntity("Unauthorized user", HttpStatus.UNAUTHORIZED);
+                }
+            } else {
+                return JPLearningUtils.getResponseEntity("Post not found", HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
     @Override
     public ResponseEntity<List<Map<String, Object>>> getByUser() {
         try {
@@ -60,6 +93,24 @@ public class PostServiceImpl implements PostService {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @Override
+    public ResponseEntity<String> deletePost(Long postId) {
+        try {
+            Optional<Post> optionalPost = postDAO.findById(postId);
+            if (optionalPost.isPresent()) {
+                postDAO.deleteById(postId);
+                return JPLearningUtils.getResponseEntity("Post successfully deleted", HttpStatus.OK);
+            } else {
+                return JPLearningUtils.getResponseEntity("Post not found", HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
 
     private Map<String, Object> mapPostToDto(Post post) {
         Map<String, Object> postMap = new HashMap<>();

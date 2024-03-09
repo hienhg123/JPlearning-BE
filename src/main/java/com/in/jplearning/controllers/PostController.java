@@ -16,6 +16,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class PostController {
     private final PostService postService;
+
     @PostMapping("/create")
     public ResponseEntity<String> createPost(
             @RequestParam Map<String, String> requestMap,
@@ -26,5 +27,16 @@ public class PostController {
     @GetMapping("/getByUser")
     public ResponseEntity<List<Map<String, Object>>> getByUser() {
         return postService.getByUser();
+    }
+
+
+    @PutMapping("/{postId}")
+    public ResponseEntity<String> updatePost(@PathVariable Long postId, @RequestBody Map<String, String> requestMap) {
+        return postService.updatePost(postId, requestMap);
+    }
+
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<String> deletePost(@PathVariable Long postId) {
+        return postService.deletePost(postId);
     }
 }

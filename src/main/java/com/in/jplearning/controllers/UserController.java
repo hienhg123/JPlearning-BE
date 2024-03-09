@@ -58,6 +58,7 @@ public class UserController {
 
     @GetMapping(path = "/profile")
     public ResponseEntity<String> getUserProfile() {
+
         return userService.getUserProfile();
     }
     @PutMapping("/update-profile/{userId}")

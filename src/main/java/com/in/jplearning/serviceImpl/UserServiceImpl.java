@@ -48,7 +48,7 @@ public class UserServiceImpl implements UserService {
     private final AuthenticationManager authenticationManager;
     private final S3Config s3Config;
     private final EmailUtils emailUtils;
-
+    private final String cloudFront = "https://ddzgswoq4gt6i.cloudfront.net/";
     @Override
     public ResponseEntity<String> register(Map<String, String> requestMap) {
         log.info("Inside sign up {}", requestMap);
@@ -236,11 +236,12 @@ public class UserServiceImpl implements UserService {
             // Check if the user exists
             if (userOptional.isPresent()) {
                 User user = userOptional.get();
+                String fullName = user.getFirstName() + " " + user.getLastName();
+
 
                 // Create a Map with desired fields
                 Map<String, Object> userProfile = new HashMap<>();
-                userProfile.put("firstName", user.getFirstName());
-                userProfile.put("lastName", user.getLastName());
+                userProfile.put("fullName", fullName);
                 userProfile.put("phoneNumber", user.getPhoneNumber());
 
                 // Format date of birth
@@ -250,6 +251,7 @@ public class UserServiceImpl implements UserService {
 
                 userProfile.put("level", user.getLevel());
                 userProfile.put("gender", user.getGender());
+                userProfile.put("userPicture", user.getUserPicture());
 
                 // Convert Map to JSON and return it
                 ObjectMapper objectMapper = new ObjectMapper();
@@ -307,6 +309,9 @@ public class UserServiceImpl implements UserService {
                 // Check if userPicture is not null before interacting with AWS S3
                 if (userPicture != null && !userPicture.isEmpty()) {
                     // Save user picture to AWS S3 and get the URL
+                    if (!isValidImageFormat(userPicture.getOriginalFilename())) {
+                        return ResponseEntity.badRequest().body("Invalid file format. Only PNG or JPG allowed.");
+                    }
                     String userPictureUrl = saveUserPictureToS3(userId, userPicture); // Use userId here
                     user.setUserPicture(userPictureUrl);
                 }
@@ -338,11 +343,10 @@ public class UserServiceImpl implements UserService {
                 String phoneNumber = user.getPhoneNumber();
 
                 // Generate a unique key for the picture in S3, incorporating email and phoneNumber
-                String key = "user-pictures/" + email + "_" + "/" + userPicture.getOriginalFilename();
+                String key = "user-pictures/" + email + "/"  + userPicture.getOriginalFilename();
 
                 // Get S3 client bean from S3Config
                 S3Client s3Client = s3Config.s3Client();
-               // https://ddzgswoq4gt6i.cloudfront.net/
                 // Upload the picture to S3
                 s3Client.putObject(PutObjectRequest.builder()
                         .bucket("jplearning-user-profile")
@@ -350,13 +354,29 @@ public class UserServiceImpl implements UserService {
                         .build(), RequestBody.fromByteBuffer(ByteBuffer.wrap(userPicture.getBytes())));
 
                 // Return the URL of the uploaded picture
-                return "https://jplearning-lesson.s3.amazonaws.com/" + key;
+                return cloudFront + key;
             } else {
                 throw new RuntimeException("User not found with ID: " + userId);
             }
         } catch (Exception ex) {
             throw new IOException("Error saving user picture to S3", ex);
         }
+    }
+
+    private boolean isValidImageFormat(String fileName) {
+        String[] allowedFormats = {"png", "jpg", "jpeg"};
+
+        // Get the file extension
+        String fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
+
+        // Check if the file format is allowed
+        for (String format : allowedFormats) {
+            if (fileExtension.equals(format)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 
