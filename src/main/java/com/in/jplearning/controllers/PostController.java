@@ -13,6 +13,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/posts")
 @AllArgsConstructor
+@CrossOrigin("http://localhost:4200")
 public class PostController {
     private final PostService postService;
     @PostMapping("/create")
