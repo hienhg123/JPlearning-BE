@@ -29,9 +29,9 @@ public class VNPayController {
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
     @GetMapping("/paymentCallback")
-    public ResponseEntity<String> paymentCallBack(@RequestParam Map<String,String> requestMap){
+    public ResponseEntity<String> paymentCallBack(@RequestParam Map<String,String> requestMap, HttpServletResponse response){
         try{
-            return vnPayService.paymentCallBack(requestMap);
+            return vnPayService.paymentCallBack(requestMap,response);
         }catch (Exception ex){
             ex.printStackTrace();
         }

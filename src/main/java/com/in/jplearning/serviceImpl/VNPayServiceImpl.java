@@ -11,7 +11,9 @@ import com.in.jplearning.repositories.PremiumDAO;
 import com.in.jplearning.repositories.UserDAO;
 import com.in.jplearning.service.VNPayService;
 import com.in.jplearning.utils.JPLearningUtils;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,7 @@ import java.util.*;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class VNPayServiceImpl implements VNPayService {
 
     private final PremiumDAO premiumDAO;
@@ -114,9 +117,10 @@ public class VNPayServiceImpl implements VNPayService {
     }
 
     @Override
-    public ResponseEntity<String> paymentCallBack(Map<String, String> requestMap) {
+    public ResponseEntity<String> paymentCallBack(Map<String, String> requestMap, HttpServletResponse response) {
         try{
             String vnp_ResponseCode = requestMap.get("vnp_ResponseCode");
+            log.info(vnp_ResponseCode);
             // get premiumID
             String premiumIDRaw = requestMap.get("premiumID");
             //check if premiumid is exist
@@ -126,6 +130,7 @@ public class VNPayServiceImpl implements VNPayService {
                     //save into bill
                     Bill bill = generateBill(premiumIDRaw);
                     billDAO.save(bill);
+                    response.sendRedirect("http://localhost:4200/homepage");
                     return JPLearningUtils.getResponseEntity("Thanh toán thành công", HttpStatus.OK);
                 }
             } else {
