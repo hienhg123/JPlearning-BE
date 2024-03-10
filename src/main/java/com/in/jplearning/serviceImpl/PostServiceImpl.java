@@ -3,8 +3,10 @@ package com.in.jplearning.serviceImpl;
 import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.constants.JPConstants;
 import com.in.jplearning.model.Post;
+import com.in.jplearning.model.PostFavorite;
 import com.in.jplearning.model.User;
 import com.in.jplearning.repositories.PostDAO;
+import com.in.jplearning.repositories.PostFavoriteDAO;
 import com.in.jplearning.repositories.UserDAO;
 import com.in.jplearning.service.PostService;
 import com.in.jplearning.utils.JPLearningUtils;
@@ -32,6 +34,7 @@ public class PostServiceImpl implements PostService {
     private final PostDAO postDAO;
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDAO userDAO;
+    private final PostFavoriteDAO postFavoriteDAO;
 
 
 
@@ -95,6 +98,32 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    public ResponseEntity<List<Map<String, Object>>> getByUserFavorites() {
+        try {
+            User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).orElse(null);
+
+            if (user != null) {
+                List<PostFavorite> userFavorites = postFavoriteDAO.findByUser(user);
+
+                List<Map<String, Object>> favoritesList = new ArrayList<>();
+
+                for (PostFavorite postFavorite : userFavorites) {
+                    Map<String, Object> postMap = mapPostToDto(postFavorite.getPost());
+                    favoritesList.add(postMap);
+                }
+
+                return new ResponseEntity<>(favoritesList, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @Override
     public ResponseEntity<String> deletePost(Long postId) {
         try {
             Optional<Post> optionalPost = postDAO.findById(postId);
@@ -123,10 +152,6 @@ public class PostServiceImpl implements PostService {
         postMap.put("numberOfLikes", post.getNumberOfLikes());
         return postMap;
     }
-
-
-
-
 
 
     @Override

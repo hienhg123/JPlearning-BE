@@ -41,6 +41,9 @@ public class Post implements Serializable {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
     List<PostLike> postLikes;
 
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
+    List<PostFavorite> postFavorites;
+
     @Transient
     private Long numberOfComments;
 
