@@ -22,9 +22,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -44,6 +42,10 @@ public class VNPayServiceImpl implements VNPayService {
     @Override
     public ResponseEntity<?> createPayment(Long premiumID) {
         try{
+            //check if user have already bought this premium or the current one is expired
+            if(checkPremium(premiumID)){
+                return JPLearningUtils.getResponseEntity("Bạn không thể mua thêm khóa hiện tại hoặc khóa thấp hơn khi chưa hết hạn",HttpStatus.BAD_REQUEST);
+            }
             String vnp_Version = "2.1.0";
             String vnp_Command = "pay";
             String orderType = "other";
@@ -130,7 +132,7 @@ public class VNPayServiceImpl implements VNPayService {
                     //save into bill
                     Bill bill = generateBill(premiumIDRaw);
                     billDAO.save(bill);
-                    response.sendRedirect("http://localhost:4200/homepage");
+                    response.sendRedirect("http://localhost:4200/checkout-success");
                     return JPLearningUtils.getResponseEntity("Thanh toán thành công", HttpStatus.OK);
                 }
             } else {
@@ -158,6 +160,39 @@ public class VNPayServiceImpl implements VNPayService {
                 .total(premium.getPrice())
                 .build();
         return bill;
+    }
+    private boolean checkPremium(Long premiumID) {
+
+        Premium premium = premiumDAO.findById(premiumID).get();
+        //get the current user premium
+        List<Bill> bills = billDAO.getbyUser(jwtAuthFilter.getCurrentUser());
+        //check if user havd ever bought premium
+        if(bills.isEmpty()){
+            return false;
+        }
+        Bill lastBill = new Bill();
+        //get the latest bill
+        if(bills.size() == 1){
+            lastBill = bills.get(bills.size());
+        }
+        lastBill = bills.get(bills.size() -1 );
+        //check the current bill
+        if(lastBill.getPremium().getPremiumID() == premiumID){
+            LocalDate startDate = lastBill.getCreatedAt().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            LocalDate expirationDate = startDate.plusMonths(premium.getDuration());
+            LocalDate currentDate = LocalDate.now();
+            //check date
+            if(currentDate.isAfter(expirationDate)){
+                return false;
+            }
+            return true;
+        }
+        //check if the current premium id is larget
+        if(lastBill.getPremium().getPremiumID() > premiumID){
+            return false;
+        } else{
+            return true;
+        }
     }
 
     private Date getDate() {

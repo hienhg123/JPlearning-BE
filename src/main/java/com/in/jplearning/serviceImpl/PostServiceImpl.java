@@ -53,12 +53,12 @@ public class PostServiceImpl implements PostService {
                     // Save the updated post
                     postDAO.save(post);
 
-                    return JPLearningUtils.getResponseEntity("Post successfully updated", HttpStatus.OK);
+                    return JPLearningUtils.getResponseEntity("Cập nhật thành công", HttpStatus.OK);
                 } else {
                     return JPLearningUtils.getResponseEntity("Unauthorized user", HttpStatus.UNAUTHORIZED);
                 }
             } else {
-                return JPLearningUtils.getResponseEntity("Post not found", HttpStatus.NOT_FOUND);
+                return JPLearningUtils.getResponseEntity("Không tìm thấy bài đăng", HttpStatus.NOT_FOUND);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -100,9 +100,9 @@ public class PostServiceImpl implements PostService {
             Optional<Post> optionalPost = postDAO.findById(postId);
             if (optionalPost.isPresent()) {
                 postDAO.deleteById(postId);
-                return JPLearningUtils.getResponseEntity("Post successfully deleted", HttpStatus.OK);
+                return JPLearningUtils.getResponseEntity("Xóa thành công", HttpStatus.OK);
             } else {
-                return JPLearningUtils.getResponseEntity("Post not found", HttpStatus.NOT_FOUND);
+                return JPLearningUtils.getResponseEntity("Không tim thấy bài đăng", HttpStatus.NOT_FOUND);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -114,6 +114,7 @@ public class PostServiceImpl implements PostService {
 
     private Map<String, Object> mapPostToDto(Post post) {
         Map<String, Object> postMap = new HashMap<>();
+        postMap.put("postID",post.getPostID());
         postMap.put("title", post.getTitle());
         postMap.put("postContent", post.getPostContent());
         postMap.put("createdAt", post.getCreatedAt());
