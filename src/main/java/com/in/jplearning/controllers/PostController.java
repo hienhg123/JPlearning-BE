@@ -40,4 +40,9 @@ public class PostController {
     public ResponseEntity<String> deletePost(@PathVariable Long postId) {
         return postService.deletePost(postId);
     }
+
+    @GetMapping("/favorites")
+    public ResponseEntity<List<Map<String, Object>>> getByUserFavorites() {
+        return postService.getByUserFavorites();
+    }
 }
