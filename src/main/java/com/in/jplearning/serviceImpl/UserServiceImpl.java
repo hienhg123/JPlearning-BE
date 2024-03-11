@@ -268,10 +268,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResponseEntity<String> updateProfile(Long userId, MultipartFile userPicture, Map<String, String> requestMap) {
+    public ResponseEntity<String> updateProfile(MultipartFile userPicture, Map<String, String> requestMap) {
         try {
             // Retrieve the user by ID
-            Optional<User> userOptional = userDAO.findById(userId);
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
 
             // Check if the user exists
             if (userOptional.isPresent()) {
@@ -310,23 +310,23 @@ public class UserServiceImpl implements UserService {
                 if (userPicture != null && !userPicture.isEmpty()) {
                     // Save user picture to AWS S3 and get the URL
                     if (!isValidImageFormat(userPicture.getOriginalFilename())) {
-                        return ResponseEntity.badRequest().body("Invalid file format. Only PNG or JPG allowed.");
+                        return ResponseEntity.badRequest().body("Sai định dảng ảnh vui lòng kiểu tra lại");
                     }
-                    String userPictureUrl = saveUserPictureToS3(userId, userPicture); // Use userId here
+                    String userPictureUrl = saveUserPictureToS3(user.getUserID(),userPicture); // Use userId here
                     user.setUserPicture(userPictureUrl);
                 }
 
                 // Save the updated user
                 userDAO.save(user);
 
-                return ResponseEntity.ok("Profile Updated Successfully");
+                return ResponseEntity.ok("Cập nhật thành công");
             } else {
-                return ResponseEntity.badRequest().body("User not found with ID: " + userId);
+                return ResponseEntity.badRequest().body("Người dùng không tồn tại");
             }
         } catch (Exception ex) {
             ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Something went wrong");
         }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Something went wrong");
     }
 
     private String saveUserPictureToS3(Long userId, MultipartFile userPicture) throws IOException {

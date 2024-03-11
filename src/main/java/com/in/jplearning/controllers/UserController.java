@@ -61,12 +61,10 @@ public class UserController {
 
         return userService.getUserProfile();
     }
-    @PutMapping("/update-profile/{userId}")
-    public ResponseEntity<String> updateProfile(@PathVariable Long userId,
-                                                @RequestParam(name = "userPicture", required = false) MultipartFile userPicture,
+    @PutMapping("/update-profile")
+    public ResponseEntity<String> updateProfile(@RequestPart(name = "userPicture", required = false) MultipartFile userPicture,
                                                 @RequestParam Map<String, String> requestMap) {
-
-        return userService.updateProfile(userId, userPicture, requestMap);
+        return userService.updateProfile(userPicture, requestMap);
     }
     @PostMapping(path = "/forgetPassword")
     public ResponseEntity<Map<String,String>> forgetPassword(@RequestBody  Map<String, String> requestMap){
