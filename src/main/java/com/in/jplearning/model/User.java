@@ -61,9 +61,6 @@ public class User implements UserDetails {
     @JoinColumn(name = "premium_fk",referencedColumnName = "premium_ID")
     private Premium premium;
 
-    @JsonIgnore
-    @ManyToMany(mappedBy = "users")
-    private Set<Course> courses = new HashSet<>();
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return null;

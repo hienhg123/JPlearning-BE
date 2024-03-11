@@ -24,7 +24,6 @@ import java.util.Set;
 @DynamicUpdate
 @DynamicInsert
 @Builder
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Course implements Serializable {
 
     @Id
@@ -41,15 +40,6 @@ public class Course implements Serializable {
     @OneToMany(mappedBy = "course")
     private List<Chapter> chapterList;
 
-    @JsonIgnore
-    @ManyToMany()
-    @JoinTable(name = "course_enroll",
-            joinColumns = @JoinColumn(name = "course_fk", referencedColumnName = "course_ID"),
-            inverseJoinColumns = @JoinColumn(name = "user_fk", referencedColumnName = "user_ID")
-    )
-    private Set<User> users = new HashSet<>();
-
-    public void enroll(User user){
-        users.add(user);
-    }
+    @OneToMany(mappedBy = "course")
+    private Set<CourseEnroll> courseEnrolls;
 }

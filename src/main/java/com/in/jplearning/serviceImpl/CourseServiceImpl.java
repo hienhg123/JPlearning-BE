@@ -4,12 +4,10 @@ package com.in.jplearning.serviceImpl;
 import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.constants.JPConstants;
 import com.in.jplearning.enums.JLPTLevel;
-import com.in.jplearning.model.Bill;
-import com.in.jplearning.model.Course;
-import com.in.jplearning.model.Premium;
-import com.in.jplearning.model.User;
+import com.in.jplearning.model.*;
 import com.in.jplearning.repositories.BillDAO;
 import com.in.jplearning.repositories.CourseDAO;
+import com.in.jplearning.repositories.CourseEnrollDAO;
 import com.in.jplearning.repositories.UserDAO;
 import com.in.jplearning.service.CourseService;
 import com.in.jplearning.utils.JPLearningUtils;
@@ -18,12 +16,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -36,6 +36,8 @@ public class CourseServiceImpl implements CourseService {
     private final JwtAuthFilter jwtAuthFilter;
 
     private final BillDAO billDAO;
+
+    private final CourseEnrollDAO courseEnrollDAO;
 
 
 
@@ -88,29 +90,31 @@ public class CourseServiceImpl implements CourseService {
             Course course = courseDAO.findById(Long.parseLong(requestMap.get("courseID"))).get();
             //get user
             User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
+            //get course enroll
+            Optional<CourseEnroll> courseEnroll = courseEnrollDAO.findByUserAndCourse(user.getUserID(),course.getCourseID());
+            log.info(String.valueOf(courseEnroll.isPresent()));
+            //check if user exist
+            if(!courseEnroll.isPresent()){
                 //check if course is free
                 if(course.getIsFree() == true){
-                    //check if user enroll in the course
-                    if(!course.getUsers().contains(user)) {
-                        //enroll
-                        enrollCourse(course, user);
-                        return JPLearningUtils.getResponseEntity("Thành công", HttpStatus.OK);
-                    }
-                    return JPLearningUtils.getResponseEntity("Bạn đã tham gia khóa học này",HttpStatus.BAD_REQUEST);
+                    //enroll user into course
+                    enrollCourse(course,user);
+                    return JPLearningUtils.getResponseEntity("Thành công", HttpStatus.OK);
                 } else {
-                    //check if user is vip account
+                    //check user premium
                     if(isPremiumExpire(user)){
-                        //check if user enroll in the course
-                        if(!course.getUsers().contains(user)){
-                            //enroll course
-                            enrollCourse(course,user);
-                            return JPLearningUtils.getResponseEntity("Thành công", HttpStatus.OK);
-                        }
-                        return JPLearningUtils.getResponseEntity("Bạn đã tham gia khóa học này",HttpStatus.BAD_REQUEST);
+                        //enroll
+                        enrollCourse(course,user);
+                        return JPLearningUtils.getResponseEntity("Thành công", HttpStatus.OK);
                     } else {
                         return JPLearningUtils.getResponseEntity("Tài khoản của bạn chưa nâng cấp", HttpStatus.BAD_REQUEST);
                     }
                 }
+
+            } else{
+                return JPLearningUtils.getResponseEntity("Bạn đã tham gia khóa học này",HttpStatus.BAD_REQUEST);
+            }
+
 
         }catch (Exception ex){
             ex.printStackTrace();
@@ -119,8 +123,11 @@ public class CourseServiceImpl implements CourseService {
     }
 
     private void enrollCourse(Course course, User user) {
-        course.enroll(user);
-        courseDAO.save(course);
+       CourseEnroll courseEnroll = CourseEnroll.builder()
+               .user(user)
+               .course(course)
+               .build();
+       courseEnrollDAO.save(courseEnroll);
     }
 
     private boolean isPremiumExpire(User user) {
