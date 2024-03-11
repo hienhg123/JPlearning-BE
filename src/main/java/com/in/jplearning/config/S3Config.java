@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3Client;
 
 import java.net.URI;
@@ -22,6 +23,14 @@ public class S3Config {
     @Bean
     public S3Client s3Client() {
         return S3Client.builder()
+                .region(Region.AP_SOUTHEAST_1)
+                .endpointOverride(URI.create("https://s3.amazonaws.com"))
+                .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey,accessSecret)))
+                .build();
+    }
+    @Bean
+    public S3AsyncClient s3AsyncClient(){
+        return S3AsyncClient.builder()
                 .region(Region.AP_SOUTHEAST_1)
                 .endpointOverride(URI.create("https://s3.amazonaws.com"))
                 .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey,accessSecret)))
