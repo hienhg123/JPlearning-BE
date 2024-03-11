@@ -11,4 +11,6 @@ public interface ChapterDAO extends JpaRepository<Chapter, Long> {
 
     @Query("select c from Chapter c left join c.lessonList a where c.chapterID = ?1 order by a.lessonOrder ASC")
     Chapter getChapterLessonByOrder(Long chapterID);
+
+
 }

@@ -4,13 +4,11 @@ package com.in.jplearning.serviceImpl;
 import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.constants.JPConstants;
 import com.in.jplearning.enums.JLPTLevel;
-import com.in.jplearning.model.Bill;
-import com.in.jplearning.model.Course;
-import com.in.jplearning.model.Premium;
-import com.in.jplearning.model.User;
+import com.in.jplearning.model.*;
 import com.in.jplearning.repositories.BillDAO;
 import com.in.jplearning.repositories.CourseDAO;
 import com.in.jplearning.repositories.UserDAO;
+import com.in.jplearning.repositories.UserLessonProgressDAO;
 import com.in.jplearning.service.CourseService;
 import com.in.jplearning.utils.JPLearningUtils;
 import lombok.AllArgsConstructor;
@@ -36,6 +34,8 @@ public class CourseServiceImpl implements CourseService {
     private final JwtAuthFilter jwtAuthFilter;
 
     private final BillDAO billDAO;
+
+    private final UserLessonProgressDAO userLessonProgressDAO;
 
 
 
@@ -118,10 +118,15 @@ public class CourseServiceImpl implements CourseService {
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+
+
+
     private void enrollCourse(Course course, User user) {
         course.enroll(user);
         courseDAO.save(course);
     }
+
+
 
     private boolean isPremiumExpire(User user) {
         //get user latest premium

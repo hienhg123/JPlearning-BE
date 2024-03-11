@@ -49,6 +49,8 @@ public class Course implements Serializable {
     )
     private Set<User> users = new HashSet<>();
 
+
+
     public void enroll(User user){
         users.add(user);
     }

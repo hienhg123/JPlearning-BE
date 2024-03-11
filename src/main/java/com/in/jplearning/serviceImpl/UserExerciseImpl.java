@@ -5,6 +5,7 @@ import com.in.jplearning.constants.JPConstants;
 import com.in.jplearning.enums.ExerciseType;
 import com.in.jplearning.model.Exercises;
 import com.in.jplearning.model.User;
+import com.in.jplearning.model.UserLessonProgress;
 import com.in.jplearning.model.User_Exercise;
 import com.in.jplearning.repositories.UserDAO;
 import com.in.jplearning.repositories.UserExerciseDAO;
