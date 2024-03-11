@@ -147,6 +147,5 @@ public class TrainerServiceImpl implements TrainerService {
     private Date getDate() {
         LocalDate currentDate = LocalDate.now();
         return Date.from(currentDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
-
     }
 }
