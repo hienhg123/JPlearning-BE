@@ -3,11 +3,13 @@ package com.in.jplearning.controllers;
 import com.in.jplearning.model.Post;
 import com.in.jplearning.service.PostService;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -18,11 +20,20 @@ import java.util.Map;
 public class PostController {
     private final PostService postService;
 
-    @PostMapping("/create")
+    @PostMapping("/createPost")
     public ResponseEntity<String> createPost(
             @RequestParam Map<String, String> requestMap,
-            @RequestParam("file") MultipartFile file) throws IOException {
-        return postService.createPost(requestMap, file);
+            @RequestPart(value = "files",required = false) List<MultipartFile> files) throws IOException {
+        return postService.createPost(requestMap, files);
+    }
+    @GetMapping(path = "/getAllPost")
+    public ResponseEntity<List<Post>> getAllPost(){
+        try{
+            return postService.getAllPost();
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @GetMapping("/getByUser")

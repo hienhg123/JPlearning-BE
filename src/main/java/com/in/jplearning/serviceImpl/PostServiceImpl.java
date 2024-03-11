@@ -14,16 +14,26 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectAclResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -33,6 +43,15 @@ public class PostServiceImpl implements PostService {
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDAO userDAO;
 
+    private final String cloudFront = "https://d3vco6mbl6bsb7.cloudfront.net";
+
+    private final String bucketName = "jplearning-userpost";
+
+    private final S3Client s3Client;
+
+    private final S3AsyncClient s3AsyncClient;
+
+    private final ExecutorService executorService = Executors.newFixedThreadPool(10);
 
 
     @Override
@@ -110,50 +129,70 @@ public class PostServiceImpl implements PostService {
         }
     }
 
-
-
-    private Map<String, Object> mapPostToDto(Post post) {
-        Map<String, Object> postMap = new HashMap<>();
-        postMap.put("postID",post.getPostID());
-        postMap.put("title", post.getTitle());
-        postMap.put("postContent", post.getPostContent());
-        postMap.put("createdAt", post.getCreatedAt());
-        postMap.put("fileUrl", (post.getFileUrl() != null) ? post.getFileUrl() : "");
-        postMap.put("numberOfComments", post.getNumberOfComments());
-        postMap.put("numberOfLikes", post.getNumberOfLikes());
-        return postMap;
+    @Override
+    public ResponseEntity<List<Post>> getAllPost() {
+        try {
+            return new ResponseEntity<>(postDAO.findAll(), HttpStatus.OK);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-
-
-
-
-
     @Override
-    public ResponseEntity<String> createPost(Map<String, String> requestMap, MultipartFile file) throws IOException {
+    public ResponseEntity<String> createPost(Map<String, String> requestMap, List<MultipartFile> files) throws IOException {
         log.info("Inside createPost {}", requestMap);
         try {
-            Post post = getPostFromMap(requestMap);
-
-            if (file != null && !file.isEmpty()) {
-                String fileUrl = uploadFileToS3(file);
-                post.setFileUrl(fileUrl);
+            int imageCount = 0;
+            int videoCount = 0;
+            String fileUrl = "";
+            //loop to check limit
+            for (MultipartFile file : files) {
+                String contentType = file.getContentType();
+                fileUrl += cloudFront + "/" + file.getOriginalFilename() + ",";
+                //check if number of image reach limit
+                if (contentType != null && contentType.startsWith("image/") && imageCount < 3) {
+                    imageCount++;
+                    //check if number of video reach limit
+                } else if (contentType != null && contentType.startsWith("video/") && videoCount < 1) {
+                    videoCount++;
+                } else {
+                    // Invalid file type or exceeded limit
+                    return JPLearningUtils.getResponseEntity("Quá số lượng cho phép", HttpStatus.BAD_REQUEST);
+                }
             }
-
+            //loop to upload to s3
+            uploadToS3(files);
+            Post post = getPostFromMap(requestMap, fileUrl);
             postDAO.save(post);
-            return JPLearningUtils.getResponseEntity("Post successfully created", HttpStatus.OK);
+            return JPLearningUtils.getResponseEntity("Đăng bài thành công", HttpStatus.OK);
         } catch (Exception ex) {
             ex.printStackTrace();
             return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
+    private void uploadToS3(List<MultipartFile> files) throws IOException {
+        List<CompletableFuture<PutObjectResponse>> uploadFutures = files.stream()
+                .map(file -> {
+                    try {
+                        return uploadToS3Async(file);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .collect(Collectors.toList());
+    }
 
+    private CompletableFuture<PutObjectResponse> uploadToS3Async(MultipartFile file) throws IOException {
+        return s3AsyncClient.putObject(PutObjectRequest.builder()
+                        .bucket(bucketName)
+                        .key(file.getOriginalFilename())
+                        .build(),
+                AsyncRequestBody.fromInputStream(file.getInputStream(), file.getSize(), executorService));
+    }
 
-
-
-
-    private Post getPostFromMap(Map<String, String> requestMap) {
+    private Post getPostFromMap(Map<String, String> requestMap, String fileUrl) {
         String postContent = requestMap.get("postContent");
         String title = requestMap.get("title");
 
@@ -163,6 +202,7 @@ public class PostServiceImpl implements PostService {
         // Fetch the user from the database using the email
         User currentUser = userDAO.findByEmail(currentUserEmail).orElse(null);
 
+        Date currentDate = getDate();
         // Ensure the user exists before creating the post
         if (currentUser != null) {
             // Create a new Post object and set its properties
@@ -170,6 +210,8 @@ public class PostServiceImpl implements PostService {
                     .postContent(postContent)
                     .title(title)
                     .user(currentUser)
+                    .fileUrl(fileUrl)
+                    .createdAt(currentDate)
                     .build();
         } else {
             // Handle the case where the user does not exist
@@ -177,38 +219,21 @@ public class PostServiceImpl implements PostService {
         }
     }
 
-    private String uploadFileToS3(MultipartFile file) throws IOException {
-        // Check if the file is present
-        if (file != null && !file.isEmpty()) {
-            // AWS S3 configuration
-            String accessKey = "your-access-key";
-            String secretKey = "your-secret-key";
-            String region = "your-region";
-            String bucketName = "your-s3-bucket-name";
-
-            // Create an S3 client
-            S3Client s3Client = S3Client.builder()
-                    .region(Region.of(region))
-                    .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)))
-                    .build();
-
-            // Generate a unique file name or use the original file name
-            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-
-            // Upload the file to S3 bucket
-            s3Client.putObject(PutObjectRequest.builder()
-                    .bucket(bucketName)
-                    .key(fileName)
-                    .build(), RequestBody.fromBytes(file.getBytes()));
-
-            // Return the S3 file URL
-            return "https://" + bucketName + ".s3." + region + ".amazonaws.com/" + fileName;
-        }
-
-        // Return an empty string or null if no file was provided
-        return null;
+    private Date getDate() {
+        LocalDate currentDate = LocalDate.now();
+        return Date.from(currentDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
 
-
+    private Map<String, Object> mapPostToDto(Post post) {
+        Map<String, Object> postMap = new HashMap<>();
+        postMap.put("postID", post.getPostID());
+        postMap.put("title", post.getTitle());
+        postMap.put("postContent", post.getPostContent());
+        postMap.put("createdAt", post.getCreatedAt());
+        postMap.put("fileUrl", (post.getFileUrl() != null) ? post.getFileUrl() : "");
+        postMap.put("numberOfComments", post.getNumberOfComments());
+        postMap.put("numberOfLikes", post.getNumberOfLikes());
+        return postMap;
+    }
 
 }

@@ -9,9 +9,11 @@ import java.util.List;
 import java.util.Map;
 
 public interface PostService {
-    ResponseEntity<String> createPost(Map<String, String> requestMap, MultipartFile file) throws IOException;
+    ResponseEntity<String> createPost(Map<String, String> requestMap, List<MultipartFile> files) throws IOException;
     ResponseEntity<List<Map<String, Object>>> getByUser();
     ResponseEntity<String> updatePost(Long postId, Map<String, String> requestMap);
     ResponseEntity<String> deletePost(Long postId);
 
+
+    ResponseEntity<List<Post>> getAllPost();
 }
