@@ -29,6 +29,9 @@ public interface PostDAO extends JpaRepository<Post,Long> {
             "GROUP BY pc")
     List<Object[]> getCommentsAndLikesForPost(Long postId);
 
-
+    @Query("SELECT pf.post " +
+            "FROM PostFavorite pf " +
+            "WHERE pf.user.email = :email")
+    List<Post> findUserFavorites(@Param("email") String email);
 
 }

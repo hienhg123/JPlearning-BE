@@ -13,6 +13,8 @@ public interface PostService {
     ResponseEntity<List<Map<String, Object>>> getByUser();
     ResponseEntity<String> updatePost(Long postId, Map<String, String> requestMap);
     ResponseEntity<String> deletePost(Long postId);
+    ResponseEntity<List<Map<String, Object>>> getByUserFavorites();
+
 
 
     ResponseEntity<List<Post>> getAllPost();
