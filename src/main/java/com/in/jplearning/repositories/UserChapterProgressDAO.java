@@ -11,6 +11,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UserChapterProgressDAO extends JpaRepository<UserChapterProgress,Long> {
-    Optional<UserChapterProgress> findByUserAndChapter(User user, Chapter chapter);
+    List<UserChapterProgress> findByUser(User user);
 
 }

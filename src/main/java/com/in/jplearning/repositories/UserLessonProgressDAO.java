@@ -9,7 +9,5 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UserLessonProgressDAO extends JpaRepository<UserLessonProgress, Long> {
-    List<UserLessonProgress> findByUserAndChapter(User user, Chapter chapter);
-    Optional<UserLessonProgress> findByUserAndLesson(User user, Lesson lesson);
 
 }
