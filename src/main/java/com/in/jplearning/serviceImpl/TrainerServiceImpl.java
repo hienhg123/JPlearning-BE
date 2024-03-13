@@ -3,10 +3,13 @@ package com.in.jplearning.serviceImpl;
 import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.constants.JPConstants;
 import com.in.jplearning.enums.JLPTLevel;
+import com.in.jplearning.enums.NotificationType;
 import com.in.jplearning.enums.VerificationType;
+import com.in.jplearning.model.Notification;
 import com.in.jplearning.model.Trainer;
 import com.in.jplearning.model.User;
 import com.in.jplearning.model.VerifyRequest;
+import com.in.jplearning.repositories.NotificationDAO;
 import com.in.jplearning.repositories.TrainerDAO;
 import com.in.jplearning.repositories.UserDAO;
 import com.in.jplearning.repositories.VerifyRequestDAO;
@@ -26,6 +29,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.Map;
@@ -49,18 +53,21 @@ public class TrainerServiceImpl implements TrainerService {
     private final S3Client s3Client;
 
     private final VerifyRequestDAO verifyRequestDAO;
+
+    private final NotificationDAO notificationDAO;
+
     @Override
     @Transactional
     public ResponseEntity<String> registerAsTrainer(MultipartFile pictureFiles, Map<String, String> requestMap) {
-        try{
+        try {
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             //get current user
-            if(userOptional.isEmpty()){
-               return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+            if (userOptional.isEmpty()) {
+                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
             }
             User user = userOptional.get();
             //check if user is already trainer
-            if(checkExist(user)){
+            if (checkExist(user)) {
                 return JPLearningUtils.getResponseEntity("Bạn đã là trainer", HttpStatus.BAD_REQUEST);
             }
             //save user in trainer table
@@ -73,18 +80,18 @@ public class TrainerServiceImpl implements TrainerService {
                     .dob(parseDate(requestMap.get("dob")))
                     .build();
             //get the certificate picture and push to aws s3
-            if(pictureFiles == null || pictureFiles.isEmpty()){
+            if (pictureFiles == null || pictureFiles.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Không tìm thấy ảnh", HttpStatus.BAD_REQUEST);
             }
             //check img content
-            if(!(pictureFiles.getContentType().endsWith("png") || pictureFiles.getContentType().endsWith("jpeg"))){
+            if (!(pictureFiles.getContentType().endsWith("png") || pictureFiles.getContentType().endsWith("jpeg"))) {
                 return JPLearningUtils.getResponseEntity("Định dạng ảnh chưa đúng", HttpStatus.BAD_REQUEST);
             }
             PutObjectRequest request = PutObjectRequest.builder()
                     .key(pictureFiles.getOriginalFilename())
                     .bucket(bucketName)
                     .build();
-            s3Client.putObject(request, RequestBody.fromInputStream(pictureFiles.getInputStream(),pictureFiles.getSize()));
+            s3Client.putObject(request, RequestBody.fromInputStream(pictureFiles.getInputStream(), pictureFiles.getSize()));
             trainerDAO.save(trainer);
             //save into verify request table
             String verifyUrl = cloudFront + "/" + pictureFiles.getOriginalFilename();
@@ -98,7 +105,7 @@ public class TrainerServiceImpl implements TrainerService {
                     .build();
             verifyRequestDAO.save(verifyRequest);
             return JPLearningUtils.getResponseEntity("Đăng kí thành công, yêu cầu của bạn sẽ được xử lí trong vòng 24 giờ", HttpStatus.OK);
-        }catch (Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -107,29 +114,50 @@ public class TrainerServiceImpl implements TrainerService {
     @Transactional
     @Override
     public ResponseEntity<String> updateStatus(Map<String, String> requestMap) {
-        try{
+        try {
             log.info(String.valueOf(jwtAuthFilter.isManager()));
 
             //check if user is manager
-            if(jwtAuthFilter.isManager()){
+            if (jwtAuthFilter.isManager()) {
                 Trainer trainer = trainerDAO.findById(Long.parseLong(requestMap.get("traineeID"))).get();
                 //check if user empty
-                if(trainer != null){
-                    trainerDAO.updateStatus(Boolean.parseBoolean(requestMap.get("isVerify")),trainer.getTraineeID());
-                    verifyRequestDAO.updateStatus(Boolean.parseBoolean(requestMap.get("approved")),Long.parseLong(requestMap.get("requestID")));
+                if (trainer != null) {
+                    trainerDAO.updateStatus(Boolean.parseBoolean(requestMap.get("isVerify")), trainer.getTraineeID());
+                    verifyRequestDAO.updateStatus(Boolean.parseBoolean(requestMap.get("approved")), Long.parseLong(requestMap.get("requestID")));
+                    notificationDAO.save(getNotificationFromMap(trainer.getUser().getUserID()));
                     return JPLearningUtils.getResponseEntity("Thay đổi thành công", HttpStatus.OK);
                 }
                 return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.UNAUTHORIZED);
             }
             return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
-        } catch (Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    private Notification getNotificationFromMap(Long userID) {
+        User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
+        User sender = User.builder()
+                .userID(user.getUserID())
+                .build();
+        User receiver = User.builder()
+                .userID(userID)
+                .build();
+        Notification notification = Notification.builder()
+                .notificationType(NotificationType.VERIFY)
+                .receiver(receiver)
+                .content("Tài khoản của bạn đã được xác thực")
+                .isRead(false)
+                .sender(sender)
+                .createdTime(LocalDateTime.now())
+                .build();
+        return notification;
+
+    }
+
     private boolean checkExist(User user) {
-        if(trainerDAO.getByUserId(user.getUserID()) != null){
+        if (trainerDAO.getByUserId(user.getUserID()) != null) {
             return true;
         }
         return false;
@@ -144,6 +172,7 @@ public class TrainerServiceImpl implements TrainerService {
             return null;
         }
     }
+
     private Date getDate() {
         LocalDate currentDate = LocalDate.now();
         return Date.from(currentDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
