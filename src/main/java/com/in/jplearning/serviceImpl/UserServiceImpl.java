@@ -400,7 +400,7 @@ public class UserServiceImpl implements UserService {
                 .email(requestMap.get("email"))
                 .password(passwordEncoder.encode(requestMap.get("password")))
                 .role(Role.USER)
-//              .level(JLPTLevel.None)
+                .level(JLPTLevel.None)
                 .isActive(true)
                 .build();
     }
