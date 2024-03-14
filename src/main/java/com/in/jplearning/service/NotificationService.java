@@ -11,4 +11,6 @@ public interface NotificationService {
     ResponseEntity<List<Notification>> getUserNotification();
 
     ResponseEntity<String> createPostNotification(Map<String, String> requestMap);
+
+    ResponseEntity<String> updateAllReadStatus(List<Notification> notifications);
 }
