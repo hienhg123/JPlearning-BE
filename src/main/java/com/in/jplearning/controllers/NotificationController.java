@@ -21,19 +21,30 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @GetMapping(path = "/getNotification")
-    public ResponseEntity<List<Notification>> getAllNotification(){
-        try{
-           return notificationService.getUserNotification();
-        }catch (Exception ex){
+    public ResponseEntity<List<Notification>> getAllNotification() {
+        try {
+            return notificationService.getUserNotification();
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
     @PostMapping(path = "/createPostNotification")
-    public ResponseEntity<String> createPostNotification(@RequestBody Map<String,String> requestMap){
-        try{
+    public ResponseEntity<String> createPostNotification(@RequestBody Map<String, String> requestMap) {
+        try {
             return notificationService.createPostNotification(requestMap);
-        }catch (Exception ex){
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity("", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @PutMapping(path = "/updateReadStatus")
+    public ResponseEntity<String> updateAllReadStatus(@RequestBody List<Notification> notifications) {
+        try {
+            return notificationService.updateAllReadStatus(notifications);
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         return JPLearningUtils.getResponseEntity("", HttpStatus.INTERNAL_SERVER_ERROR);

@@ -67,6 +67,21 @@ public class NotificationServiceImpl implements NotificationService {
         return JPLearningUtils.getResponseEntity("", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @Override
+    public ResponseEntity<String> updateAllReadStatus(List<Notification> notifications) {
+        try{
+            //set all read to true
+            for(Notification notification: notifications){
+                notification.setRead(true);
+                notificationDAO.save(notification);
+            }
+            return JPLearningUtils.getResponseEntity("", HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity("", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     private Notification getNotificationFromMap(Map<String, String> requestMap, Long userID) {
         User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
         User sender = User.builder()
