@@ -92,8 +92,12 @@ public class ReportServiceImpl implements ReportService {
         try{
             //check if manager
             if(jwtAuthFilter.isManager()){
-                reportDAO.deleteById(reportID);
-                return JPLearningUtils.getResponseEntity("Xóa thành công", HttpStatus.OK);
+                //check if exist
+                if(reportDAO.findById(reportID).isPresent()) {
+                    reportDAO.deleteById(reportID);
+                    return JPLearningUtils.getResponseEntity("Xóa thành công", HttpStatus.OK);
+                }
+                return JPLearningUtils.getResponseEntity("Không tồn tại", HttpStatus.BAD_REQUEST);
             }
             return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
         }catch (Exception ex){

@@ -1,5 +1,7 @@
 package com.in.jplearning.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,6 +22,7 @@ import java.util.List;
 @DynamicUpdate
 @DynamicInsert
 @Builder
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Post implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,15 +34,19 @@ public class Post implements Serializable {
     private Date createdAt;
     private String fileUrl;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_fk",referencedColumnName = "user_ID")
     private User user;
 
+
     @OneToMany(mappedBy = "post")
     List<PostComment> postComments;
 
+
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
     List<PostLike> postLikes;
+
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
     List<PostFavorite> postFavorites;

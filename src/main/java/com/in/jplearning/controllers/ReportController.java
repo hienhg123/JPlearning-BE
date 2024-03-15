@@ -25,7 +25,7 @@ public class ReportController {
             @RequestBody Map<String, String> reportDetails) {
         return reportService.createReport(postId, reportDetails);
     }
-    @GetMapping(path = "getAllReport")
+    @GetMapping(path = "/getAllReport")
     public ResponseEntity<Page<Report>> getReportList(){
         try{
             return reportService.getReportList();
