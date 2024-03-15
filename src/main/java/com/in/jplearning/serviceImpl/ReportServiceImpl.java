@@ -13,6 +13,10 @@ import com.in.jplearning.service.ReportService;
 import com.in.jplearning.utils.JPLearningUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -67,6 +71,35 @@ public class ReportServiceImpl implements ReportService {
             ex.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Something went wrong");
         }
+    }
+    @Override
+    public ResponseEntity<Page<Report>> getReportList() {
+        try{
+            //check if user is manager
+            if(jwtAuthFilter.isManager()){
+               return new ResponseEntity<>(reportDAO.findAll(PageRequest.of(0,10,Sort.by("createdAt").descending())),HttpStatus.OK);
+            }
+            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
+
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
+    public ResponseEntity<String> deleteReport(Long reportID) {
+        try{
+            //check if manager
+            if(jwtAuthFilter.isManager()){
+                reportDAO.deleteById(reportID);
+                return JPLearningUtils.getResponseEntity("Xóa thành công", HttpStatus.OK);
+            }
+            return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
 
