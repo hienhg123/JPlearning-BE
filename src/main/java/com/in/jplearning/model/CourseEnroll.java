@@ -9,6 +9,7 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.io.Serializable;
+import java.util.Date;
 
 @Entity
 @Data
@@ -31,5 +32,7 @@ public class CourseEnroll implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_fk",referencedColumnName = "course_ID")
     private Course course;
+
+    private Date joinTime;
 
 }

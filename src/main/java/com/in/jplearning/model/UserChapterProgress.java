@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
+import java.io.Serializable;
+
 @Entity
 @Data
 @AllArgsConstructor
@@ -15,7 +17,7 @@ import org.hibernate.annotations.DynamicUpdate;
 @DynamicUpdate
 @DynamicInsert
 @Builder
-public class UserChapterProgess {
+public class UserChapterProgress implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,5 +32,7 @@ public class UserChapterProgess {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "chapter_fk",referencedColumnName = "chapter_ID")
     private Chapter chapter;
+
+
 
 }

@@ -1,5 +1,6 @@
 package com.in.jplearning.model;
 
+import com.in.jplearning.enums.ReportType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,6 +10,9 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.io.Serializable;
+import java.util.Date;
+import java.util.List;
+
 
 @Entity
 @Data
@@ -17,19 +21,27 @@ import java.io.Serializable;
 @DynamicUpdate
 @DynamicInsert
 @Builder
-public class UserLessonProgress implements Serializable {
+public class Report implements Serializable {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_lesson_progress_id")
-    private Long user_lesson_progress_Id;
-    private Boolean isFinished;
+    @Column(name = "report_Id")
+    private Long reportID;
+
+    @Enumerated(EnumType.STRING)
+    private ReportType reportType;
+
+    private String reportContent;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_fk",referencedColumnName = "user_ID")
+    @JoinColumn(name = "user_fk", referencedColumnName = "user_id")
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "lesson_fk",referencedColumnName = "lesson_ID")
-    private Lesson lesson;
+    @JoinColumn(name = "post_fk",referencedColumnName = "post_ID")
+    private Post post;
 
 }

@@ -42,4 +42,6 @@ public class Course implements Serializable {
 
     @OneToMany(mappedBy = "course")
     private Set<CourseEnroll> courseEnrolls;
+
+
 }
