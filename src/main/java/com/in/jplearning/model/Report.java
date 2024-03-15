@@ -1,6 +1,6 @@
 package com.in.jplearning.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.in.jplearning.enums.ReportType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,6 +11,8 @@ import org.hibernate.annotations.DynamicUpdate;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
+
 
 @Entity
 @Data
@@ -19,23 +21,27 @@ import java.util.Date;
 @DynamicUpdate
 @DynamicInsert
 @Builder
-public class Bill implements Serializable {
+public class Report implements Serializable {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "bill_ID")
-    private Long billID;
-    private String billNumber;
-    private Long total;
-    private Date createdAt;
-    private String paymentMethod;
+    @Column(name = "report_Id")
+    private Long reportID;
 
-    @JsonIgnore
+    @Enumerated(EnumType.STRING)
+    private ReportType reportType;
+
+    private String reportContent;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date createdAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_fk",referencedColumnName = "user_ID")
+    @JoinColumn(name = "user_fk", referencedColumnName = "user_id")
     private User user;
 
-    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "premium_fk",referencedColumnName = "premium_ID")
-    private Premium premium;
+    @JoinColumn(name = "post_fk",referencedColumnName = "post_ID")
+    private Post post;
+
 }

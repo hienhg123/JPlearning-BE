@@ -14,6 +14,7 @@ public interface ChapterService {
     ResponseEntity<Chapter> getChapterLesson(Long chapterID);
 
     double calculateCourseProgressByUser(User user, Course course);
+    List<Map<String, Object>> getCoursesWithProgressByUser(String userEmail);
 
 
 }

@@ -195,8 +195,33 @@ public class VNPayServiceImpl implements VNPayService {
         }
     }
 
+    @Override
+    public ResponseEntity<List<Bill>> getBillHistoryByUser() {
+        try {
+            // Get the current user
+            User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).orElse(null);
+            if (user != null) {
+                log.info("User ID: " + user.getUserID());
+                // Get bill history by user ID
+                List<Bill> billHistory = billDAO.getbyUser(user.getEmail());
+                return new ResponseEntity<>(billHistory, HttpStatus.OK);
+            } else {
+                // User not found
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+
+
     private Date getDate() {
         LocalDate currentDate = LocalDate.now();
         return Date.from(currentDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
+
+
 }

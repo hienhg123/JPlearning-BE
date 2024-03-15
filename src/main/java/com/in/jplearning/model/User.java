@@ -53,7 +53,7 @@ public class User implements UserDetails {
     @JsonIgnore
     @OneToMany(mappedBy = "user")
     private List<User_Exercise> user_exercises;
-
+    @JsonIgnore
     @ManyToMany(mappedBy = "userSet")
     private Set<FlashCardSet> cardSets = new HashSet<>();
 

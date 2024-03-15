@@ -2,10 +2,7 @@ package com.in.jplearning.serviceImpl;
 
 import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.model.*;
-import com.in.jplearning.repositories.ChapterDAO;
-import com.in.jplearning.repositories.UserChapterProgressDAO;
-import com.in.jplearning.repositories.UserDAO;
-import com.in.jplearning.repositories.UserLessonProgressDAO;
+import com.in.jplearning.repositories.*;
 import com.in.jplearning.service.ChapterService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +23,7 @@ public class ChapterServiceImpl implements ChapterService {
     private final UserChapterProgressDAO userChapterProgressDAO;
     private final UserDAO userDAO;
     private final JwtAuthFilter jwtAuthFilter;
+    private final CourseDAO courseDAO;
 
     @Override
     public ResponseEntity<Chapter> getChapterLesson(Long chapterID) {
@@ -36,6 +34,43 @@ public class ChapterServiceImpl implements ChapterService {
         }
         return new ResponseEntity<>(new Chapter(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @Override
+    public List<Map<String, Object>> getCoursesWithProgressByUser(String userEmail) {
+        User user = userDAO.findByEmail(userEmail).orElse(null);
+        if (user == null) {
+            // Handle the case where user is not found
+            return Collections.emptyList();
+        }
+
+        List<Course> courses = courseDAO.findAll();
+        List<Map<String, Object>> courseProgressList = new ArrayList<>();
+
+        for (Course course : courses) {
+            List<Chapter> chapters = course.getChapterList();
+            int totalChapters = chapters.size();
+            int finishedChapters = 0;
+
+            for (Chapter chapter : chapters) {
+                List<UserChapterProgress> userChapterProgressList
+                        = userChapterProgressDAO.findByUserAndChapterAndIsFinished(user, chapter, true);
+                if (!userChapterProgressList.isEmpty()) {
+                    finishedChapters++;
+                }
+            }
+
+            double courseProgress = totalChapters == 0 ? 0.0 : ((double) finishedChapters / totalChapters) * 100;
+
+            Map<String, Object> courseProgressMap = new HashMap<>();
+            courseProgressMap.put("courseName", course.getCourseName());
+            courseProgressMap.put("courseDescription", course.getCourseDescription());
+            courseProgressMap.put("progress", courseProgress);
+            courseProgressList.add(courseProgressMap);
+        }
+
+        return courseProgressList;
+    }
+
 
 
     @Override
