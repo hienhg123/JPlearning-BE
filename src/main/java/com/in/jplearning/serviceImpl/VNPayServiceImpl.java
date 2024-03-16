@@ -14,6 +14,9 @@ import com.in.jplearning.utils.JPLearningUtils;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -194,28 +197,38 @@ public class VNPayServiceImpl implements VNPayService {
             return true;
         }
     }
-
     @Override
-    public ResponseEntity<List<Bill>> getBillHistoryByUser() {
+    public ResponseEntity<Page<Map<String, Object>>> getBillHistoryByUser(int pageNumber, int pageSize) {
         try {
             // Get the current user
             User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).orElse(null);
             if (user != null) {
                 log.info("User ID: " + user.getUserID());
-                // Get bill history by user ID
-                List<Bill> billHistory = billDAO.getbyUser(user.getEmail());
-                return new ResponseEntity<>(billHistory, HttpStatus.OK);
+                // Get bill history by user ID with pagination
+                Page<Bill> billHistoryPage = billDAO.findByUserEmail(user.getEmail(), PageRequest.of(pageNumber, pageSize));
+
+                // Convert Page<Bill> to Page<Map<String, Object>> containing bill information maps
+                Page<Map<String, Object>> billInfoPage = billHistoryPage.map(bill -> {
+                    Map<String, Object> billInfoMap = new HashMap<>();
+                    billInfoMap.put("duration", bill.getPremium().getDuration());
+                    billInfoMap.put("total", bill.getTotal());
+                    billInfoMap.put("createdAt", bill.getCreatedAt());
+                    // You can add more properties to the map if needed
+                    return billInfoMap;
+                });
+
+                // Return the paged bill information
+                return ResponseEntity.ok(billInfoPage);
             } else {
                 // User not found
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                log.error("User not found.");
+                return ResponseEntity.notFound().build();
             }
         } catch (Exception ex) {
-            ex.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            log.error("Error occurred while fetching bill history for user.", ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-
-
 
 
     private Date getDate() {
