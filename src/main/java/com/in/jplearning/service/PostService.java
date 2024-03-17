@@ -18,4 +18,6 @@ public interface PostService {
 
 
     ResponseEntity<List<Post>> getAllPost();
+
+    ResponseEntity<?> getPostById(Long postID);
 }

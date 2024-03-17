@@ -56,4 +56,14 @@ public class PostController {
     public ResponseEntity<List<Map<String, Object>>> getByUserFavorites() {
         return postService.getByUserFavorites();
     }
+
+    @GetMapping(path = "/getPostById/{postID}")
+    public ResponseEntity<?> getPostById(@PathVariable Long postID){
+        try{
+            return postService.getPostById(postID);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return new ResponseEntity<>(new Post(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }

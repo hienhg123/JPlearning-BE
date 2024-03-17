@@ -169,6 +169,21 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    public ResponseEntity<?> getPostById(Long postID) {
+        try{
+            //check post exist
+            Optional<Post> postOptional = postDAO.findById(postID);
+            if(postOptional.isPresent()){
+                return new ResponseEntity<>(postOptional.get(), HttpStatus.OK);
+            }
+            return JPLearningUtils.getResponseEntity("Bài viết không tồn tại", HttpStatus.BAD_REQUEST);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return new ResponseEntity<>(new Post(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
     public ResponseEntity<String> createPost(Map<String, String> requestMap, List<MultipartFile> files) throws IOException {
         log.info("Inside createPost {}", requestMap);
         try {

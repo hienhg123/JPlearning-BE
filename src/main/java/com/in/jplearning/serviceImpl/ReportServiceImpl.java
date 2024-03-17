@@ -13,12 +13,17 @@ import com.in.jplearning.service.ReportService;
 import com.in.jplearning.utils.JPLearningUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -34,39 +39,66 @@ public class ReportServiceImpl implements ReportService {
     public ResponseEntity<String> createReport(Long postId, Map<String, String> reportDetails) {
         try {
             // Retrieve the user based on the current authentication
-            User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).orElse(null);
-            if (user == null) {
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            Optional<Post> postOptional = postDAO.findById(postId);
+            if (userOptional.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
             }
-
             // Retrieve the post if postId is provided
-            Post post = null;
-            if (postId != null) {
-                post = postDAO.findById(postId).orElse(null);
-                if (post == null) {
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Post not found");
-                }
+            if(postOptional.isEmpty()){
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy bài viết");
             }
 
             // Create the report
             Report report = mapToReport(reportDetails);
 
             // Set the user
-            report.setUser(user);
+            report.setUser(userOptional.get());
 
             // If postId is provided, set the post
-            if (post != null) {
-                report.setPost(post);
-            }
+            report.setPost(postOptional.get());
 
             // Save the report
             reportDAO.save(report);
 
-            return ResponseEntity.ok("Report created successfully");
+            return JPLearningUtils.getResponseEntity("Báo cáo thành công", HttpStatus.OK);
         } catch (Exception ex) {
             ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Something went wrong");
         }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    @Override
+    public ResponseEntity<Page<Report>> getReportList(int pageNumber ,int pageSize) {
+        try{
+            //check if user is manager
+            if(jwtAuthFilter.isManager()){
+               return new ResponseEntity<>(reportDAO.findAll(PageRequest.of(pageNumber,pageSize,Sort.by("createdAt").descending())),HttpStatus.OK);
+            }
+            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
+
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
+    public ResponseEntity<String> deleteReport(Long reportID) {
+        try{
+            //check if manager
+            if(jwtAuthFilter.isManager()){
+                //check if exist
+                if(reportDAO.findById(reportID).isPresent()) {
+                    reportDAO.deleteById(reportID);
+                    return JPLearningUtils.getResponseEntity("Xóa thành công", HttpStatus.OK);
+                }
+                return JPLearningUtils.getResponseEntity("Không tồn tại", HttpStatus.BAD_REQUEST);
+            }
+            return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
 
