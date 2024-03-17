@@ -25,10 +25,10 @@ public class ReportController {
             @RequestBody Map<String, String> reportDetails) {
         return reportService.createReport(postId, reportDetails);
     }
-    @GetMapping(path = "/getAllReport")
-    public ResponseEntity<Page<Report>> getReportList(){
+    @GetMapping(path = "/getAllReport/{pageNumber}/{pageSize}")
+    public ResponseEntity<Page<Report>> getReportList(@PathVariable int pageNumber ,@PathVariable int pageSize ){
         try{
-            return reportService.getReportList();
+            return reportService.getReportList(pageNumber,pageSize);
         }catch (Exception ex){
             ex.printStackTrace();
         }

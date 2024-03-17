@@ -34,7 +34,6 @@ public class Post implements Serializable {
     private Date createdAt;
     private String fileUrl;
 
-    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_fk",referencedColumnName = "user_ID")
     private User user;
