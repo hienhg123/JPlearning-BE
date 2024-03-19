@@ -13,6 +13,6 @@ public interface TrainerDAO extends JpaRepository<Trainer,Long> {
 
     @Transactional
     @Modifying
-    @Query(value = "Update Trainer t set t.isVerify = ?1 where t.traineeID =?2")
-    Integer updateStatus(Boolean isVerify, Long traineeID);
+    @Query(value = "Update Trainer t set t.isVerify = ?1 where t.trainerID =?2")
+    Integer updateStatus(Boolean isVerify, Long trainerID);
 }

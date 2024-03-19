@@ -36,6 +36,6 @@ public class VerifyRequest implements Serializable {
     private Date requestTimestamp;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "trainee_fk",referencedColumnName = "trainee_ID")
-    private Trainer trainee;
+    @JoinColumn(name = "trainer_fk",referencedColumnName = "trainer_ID")
+    private Trainer trainer;
 }
