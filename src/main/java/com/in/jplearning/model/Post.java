@@ -2,6 +2,8 @@ package com.in.jplearning.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.in.jplearning.enums.JLPTLevel;
+import com.in.jplearning.enums.PostType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,6 +13,8 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -28,11 +32,16 @@ public class Post implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "post_ID")
     private Long postID;
+    @Enumerated(EnumType.STRING)
+    private PostType postType;
+    @Enumerated(EnumType.STRING)
+    private JLPTLevel level;
     private String title;
+    @Column(columnDefinition = "MEDIUMTEXT")
     private String postContent;
     @Temporal(TemporalType.TIMESTAMP)
-    private Date createdAt;
-    private String fileUrl;
+    private LocalDateTime createdAt;
+    private Boolean isDraft;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_fk",referencedColumnName = "user_ID")
@@ -50,39 +59,5 @@ public class Post implements Serializable {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
     List<PostFavorite> postFavorites;
 
-    @Transient
-    private Long numberOfComments;
 
-    @Transient
-    private Long numberOfLikes;
-
-    @Transient
-    public Long getNumberOfComments() {
-        return postComments != null ? (long) postComments.size() : 0;
-    }
-
-    @Transient
-    public Long getNumberOfLikes() {
-        return postLikes != null ? (long) postLikes.size() : 0;
-    }
-
-    public void addComment(PostComment comment) {
-        if (postComments == null) {
-            postComments = new ArrayList<>();
-        }
-        postComments.add(comment);
-        comment.setPost(this);
-    }
-
-    public void addLike(PostLike like) {
-        if (postLikes == null) {
-            postLikes = new ArrayList<>();
-        }
-        postLikes.add(like);
-        like.setPost(this);
-    }
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = new Date();
-    }
 }

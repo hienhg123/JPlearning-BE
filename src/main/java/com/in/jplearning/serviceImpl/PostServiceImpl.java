@@ -2,34 +2,37 @@ package com.in.jplearning.serviceImpl;
 
 import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.constants.JPConstants;
+import com.in.jplearning.enums.JLPTLevel;
+import com.in.jplearning.enums.PostType;
 import com.in.jplearning.model.Post;
 import com.in.jplearning.model.PostFavorite;
+import com.in.jplearning.model.Trainer;
 import com.in.jplearning.model.User;
 import com.in.jplearning.repositories.PostDAO;
 import com.in.jplearning.repositories.PostFavoriteDAO;
+import com.in.jplearning.repositories.TrainerDAO;
 import com.in.jplearning.repositories.UserDAO;
 import com.in.jplearning.service.PostService;
 import com.in.jplearning.utils.JPLearningUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
-import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.PutObjectAclResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -54,9 +57,49 @@ public class PostServiceImpl implements PostService {
 
     private final S3AsyncClient s3AsyncClient;
 
+    private final TrainerDAO trainerDAO;
+
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);
 
+    @Override
+    public ResponseEntity<String> createPost(Map<String, String> requestMap){
+        log.info("Inside createPost {}", requestMap);
+        try{
+            User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
+            //check if user is trainer
+            Trainer trainer = trainerDAO.getByUserId(user.getUserID());
+            if(trainer == null){
+                return JPLearningUtils.getResponseEntity("Chỉ có trainer mới được đăng bài", HttpStatus.BAD_REQUEST);
+            }
 
+            Post post = getPostFromMap(requestMap,user);
+            postDAO.save(post);
+            //check if draft
+            if(requestMap.get("draft").isEmpty()){
+                return JPLearningUtils.getResponseEntity("Lưu bản nháp thành công", HttpStatus.OK);
+            }
+            return JPLearningUtils.getResponseEntity("Đăng bài thành công", HttpStatus.OK);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @Override
+    public ResponseEntity<?> uploadFiles(MultipartFile file) {
+        try{
+            if (file == null || file.isEmpty()) {
+                return JPLearningUtils.getResponseEntity("Không tìm thấy file", HttpStatus.BAD_REQUEST);
+            }
+            uploadToS3Async(file);
+            Map<String, String> response = new HashMap<>();
+            String imgUrl = cloudFront + "/" + file.getOriginalFilename();
+            response.put("url",imgUrl);
+            return  new ResponseEntity<>(response, HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
     @Override
     public ResponseEntity<String> updatePost(Long postId, Map<String, String> requestMap) {
         try {
@@ -159,13 +202,14 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public ResponseEntity<List<Post>> getAllPost() {
+    public ResponseEntity<?> getAllPost(int pageNumber, int pageSize) {
         try {
-            return new ResponseEntity<>(postDAO.findAll(), HttpStatus.OK);
+            Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("createdAt").descending());
+            return new ResponseEntity<>(postDAO.findAll(pageable), HttpStatus.OK);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
@@ -183,40 +227,7 @@ public class PostServiceImpl implements PostService {
         return new ResponseEntity<>(new Post(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    @Override
-    public ResponseEntity<String> createPost(Map<String, String> requestMap, List<MultipartFile> files) throws IOException {
-        log.info("Inside createPost {}", requestMap);
-        try {
-            int imageCount = 0;
-            int videoCount = 0;
-            String fileUrl = "";
-            //loop to check limit
-            for (MultipartFile file : files) {
-                String contentType = file.getContentType();
-                fileUrl += cloudFront + "/" + file.getOriginalFilename() + ",";
-                //check if number of image reach limit
-                if (contentType != null && contentType.startsWith("image/") && imageCount < 3) {
-                    imageCount++;
-                    //check if number of video reach limit
-                } else if (contentType != null && contentType.startsWith("video/") && videoCount < 1) {
-                    videoCount++;
-                } else {
-                    // Invalid file type or exceeded limit
-                    return JPLearningUtils.getResponseEntity("Quá số lượng cho phép", HttpStatus.BAD_REQUEST);
-                }
-            }
-            //loop to upload to s3
-            uploadToS3(files);
-            Post post = getPostFromMap(requestMap, fileUrl);
-            postDAO.save(post);
-            return JPLearningUtils.getResponseEntity("Đăng bài thành công", HttpStatus.OK);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    private void uploadToS3(List<MultipartFile> files) throws IOException {
+    private void uploadToS3(List<MultipartFile> files){
         List<CompletableFuture<PutObjectResponse>> uploadFutures = files.stream()
                 .map(file -> {
                     try {
@@ -236,36 +247,17 @@ public class PostServiceImpl implements PostService {
                 AsyncRequestBody.fromInputStream(file.getInputStream(), file.getSize(), executorService));
     }
 
-    private Post getPostFromMap(Map<String, String> requestMap, String fileUrl) {
-        String postContent = requestMap.get("postContent");
-        String title = requestMap.get("title");
+    private Post getPostFromMap(Map<String, String> requestMap, User user) {
+        return Post.builder()
+               .postContent(requestMap.get("postContent"))
+               .title(requestMap.get("title"))
+               .postType(PostType.valueOf(requestMap.get("postType")))
+               .level(JLPTLevel.valueOf(requestMap.get("level")))
+               .isDraft(Boolean.parseBoolean(requestMap.get("draft")))
+               .createdAt(LocalDateTime.now())
+               .user(user)
+               .build();
 
-        // Retrieve the logged-in user details from the JwtAuthFilter
-        String currentUserEmail = jwtAuthFilter.getCurrentUser();
-
-        // Fetch the user from the database using the email
-        User currentUser = userDAO.findByEmail(currentUserEmail).orElse(null);
-
-        Date currentDate = getDate();
-        // Ensure the user exists before creating the post
-        if (currentUser != null) {
-            // Create a new Post object and set its properties
-            return Post.builder()
-                    .postContent(postContent)
-                    .title(title)
-                    .user(currentUser)
-                    .fileUrl(fileUrl)
-                    .createdAt(currentDate)
-                    .build();
-        } else {
-            // Handle the case where the user does not exist
-            throw new RuntimeException("Logged-in user not found");
-        }
-    }
-
-    private Date getDate() {
-        LocalDate currentDate = LocalDate.now();
-        return Date.from(currentDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
 
     private Map<String, Object> mapPostToDto(Post post) {
@@ -274,9 +266,6 @@ public class PostServiceImpl implements PostService {
         postMap.put("title", post.getTitle());
         postMap.put("postContent", post.getPostContent());
         postMap.put("createdAt", post.getCreatedAt());
-        postMap.put("fileUrl", (post.getFileUrl() != null) ? post.getFileUrl() : "");
-        postMap.put("numberOfComments", post.getNumberOfComments());
-        postMap.put("numberOfLikes", post.getNumberOfLikes());
         return postMap;
     }
 

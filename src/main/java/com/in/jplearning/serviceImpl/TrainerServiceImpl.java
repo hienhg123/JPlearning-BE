@@ -100,7 +100,7 @@ public class TrainerServiceImpl implements TrainerService {
                     .verificationType(VerificationType.JLPT_CERTIFICATE_VERIFICATION)
                     .approved(false)
                     .url(verifyUrl)
-                    .trainee(trainer)
+                    .trainer(trainer)
                     .requestTimestamp(currentDate)
                     .build();
             verifyRequestDAO.save(verifyRequest);
@@ -119,10 +119,10 @@ public class TrainerServiceImpl implements TrainerService {
 
             //check if user is manager
             if (jwtAuthFilter.isManager()) {
-                Trainer trainer = trainerDAO.findById(Long.parseLong(requestMap.get("traineeID"))).get();
+                Trainer trainer = trainerDAO.findById(Long.parseLong(requestMap.get("trainerID"))).get();
                 //check if user empty
                 if (trainer != null) {
-                    trainerDAO.updateStatus(Boolean.parseBoolean(requestMap.get("isVerify")), trainer.getTraineeID());
+                    trainerDAO.updateStatus(Boolean.parseBoolean(requestMap.get("isVerify")), trainer.getTrainerID());
                     verifyRequestDAO.updateStatus(Boolean.parseBoolean(requestMap.get("approved")), Long.parseLong(requestMap.get("requestID")));
                     notificationDAO.save(getNotificationFromMap(trainer.getUser().getUserID()));
                     return JPLearningUtils.getResponseEntity("Thay đổi thành công", HttpStatus.OK);

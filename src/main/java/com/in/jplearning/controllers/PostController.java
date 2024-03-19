@@ -1,7 +1,9 @@
 package com.in.jplearning.controllers;
 
+import com.in.jplearning.constants.JPConstants;
 import com.in.jplearning.model.Post;
 import com.in.jplearning.service.PostService;
+import com.in.jplearning.utils.JPLearningUtils;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,20 +22,32 @@ import java.util.Map;
 public class PostController {
     private final PostService postService;
 
-    @PostMapping("/createPost")
-    public ResponseEntity<String> createPost(
-            @RequestParam Map<String, String> requestMap,
-            @RequestPart(value = "files",required = false) List<MultipartFile> files) throws IOException {
-        return postService.createPost(requestMap, files);
-    }
-    @GetMapping(path = "/getAllPost")
-    public ResponseEntity<List<Post>> getAllPost(){
+   @PostMapping(path = "/createPost")
+   public ResponseEntity<String> createPost(@RequestBody Map<String,String> requestMap){
+       try{
+           return postService.createPost(requestMap);
+       }catch (Exception ex){
+           ex.printStackTrace();
+       }
+       return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+   }
+   @PostMapping(path = "/uploadFile")
+   public ResponseEntity<?> uploadFiles(@RequestParam("upload") MultipartFile file) throws IOException{
+       try{
+           return postService.uploadFiles(file);
+       }catch (Exception ex){
+           ex.printStackTrace();
+       }
+       return new ResponseEntity<>(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+   }
+    @GetMapping(path = "/getAllPost/{pageNumber}/{pageSize}")
+    public ResponseEntity<?> getAllPost(@PathVariable int pageNumber, @PathVariable int pageSize){
         try{
-            return postService.getAllPost();
+            return postService.getAllPost(pageNumber,pageSize);
         }catch (Exception ex){
             ex.printStackTrace();
         }
-        return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @GetMapping("/getByUser")

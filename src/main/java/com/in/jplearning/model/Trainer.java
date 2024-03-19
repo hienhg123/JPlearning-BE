@@ -23,8 +23,8 @@ import java.util.Date;
 public class Trainer implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "trainee_ID")
-    private Long traineeID;
+    @Column(name = "trainer_ID")
+    private Long trainerID;
     @Column(columnDefinition = "NVARCHAR(255)")
     private String fullName;
     @Column(columnDefinition = "NVARCHAR(255)")
