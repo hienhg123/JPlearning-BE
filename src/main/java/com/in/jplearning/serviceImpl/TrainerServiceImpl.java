@@ -22,18 +22,23 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.core.async.AsyncRequestBody;
+import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Date;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -50,16 +55,19 @@ public class TrainerServiceImpl implements TrainerService {
 
     private final String bucketName = "trainerverfiy";
 
-    private final S3Client s3Client;
-
     private final VerifyRequestDAO verifyRequestDAO;
 
     private final NotificationDAO notificationDAO;
+    private final S3AsyncClient s3AsyncClient;
+
+    private final ExecutorService executorService = Executors.newFixedThreadPool(10);
 
     @Override
     @Transactional
-    public ResponseEntity<String> registerAsTrainer(MultipartFile pictureFiles, Map<String, String> requestMap) {
+    public ResponseEntity<String> registerAsTrainer(List<MultipartFile> pictureFiles, Map<String, String> requestMap) {
         try {
+            String uuid = UUID.randomUUID().toString();
+            String verifyUrl = "";
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             //get current user
             if (userOptional.isEmpty()) {
@@ -84,17 +92,13 @@ public class TrainerServiceImpl implements TrainerService {
                 return JPLearningUtils.getResponseEntity("Không tìm thấy ảnh", HttpStatus.BAD_REQUEST);
             }
             //check img content
-            if (!(pictureFiles.getContentType().endsWith("png") || pictureFiles.getContentType().endsWith("jpeg"))) {
-                return JPLearningUtils.getResponseEntity("Định dạng ảnh chưa đúng", HttpStatus.BAD_REQUEST);
+            for(MultipartFile multipartFile : pictureFiles){
+                verifyUrl += cloudFront + "/" + uuid + multipartFile.getOriginalFilename() + ", ";
+                if (!(multipartFile.getContentType().endsWith("png") || multipartFile.getContentType().endsWith("jpeg"))) {
+                    return JPLearningUtils.getResponseEntity("Định dạng ảnh chưa đúng", HttpStatus.BAD_REQUEST);
+                }
             }
-            PutObjectRequest request = PutObjectRequest.builder()
-                    .key(pictureFiles.getOriginalFilename())
-                    .bucket(bucketName)
-                    .build();
-            s3Client.putObject(request, RequestBody.fromInputStream(pictureFiles.getInputStream(), pictureFiles.getSize()));
-            trainerDAO.save(trainer);
             //save into verify request table
-            String verifyUrl = cloudFront + "/" + pictureFiles.getOriginalFilename();
             Date currentDate = getDate();
             VerifyRequest verifyRequest = VerifyRequest.builder()
                     .verificationType(VerificationType.JLPT_CERTIFICATE_VERIFICATION)
@@ -103,7 +107,9 @@ public class TrainerServiceImpl implements TrainerService {
                     .trainer(trainer)
                     .requestTimestamp(currentDate)
                     .build();
+            trainerDAO.save(trainer);
             verifyRequestDAO.save(verifyRequest);
+            uploadToS3(pictureFiles,uuid);
             return JPLearningUtils.getResponseEntity("Đăng kí thành công, yêu cầu của bạn sẽ được xử lí trong vòng 24 giờ", HttpStatus.OK);
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -124,7 +130,12 @@ public class TrainerServiceImpl implements TrainerService {
                 if (trainer != null) {
                     trainerDAO.updateStatus(Boolean.parseBoolean(requestMap.get("isVerify")), trainer.getTrainerID());
                     verifyRequestDAO.updateStatus(Boolean.parseBoolean(requestMap.get("approved")), Long.parseLong(requestMap.get("requestID")));
-                    notificationDAO.save(getNotificationFromMap(trainer.getUser().getUserID()));
+                    //check if approve or reject
+                    if(Boolean.parseBoolean(requestMap.get("approved"))){
+                        notificationDAO.save(getNotificationFromMap(trainer.getUser().getUserID(),"Tài khoản của bạn đã được xác thực"));
+                    } else {
+                        notificationDAO.save(getNotificationFromMap(trainer.getUser().getUserID(),"Tài khoản của bạn không được chấp nhận"));
+                    }
                     return JPLearningUtils.getResponseEntity("Thay đổi thành công", HttpStatus.OK);
                 }
                 return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.UNAUTHORIZED);
@@ -136,7 +147,7 @@ public class TrainerServiceImpl implements TrainerService {
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    private Notification getNotificationFromMap(Long userID) {
+    private Notification getNotificationFromMap(Long userID,String content) {
         User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
         User sender = User.builder()
                 .userID(user.getUserID())
@@ -147,7 +158,7 @@ public class TrainerServiceImpl implements TrainerService {
         Notification notification = Notification.builder()
                 .notificationType(NotificationType.VERIFY)
                 .receiver(receiver)
-                .content("Tài khoản của bạn đã được xác thực")
+                .content(content)
                 .isRead(false)
                 .sender(sender)
                 .createdTime(LocalDateTime.now())
@@ -176,5 +187,25 @@ public class TrainerServiceImpl implements TrainerService {
     private Date getDate() {
         LocalDate currentDate = LocalDate.now();
         return Date.from(currentDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+    }
+    private void uploadToS3(List<MultipartFile> files,String uuid) throws IOException {
+        List<CompletableFuture<PutObjectResponse>> uploadFutures = files.stream()
+                .map(file -> {
+                    try {
+                        return uploadToS3Async(file,uuid);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .collect(Collectors.toList());
+    }
+
+    private CompletableFuture<PutObjectResponse> uploadToS3Async(MultipartFile file,String uuid) throws IOException {
+        String key =  uuid + file.getOriginalFilename();
+        return s3AsyncClient.putObject(PutObjectRequest.builder()
+                        .bucket(bucketName)
+                        .key(key)
+                        .build(),
+                AsyncRequestBody.fromInputStream(file.getInputStream(), file.getSize(), executorService));
     }
 }
