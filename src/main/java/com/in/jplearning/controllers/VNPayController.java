@@ -51,6 +51,15 @@ public class VNPayController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ArrayList<>());
         }
     }
+    @GetMapping("/checkout")
+    public ResponseEntity<?> checkOut() {
+        try {
+            return vnPayService.checkOut();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ArrayList<>());
+    }
 
 
 }

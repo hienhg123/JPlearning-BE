@@ -13,4 +13,5 @@ public interface VNPayService {
     ResponseEntity<String> paymentCallBack(Map<String, String> requestMap, HttpServletResponse response);
     ResponseEntity<List<Bill>> getBillHistoryByUser();
 
+    ResponseEntity<?> checkOut();
 }

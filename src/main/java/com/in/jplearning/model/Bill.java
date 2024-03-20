@@ -27,6 +27,7 @@ public class Bill implements Serializable {
     private String billNumber;
     private Long total;
     private Date createdAt;
+    private Date expireAt;
     private String paymentMethod;
 
     @JsonIgnore

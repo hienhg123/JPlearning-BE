@@ -14,6 +14,7 @@ import com.in.jplearning.utils.JPLearningUtils;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.Period;
 import java.time.ZoneId;
 import java.util.*;
 
@@ -35,17 +37,14 @@ public class VNPayServiceImpl implements VNPayService {
     private final BillDAO billDAO;
 
 
-
     private final UserDAO userDAO;
 
     private final JwtAuthFilter jwtAuthFilter;
+
     @Override
     public ResponseEntity<?> createPayment(Long premiumID) {
-        try{
+        try {
             //check if user have already bought this premium or the current one is expired
-            if(checkPremium(premiumID)){
-                return JPLearningUtils.getResponseEntity("Bạn không thể mua thêm khóa hiện tại hoặc khóa thấp hơn khi chưa hết hạn",HttpStatus.BAD_REQUEST);
-            }
             String vnp_Version = "2.1.0";
             String vnp_Command = "pay";
             String orderType = "other";
@@ -66,7 +65,6 @@ public class VNPayServiceImpl implements VNPayService {
             vnp_Params.put("vnp_Amount", String.valueOf(amount));
             vnp_Params.put("vnp_CurrCode", "VND");
 
-            vnp_Params.put("vnp_BankCode", bankCode);
             vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
             vnp_Params.put("vnp_OrderInfo", "Thanh toan:" + vnp_TxnRef);
             vnp_Params.put("vnp_OrderType", orderType);
@@ -111,8 +109,8 @@ public class VNPayServiceImpl implements VNPayService {
             String vnp_SecureHash = VNPayConfig.hmacSHA512(VNPayConfig.secretKey, hashData.toString());
             queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
             String paymentUrl = VNPayConfig.vnp_PayUrl + "?" + queryUrl;
-           return JPLearningUtils.getResponseEntity(paymentUrl,HttpStatus.OK);
-        }catch (Exception ex){
+            return JPLearningUtils.getResponseEntity(paymentUrl, HttpStatus.OK);
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -120,79 +118,74 @@ public class VNPayServiceImpl implements VNPayService {
 
     @Override
     public ResponseEntity<String> paymentCallBack(Map<String, String> requestMap, HttpServletResponse response) {
-        try{
+        try {
             String vnp_ResponseCode = requestMap.get("vnp_ResponseCode");
             log.info(vnp_ResponseCode);
             // get premiumID
             String premiumIDRaw = requestMap.get("premiumID");
             //check if premiumid is exist
-            if(premiumIDRaw !=null && !premiumIDRaw.equals("")){
+            if (premiumIDRaw != null && !premiumIDRaw.equals("")) {
                 //check if payment sucess
-                if("00".equals(vnp_ResponseCode)){
+                if ("00".equals(vnp_ResponseCode)) {
+                    Premium premium = premiumDAO.findById(Long.parseLong(premiumIDRaw)).get();
+                    Date currentDate = getDate();
+                    Bill bill = new Bill();
+                    //check if first time buying
+                    if (billDAO.getUserLatestBill(jwtAuthFilter.getCurrentUser(), PageRequest.of(0, 1)).isEmpty()) {
+                        Date expireDate = getExpireDate(currentDate,premium,0);
+                        bill = generateBill(premium,currentDate,expireDate);
+                    } else {
+                        Bill oldBill = billDAO.getUserLatestBill(jwtAuthFilter.getCurrentUser(), PageRequest.of(0, 1)).get(0);
+                        //get the remaining month
+                        int remaining = remainingMoth(oldBill.getExpireAt());
+                        //set the latest bill expert to today
+                        Date expireDate = getExpireDate(currentDate,premium,remaining);
+                        oldBill.setExpireAt(currentDate);
+                        billDAO.save(oldBill);
+                        bill = generateBill(premium,currentDate,expireDate);
+                    }
                     //save into bill
-                    Bill bill = generateBill(premiumIDRaw);
                     billDAO.save(bill);
                     response.sendRedirect("http://localhost:4200/checkout-success");
                     return JPLearningUtils.getResponseEntity("Thanh toán thành công", HttpStatus.OK);
+                } else {
+                    return JPLearningUtils.getResponseEntity("Thanh toán thất bại", HttpStatus.BAD_GATEWAY);
                 }
-            } else {
-                return JPLearningUtils.getResponseEntity("Thanh toán thất bại", HttpStatus.OK);
             }
 
-        }catch (Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    private Bill generateBill(String premiumIDRaw) {
-        Premium premium = premiumDAO.findById(Long.parseLong(premiumIDRaw)).get();
+    private Bill generateBill(Premium premium, Date currentDate, Date expireDate) {
         User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
-         Date currentDate = getDate();
-        //generate bill number
         String billNumber = UUID.randomUUID().toString().replaceAll("-", "");
-        Bill bill =Bill.builder()
+        return Bill.builder()
                 .billNumber(billNumber)
-                .paymentMethod("VNPAY")
                 .premium(premium)
                 .user(user)
+                .paymentMethod("VNPAY")
                 .createdAt(currentDate)
+                .expireAt(expireDate)
                 .total(premium.getPrice())
                 .build();
-        return bill;
     }
-    private boolean checkPremium(Long premiumID) {
-
-        Premium premium = premiumDAO.findById(premiumID).get();
-        //get the current user premium
-        List<Bill> bills = billDAO.getbyUser(jwtAuthFilter.getCurrentUser());
-        //check if user havd ever bought premium
-        if(bills.isEmpty()){
-            return false;
-        }
-        Bill lastBill = new Bill();
-        //get the latest bill
-        if(bills.size() == 1){
-            lastBill = bills.get(bills.size());
-        }
-        lastBill = bills.get(bills.size() -1 );
-        //check the current bill
-        if(lastBill.getPremium().getPremiumID() == premiumID){
-            LocalDate startDate = lastBill.getCreatedAt().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            LocalDate expirationDate = startDate.plusMonths(premium.getDuration());
-            LocalDate currentDate = LocalDate.now();
-            //check date
-            if(currentDate.isAfter(expirationDate)){
-                return false;
-            }
-            return true;
-        }
-        //check if the current premium id is larget
-        if(lastBill.getPremium().getPremiumID() > premiumID){
-            return false;
-        } else{
-            return true;
-        }
+    private Date getExpireDate(Date currentDate,Premium premium,int remaining){
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(currentDate);
+        calendar.add(Calendar.MONTH, premium.getDuration());
+        calendar.add(Calendar.MONTH, remaining);
+        Date expireAt = calendar.getTime();
+        return expireAt;
+    }
+    private int remainingMoth(Date expertDate){
+        LocalDate currentDate = LocalDate.now();
+        LocalDate expireAt = expertDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        Period period = Period.between(currentDate.withDayOfMonth(1), expireAt.withDayOfMonth(1));
+        int monthsDiff = period.getMonths();
+        return monthsDiff;
     }
 
     @Override
@@ -203,7 +196,7 @@ public class VNPayServiceImpl implements VNPayService {
             if (user != null) {
                 log.info("User ID: " + user.getUserID());
                 // Get bill history by user ID
-                List<Bill> billHistory = billDAO.getbyUser(user.getEmail());
+                List<Bill> billHistory = billDAO.getByUser(user.getEmail());
                 return new ResponseEntity<>(billHistory, HttpStatus.OK);
             } else {
                 // User not found
@@ -215,7 +208,16 @@ public class VNPayServiceImpl implements VNPayService {
         }
     }
 
-
+    @Override
+    public ResponseEntity<?> checkOut() {
+        try {
+            String url = "https://sandbox.vnpayment.vn/paymentv2/Transaction/PaymentMethod.html";
+            return JPLearningUtils.getResponseEntity(url, HttpStatus.OK);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
 
     private Date getDate() {
