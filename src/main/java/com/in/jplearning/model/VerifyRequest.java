@@ -30,7 +30,7 @@ public class VerifyRequest implements Serializable {
     private Long requestID;
     @Enumerated(EnumType.STRING)
     private VerificationType verificationType;
-    @Column(nullable = false)
+    @Column(nullable = false,columnDefinition = "LONGTEXT")
     private String url;
     private boolean approved;
     private Date requestTimestamp;

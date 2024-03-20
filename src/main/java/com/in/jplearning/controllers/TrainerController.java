@@ -21,7 +21,7 @@ public class TrainerController {
     private final TrainerService trainerService;
 
     @PostMapping("/register-as-trainer")
-    public ResponseEntity<String> registerAsTrainer(@RequestPart("pictureFiles") MultipartFile pictureFiles,
+    public ResponseEntity<String> registerAsTrainer(@RequestPart("pictureFiles") List<MultipartFile> pictureFiles,
                                                     @RequestParam Map<String, String> requestMap){
         try{
             return trainerService.registerAsTrainer(pictureFiles,requestMap);

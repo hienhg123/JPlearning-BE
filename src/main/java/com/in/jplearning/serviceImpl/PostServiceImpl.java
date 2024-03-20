@@ -53,7 +53,6 @@ public class PostServiceImpl implements PostService {
 
     private final String bucketName = "jplearning-userpost";
 
-    private final S3Client s3Client;
 
     private final S3AsyncClient s3AsyncClient;
 
