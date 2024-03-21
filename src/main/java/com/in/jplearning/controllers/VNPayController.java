@@ -45,6 +45,4 @@ public class VNPayController {
     ) {
         return vnPayService.getBillHistoryByUser(pageNumber, pageSize);
     }
-
-
 }

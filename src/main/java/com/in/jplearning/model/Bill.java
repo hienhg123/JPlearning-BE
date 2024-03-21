@@ -27,6 +27,7 @@ public class Bill implements Serializable {
     private String billNumber;
     private Long total;
     private Date createdAt;
+    private Date expireAt;
     private String paymentMethod;
 
     @JsonIgnore
@@ -34,7 +35,6 @@ public class Bill implements Serializable {
     @JoinColumn(name = "user_fk",referencedColumnName = "user_ID")
     private User user;
 
-    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "premium_fk",referencedColumnName = "premium_ID")
     private Premium premium;

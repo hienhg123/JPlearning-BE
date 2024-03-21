@@ -13,10 +13,10 @@ import com.in.jplearning.service.CourseService;
 import com.in.jplearning.utils.JPLearningUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -131,24 +131,13 @@ public class CourseServiceImpl implements CourseService {
     }
 
     private boolean isPremiumExpire(User user) {
-        //get user latest premium
-        if(user.getPremium() == null){
-            return false;
+        //get user premium
+        List<Bill> bill = billDAO.getUserLatestBill(user.getEmail(),PageRequest.of(0,1));
+        if(bill.isEmpty()){
+            return true;
         }
-        Premium premium = user.getPremium();
-        //get the bill
-        List<Bill> bill = billDAO.getbyUser(user.getEmail());
-        //get the latest bill
-        //check if size
-        if(bill.size() == 1){
-            Bill lastBill = bill.get(bill.size());
-        }
-        Bill lastBill = bill.get(bill.size() - 1);
-        LocalDate startDate = lastBill.getCreatedAt().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        LocalDate expirationDate = startDate.plusMonths(premium.getDuration());
-        LocalDate currentDate = LocalDate.now();
-        //compare
-        if(currentDate.isAfter(expirationDate)){
+        //check duration
+        if(bill.get(0).getExpireAt().toInstant().atZone(ZoneId.systemDefault()).toLocalDate().isAfter(LocalDate.now())){
             return true;
         }
         return false;
