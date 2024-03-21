@@ -6,12 +6,10 @@ import com.in.jplearning.service.VNPayService;
 import com.in.jplearning.utils.JPLearningUtils;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 @CrossOrigin("http://localhost:4200")
@@ -42,13 +40,9 @@ public class VNPayController {
     }
 
     @GetMapping("/billHistory/{pageNumber}/{pageSize}")
-    public ResponseEntity<?> getBillHistoryByUser(@PathVariable int pageNumber, @PathVariable int pageSize) {
-        try {
-            ResponseEntity<?> response = vnPayService.getBillHistoryByUser(pageNumber,pageSize);
-            return response;
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ArrayList<>());
-        }
+    public ResponseEntity<Page<Map<String, Object>>> getBillHistoryByUser(
+            @PathVariable int pageNumber, @PathVariable int pageSize
+    ) {
+        return vnPayService.getBillHistoryByUser(pageNumber, pageSize);
     }
 }

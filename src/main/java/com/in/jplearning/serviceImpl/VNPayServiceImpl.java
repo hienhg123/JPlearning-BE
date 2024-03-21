@@ -160,23 +160,38 @@ public class VNPayServiceImpl implements VNPayService {
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
     @Override
-    public ResponseEntity<?> getBillHistoryByUser(int pageNumber, int pageSize) {
+    public ResponseEntity<Page<Map<String, Object>>> getBillHistoryByUser(int pageNumber, int pageSize) {
         try {
             // Get the current user
             User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).orElse(null);
             if (user != null) {
                 log.info("User ID: " + user.getUserID());
-                // Get bill history by user ID
-                Page<Bill> billHistory = billDAO.getByUser(user.getEmail(),PageRequest.of(pageNumber,pageSize));
-                return new ResponseEntity<>(billHistory, HttpStatus.OK);
+                // Get bill history by user ID with pagination
+                Page<Bill> billHistoryPage = billDAO.findByUserEmail(user.getEmail(), PageRequest.of(pageNumber, pageSize));
+
+                // Convert Page<Bill> to Page<Map<String, Object>> containing bill information maps
+                Page<Map<String, Object>> billInfoPage = billHistoryPage.map(bill -> {
+                    Map<String, Object> billInfoMap = new HashMap<>();
+                    billInfoMap.put("duration", bill.getPremium().getDuration());
+                    billInfoMap.put("total", bill.getTotal());
+                    billInfoMap.put("createdAt", bill.getCreatedAt());
+                    billInfoMap.put("expireAt", bill.getExpireAt());
+                    // You can add more properties to the map if needed
+                    return billInfoMap;
+                });
+
+                // Return the paged bill information
+                return ResponseEntity.ok(billInfoPage);
             } else {
                 // User not found
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                log.error("User not found.");
+                return ResponseEntity.notFound().build();
             }
         } catch (Exception ex) {
             ex.printStackTrace();
+            log.error("Error occurred while fetching bill history for user.", ex);
         }
-        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
 
     private Bill generateBill(Premium premium, Date currentDate, Date expireDate) {
@@ -207,7 +222,6 @@ public class VNPayServiceImpl implements VNPayService {
         int monthsDiff = period.getMonths();
         return monthsDiff;
     }
-
 
     private Date getDate() {
         LocalDate currentDate = LocalDate.now();
