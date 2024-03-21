@@ -41,25 +41,14 @@ public class VNPayController {
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    @GetMapping("/billHistory")
-    public ResponseEntity<List<Bill>> getBillHistoryByUser() {
+    @GetMapping("/billHistory/{pageNumber}/{pageSize}")
+    public ResponseEntity<?> getBillHistoryByUser(@PathVariable int pageNumber, @PathVariable int pageSize) {
         try {
-            ResponseEntity<List<Bill>> response = vnPayService.getBillHistoryByUser();
+            ResponseEntity<?> response = vnPayService.getBillHistoryByUser(pageNumber,pageSize);
             return response;
         } catch (Exception ex) {
             ex.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ArrayList<>());
         }
     }
-    @GetMapping("/checkout")
-    public ResponseEntity<?> checkOut() {
-        try {
-            return vnPayService.checkOut();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ArrayList<>());
-    }
-
-
 }

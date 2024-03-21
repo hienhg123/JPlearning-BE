@@ -14,6 +14,7 @@ import com.in.jplearning.utils.JPLearningUtils;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -158,6 +159,25 @@ public class VNPayServiceImpl implements VNPayService {
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+    @Override
+    public ResponseEntity<?> getBillHistoryByUser(int pageNumber, int pageSize) {
+        try {
+            // Get the current user
+            User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).orElse(null);
+            if (user != null) {
+                log.info("User ID: " + user.getUserID());
+                // Get bill history by user ID
+                Page<Bill> billHistory = billDAO.getByUser(user.getEmail(),PageRequest.of(pageNumber,pageSize));
+                return new ResponseEntity<>(billHistory, HttpStatus.OK);
+            } else {
+                // User not found
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
     private Bill generateBill(Premium premium, Date currentDate, Date expireDate) {
         User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
@@ -186,37 +206,6 @@ public class VNPayServiceImpl implements VNPayService {
         Period period = Period.between(currentDate.withDayOfMonth(1), expireAt.withDayOfMonth(1));
         int monthsDiff = period.getMonths();
         return monthsDiff;
-    }
-
-    @Override
-    public ResponseEntity<List<Bill>> getBillHistoryByUser() {
-        try {
-            // Get the current user
-            User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).orElse(null);
-            if (user != null) {
-                log.info("User ID: " + user.getUserID());
-                // Get bill history by user ID
-                List<Bill> billHistory = billDAO.getByUser(user.getEmail());
-                return new ResponseEntity<>(billHistory, HttpStatus.OK);
-            } else {
-                // User not found
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @Override
-    public ResponseEntity<?> checkOut() {
-        try {
-            String url = "https://sandbox.vnpayment.vn/paymentv2/Transaction/PaymentMethod.html";
-            return JPLearningUtils.getResponseEntity(url, HttpStatus.OK);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
 

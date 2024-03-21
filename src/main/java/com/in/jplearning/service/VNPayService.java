@@ -11,7 +11,5 @@ public interface VNPayService {
     ResponseEntity<?> createPayment(Long premiumID);
 
     ResponseEntity<String> paymentCallBack(Map<String, String> requestMap, HttpServletResponse response);
-    ResponseEntity<List<Bill>> getBillHistoryByUser();
-
-    ResponseEntity<?> checkOut();
+    ResponseEntity<?> getBillHistoryByUser(int pageNumber, int pageSize);
 }
