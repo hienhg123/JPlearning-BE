@@ -5,10 +5,7 @@ import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.constants.JPConstants;
 import com.in.jplearning.enums.JLPTLevel;
 import com.in.jplearning.model.*;
-import com.in.jplearning.repositories.BillDAO;
-import com.in.jplearning.repositories.CourseDAO;
-import com.in.jplearning.repositories.CourseEnrollDAO;
-import com.in.jplearning.repositories.UserDAO;
+import com.in.jplearning.repositories.*;
 import com.in.jplearning.service.CourseService;
 import com.in.jplearning.utils.JPLearningUtils;
 import lombok.AllArgsConstructor;
@@ -19,11 +16,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -38,6 +33,7 @@ public class CourseServiceImpl implements CourseService {
     private final BillDAO billDAO;
 
     private final CourseEnrollDAO courseEnrollDAO;
+    private final CourseFeedbackDAO courseFeedbackDAO;
 
 
 
@@ -122,6 +118,97 @@ public class CourseServiceImpl implements CourseService {
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+
+    @Override
+    public ResponseEntity<List<Map<String, Object>>> getAllCourseWithDetails() {
+        try {
+            List<Map<String, Object>> coursesDetails = new ArrayList<>();
+            List<Course> courses = courseDAO.findAll();
+
+            for (Course course : courses) {
+                Map<String, Object> courseDetails = new HashMap<>();
+                // Calculate the count of enrolled users for each course
+                Long enrollCount = courseEnrollDAO.countByCourse(course);
+                courseDetails.put("enrolledUsersCount", enrollCount);
+
+                // Calculate the average rating for each course
+                Double averageRating = courseFeedbackDAO.calculateAverageRating(course);
+                courseDetails.put("averageRating", averageRating);
+
+                coursesDetails.add(courseDetails);
+            }
+
+            return new ResponseEntity<>(coursesDetails, HttpStatus.OK);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return new ResponseEntity<>(Collections.emptyList(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public ResponseEntity<Map<String, Object>> getCourseDetailsById(Long courseID) {
+        try {
+            Course course = courseDAO.findById(courseID).orElse(null);
+            if (course == null) {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+
+            Map<String, Object> courseDetails = new HashMap<>();
+            // Calculate the count of enrolled users for the course
+            Long enrollCount = courseEnrollDAO.countByCourse(course);
+            courseDetails.put("enrolledUsersCount", enrollCount);
+
+            // Calculate the average rating for the course
+            Double averageRating = courseFeedbackDAO.calculateAverageRating(course);
+            courseDetails.put("averageRating", averageRating);
+
+            return new ResponseEntity<>(courseDetails, HttpStatus.OK);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public ResponseEntity<String> addCourseFeedback(Long courseId, CourseFeedBack feedback) {
+        try {
+            // Obtain the user using the email
+            User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
+            if (user == null) {
+                return JPLearningUtils.getResponseEntity("User not found", HttpStatus.BAD_REQUEST);
+            }
+
+            if (feedback.getCreatedAt() == null) {
+                feedback.setCreatedAt(LocalDateTime.now()); // Set current timestamp
+            }
+
+            // Validate rating
+            if (feedback.getRating() < 1 || feedback.getRating() > 5) {
+                return JPLearningUtils.getResponseEntity("Rating must be between 1 and 5", HttpStatus.BAD_REQUEST);
+            }
+
+            // Obtain the course using courseId
+            Optional<Course> courseOptional = courseDAO.findById(courseId);
+            if (!courseOptional.isPresent()) {
+                return JPLearningUtils.getResponseEntity("Course not found", HttpStatus.BAD_REQUEST);
+            }
+            Course course = courseOptional.get();
+
+            // Set the user and course for the feedback
+            feedback.setUser(user);
+            feedback.setCourse(course);
+
+            // Save the feedback
+            courseFeedbackDAO.save(feedback);
+            return JPLearningUtils.getResponseEntity("Đánh giá thành công", HttpStatus.OK);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+
     private void enrollCourse(Course course, User user) {
        CourseEnroll courseEnroll = CourseEnroll.builder()
                .user(user)
@@ -154,4 +241,10 @@ public class CourseServiceImpl implements CourseService {
                 .courseLevel(level)
                 .build();
     }
+
+
+
+
+
+
 }

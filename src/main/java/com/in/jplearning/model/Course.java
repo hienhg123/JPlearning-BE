@@ -43,5 +43,37 @@ public class Course implements Serializable {
     @OneToMany(mappedBy = "course")
     private Set<CourseEnroll> courseEnrolls;
 
+    @OneToMany(mappedBy = "course")
+    private Set<CourseFeedBack> courseFeedbacks;
+
+
+    @Transient
+    private Long enrolledUsersCount;
+
+    @Transient
+    private Double averageRating;
+
+    // Method to set enrolled users count
+    public void setEnrolledUsersCount() {
+        if (courseEnrolls != null) {
+            enrolledUsersCount = (long) courseEnrolls.size();
+        } else {
+            enrolledUsersCount = 0L;
+        }
+    }
+
+    // Method to set average rating
+    public void setAverageRating() {
+        if (courseFeedbacks != null && !courseFeedbacks.isEmpty()) {
+            double totalRating = 0;
+            for (CourseFeedBack feedback : courseFeedbacks) {
+                totalRating += feedback.getRating();
+            }
+            averageRating = totalRating / courseFeedbacks.size();
+        } else {
+            averageRating = 0.0;
+        }
+    }
+
 
 }
