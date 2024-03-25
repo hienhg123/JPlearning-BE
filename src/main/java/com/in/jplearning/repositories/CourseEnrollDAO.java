@@ -12,4 +12,7 @@ public interface CourseEnrollDAO extends JpaRepository<CourseEnroll,Long> {
 
     @Query(value = "select ce from CourseEnroll ce where ce.user.userID =?1 and ce.course.courseID =?2")
     Optional<CourseEnroll> findByUserAndCourse(Long userID, Long courseID);
+
+    Long countByCourse(Course course);
+
 }

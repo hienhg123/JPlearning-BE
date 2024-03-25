@@ -6,6 +6,7 @@ import com.in.jplearning.model.User;
 import com.in.jplearning.service.UserService;
 import com.in.jplearning.utils.JPLearningUtils;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -46,14 +47,10 @@ public class UserController {
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    @GetMapping(path = "/getAllUser")
-    public ResponseEntity<List<User>> getAllUser() {
-        try {
-            return userService.getAllUser();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        return new ResponseEntity<List<User>>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
+    @GetMapping(path = "/getAllUser/{pageNumber}/{pageSize}")
+    public ResponseEntity<Page<Map<String, Object>>> getAllUsers(
+            @PathVariable int pageNumber, @PathVariable int pageSize) {
+        return userService.getAllUsers(pageNumber,pageSize);
     }
 
     @GetMapping(path = "/profile")
@@ -115,6 +112,11 @@ public class UserController {
             }
             return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
+    @PostMapping("/userManagement")
+    public ResponseEntity<String> updateUser(@RequestBody Map<String, String> requestMap) {
+        return userService.updateUser(requestMap);
+    }
 
 
 

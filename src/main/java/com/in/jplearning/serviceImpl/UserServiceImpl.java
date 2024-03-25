@@ -16,6 +16,10 @@ import com.in.jplearning.utils.EmailUtils;
 import com.in.jplearning.utils.JPLearningUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -30,7 +34,6 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -71,22 +74,81 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResponseEntity<List<User>> getAllUser() {
-        log.info("Insite getALlUser");
-        log.info(String.valueOf(jwtAuthFilter.isAdmin()));
+    public ResponseEntity<Page<Map<String, Object>>> getAllUsers(int pageNumber, int pageSize) {
         try {
-            //check if person login is admin or not
+            // Check if the current user is an admin
             if (jwtAuthFilter.isAdmin()) {
-                return new ResponseEntity<>(userDAO.findByRole(Role.USER), HttpStatus.OK);
+                log.info("Fetching all users.");
+
+                // Get all users
+                List<User> allUsers = userDAO.findByRole(Role.USER);
+
+                // Calculate the start and end indices for the sublist
+                int startIndex = pageNumber * pageSize;
+                int endIndex = Math.min((pageNumber + 1) * pageSize, allUsers.size());
+
+                // Create a sublist of users for the current page
+                List<User> usersForPage = allUsers.subList(startIndex, endIndex);
+
+                // Convert the sublist of users to a list of user information maps
+                List<Map<String, Object>> userInfoList = usersForPage.stream()
+                        .map(user -> {
+                            Map<String, Object> userInfoMap = new HashMap<>();
+                            userInfoMap.put("userID", user.getUserID());
+                            userInfoMap.put("fullName", user.getFirstName() + " " + user.getLastName());
+                            userInfoMap.put("email", user.getEmail());
+                            userInfoMap.put("isActive", user.isActive());
+                            // You can add more properties to the map if needed
+                            return userInfoMap;
+                        })
+                        .toList(); // Requires Java 16 or newer, otherwise use .collect(Collectors.toList());
+
+                // Return the list of user information maps
+                return ResponseEntity.ok(new PageImpl<>(userInfoList));
             } else {
-                return new ResponseEntity<>(new ArrayList<>(), HttpStatus.UNAUTHORIZED);
+                // User is not authorized to access this endpoint
+                log.error("Unauthorized access. Current user is not an admin.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            log.error("Error occurred while fetching all users.", ex);
+        }
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
+
+
+    @Override
+    public ResponseEntity<String> updateUser(Map<String, String> requestMap) {
+        try {
+            //check if admin
+            if (jwtAuthFilter.isAdmin()) {
+                Long userId = Long.parseLong(requestMap.get("id"));
+                Optional<User> userOptional = userDAO.findById(userId);
+
+                //check if the user exists
+                if (userOptional.isPresent()) {
+                    User user = userOptional.get();
+                    boolean newStatus = Boolean.parseBoolean(requestMap.get("status"));
+
+                    // Update the isActive status using the setter method
+                    user.setActive(newStatus);
+                    userDAO.save(user);
+                    return JPLearningUtils.getResponseEntity("User Status Updated Successfully", HttpStatus.OK);
+                } else {
+                    return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.UNAUTHORIZED);
+                }
+            } else {
+                return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-
-        return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+
+
 
     @Override
     public ResponseEntity<String> login(Map<String, String> requestMap) {
@@ -243,12 +305,6 @@ public class UserServiceImpl implements UserService {
                 Map<String, Object> userProfile = new HashMap<>();
                 userProfile.put("fullName", fullName);
                 userProfile.put("phoneNumber", user.getPhoneNumber());
-
-                // Format date of birth
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-                String formattedDob = dateFormat.format(user.getDob());
-                userProfile.put("dob", formattedDob);
-
                 userProfile.put("level", user.getLevel());
                 userProfile.put("gender", user.getGender());
                 userProfile.put("userPicture", user.getUserPicture());
@@ -400,7 +456,6 @@ public class UserServiceImpl implements UserService {
                 .email(requestMap.get("email"))
                 .password(passwordEncoder.encode(requestMap.get("password")))
                 .role(Role.USER)
-                .level(JLPTLevel.None)
                 .isActive(true)
                 .build();
     }
