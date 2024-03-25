@@ -11,7 +11,7 @@ public interface ReportService {
     ResponseEntity<String> createReport(Long postId, Map<String, String> reportDetails);
 
 
-    ResponseEntity<Page<Report>> getReportList(int pageNumber ,int pageSize);
+    ResponseEntity<?> getReportList(int pageNumber ,int pageSize);
 
     ResponseEntity<String> deleteReport(Long reportID);
 }

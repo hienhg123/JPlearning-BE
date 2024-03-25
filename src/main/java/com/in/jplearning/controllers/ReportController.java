@@ -26,13 +26,13 @@ public class ReportController {
         return reportService.createReport(postId, reportDetails);
     }
     @GetMapping(path = "/getAllReport/{pageNumber}/{pageSize}")
-    public ResponseEntity<Page<Report>> getReportList(@PathVariable int pageNumber ,@PathVariable int pageSize ){
+    public ResponseEntity<?> getReportList(@PathVariable int pageNumber ,@PathVariable int pageSize ){
         try{
             return reportService.getReportList(pageNumber,pageSize);
         }catch (Exception ex){
             ex.printStackTrace();
         }
-        return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
     @DeleteMapping("deleteReport/{reportID}")
     public ResponseEntity<String> deleteReport(@PathVariable Long reportID){
