@@ -68,18 +68,19 @@ public class ReportServiceImpl implements ReportService {
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
     @Override
-    public ResponseEntity<Page<Report>> getReportList(int pageNumber ,int pageSize) {
+    public ResponseEntity<?> getReportList(int pageNumber ,int pageSize) {
         try{
             //check if user is manager
             if(jwtAuthFilter.isManager()){
-               return new ResponseEntity<>(reportDAO.findAll(PageRequest.of(pageNumber,pageSize,Sort.by("createdAt").descending())),HttpStatus.OK);
+                return new ResponseEntity<>(reportDAO.getAllReport(PageRequest.of(pageNumber,pageSize)), HttpStatus.OK);
+//               return new ResponseEntity<>(reportDAO.findAll(PageRequest.of(pageNumber,pageSize,Sort.by("createdAt").descending())),HttpStatus.OK);
             }
-            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
+            return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
 
         }catch (Exception ex){
             ex.printStackTrace();
         }
-        return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
