@@ -42,6 +42,8 @@ public class VNPayServiceImpl implements VNPayService {
 
     private final JwtAuthFilter jwtAuthFilter;
 
+    private static final int MONTHS_IN_YEAR = 12;
+
     @Override
     public ResponseEntity<?> createPayment(Long premiumID) {
         try {
@@ -137,6 +139,7 @@ public class VNPayServiceImpl implements VNPayService {
                         bill = generateBill(premium,currentDate,expireDate);
                     } else {
                         Bill oldBill = billDAO.getUserLatestBill(jwtAuthFilter.getCurrentUser(), PageRequest.of(0, 1)).get(0);
+                        log.info(oldBill.getBillID().toString());
                         //get the remaining month
                         int remaining = remainingMoth(oldBill.getExpireAt());
                         //set the latest bill expert to today
@@ -194,6 +197,11 @@ public class VNPayServiceImpl implements VNPayService {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
 
+    @Override
+    public ResponseEntity<Bill> getOldBild() {
+        return new ResponseEntity<>(billDAO.getUserLatestBill(jwtAuthFilter.getCurrentUser(), PageRequest.of(0, 1)).get(0), HttpStatus.OK);
+    }
+
     private Bill generateBill(Premium premium, Date currentDate, Date expireDate) {
         User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
         String billNumber = UUID.randomUUID().toString().replaceAll("-", "");
@@ -219,7 +227,9 @@ public class VNPayServiceImpl implements VNPayService {
         LocalDate currentDate = LocalDate.now();
         LocalDate expireAt = expertDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         Period period = Period.between(currentDate.withDayOfMonth(1), expireAt.withDayOfMonth(1));
+        int yearsDiff = period.getYears();
         int monthsDiff = period.getMonths();
+        monthsDiff += yearsDiff * MONTHS_IN_YEAR;
         return monthsDiff;
     }
 
