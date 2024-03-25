@@ -34,4 +34,7 @@ public interface PostDAO extends JpaRepository<Post,Long> {
             "WHERE pf.user.email = :email")
     List<Post> findUserFavorites(@Param("email") String email);
 
+    @Query("select p from Post p where p.title LIKE %?1% and p.isDraft = false")
+    List<Post> searchByValue(String value);
+
 }
