@@ -137,6 +137,7 @@ public class PostInteractionServiceImpl implements PostInteractionService {
                 .user(user)
                 .commentContent(requestMap.get("content"))
                 .parentComment(postComment)
+                .createdAt(LocalDateTime.now())
                 .build();
     }
 
@@ -145,6 +146,7 @@ public class PostInteractionServiceImpl implements PostInteractionService {
                 .post(post)
                 .user(user)
                 .commentContent(requestMap.get("content"))
+                .createdAt(LocalDateTime.now())
                 .build();
     }
 

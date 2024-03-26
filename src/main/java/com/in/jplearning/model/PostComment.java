@@ -10,6 +10,7 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,6 +28,7 @@ public class PostComment implements Serializable {
     @Column(name = "comment_ID")
     private Long commentID;
     private String commentContent;
+    private LocalDateTime createdAt;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)

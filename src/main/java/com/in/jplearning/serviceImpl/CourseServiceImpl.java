@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
@@ -137,7 +138,7 @@ public class CourseServiceImpl implements CourseService {
             return true;
         }
         //check duration
-        if(bill.get(0).getExpireAt().toInstant().atZone(ZoneId.systemDefault()).toLocalDate().isAfter(LocalDate.now())){
+        if(bill.get(0).getExpireAt().isAfter(LocalDateTime.now())){
             return true;
         }
         return false;

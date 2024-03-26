@@ -9,6 +9,7 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Entity
@@ -33,6 +34,6 @@ public class CourseEnroll implements Serializable {
     @JoinColumn(name = "course_fk",referencedColumnName = "course_ID")
     private Course course;
 
-    private Date joinTime;
+    private LocalDateTime joinTime;
 
 }
