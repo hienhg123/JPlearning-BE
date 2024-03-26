@@ -2,6 +2,7 @@ package com.in.jplearning.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
@@ -15,6 +16,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @DynamicUpdate
 @DynamicInsert
+@Builder
 public class PostFavorite implements Serializable {
 
     @Id
