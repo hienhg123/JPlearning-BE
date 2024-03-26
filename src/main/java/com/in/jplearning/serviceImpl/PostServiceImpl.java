@@ -3,12 +3,10 @@ package com.in.jplearning.serviceImpl;
 import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.constants.JPConstants;
 import com.in.jplearning.enums.JLPTLevel;
+import com.in.jplearning.enums.NotificationType;
 import com.in.jplearning.enums.PostType;
 import com.in.jplearning.model.*;
-import com.in.jplearning.repositories.PostDAO;
-import com.in.jplearning.repositories.PostFavoriteDAO;
-import com.in.jplearning.repositories.TrainerDAO;
-import com.in.jplearning.repositories.UserDAO;
+import com.in.jplearning.repositories.*;
 import com.in.jplearning.service.PostService;
 import com.in.jplearning.utils.JPLearningUtils;
 import lombok.AllArgsConstructor;
@@ -56,6 +54,8 @@ public class PostServiceImpl implements PostService {
     private final TrainerDAO trainerDAO;
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);
+
+    private final NotificationDAO notificationDAO;
 
     @Override
     public ResponseEntity<String> createPost(Map<String, String> requestMap){
@@ -185,16 +185,32 @@ public class PostServiceImpl implements PostService {
     public ResponseEntity<String> deletePost(Long postId) {
         try {
             Optional<Post> optionalPost = postDAO.findById(postId);
-            if (optionalPost.isPresent()) {
-                postDAO.deleteById(postId);
-                return JPLearningUtils.getResponseEntity("Xóa thành công", HttpStatus.OK);
-            } else {
+            if (optionalPost.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Không tim thấy bài đăng", HttpStatus.NOT_FOUND);
             }
+            if(!jwtAuthFilter.isManager()){
+                return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
+            }
+            Notification notification = getFromMap(optionalPost.get());
+            notificationDAO.save(notification);
+            postDAO.deleteById(postId);
+            return JPLearningUtils.getResponseEntity("Xóa thành công", HttpStatus.OK);
         } catch (Exception ex) {
             ex.printStackTrace();
-            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    private Notification getFromMap(Post post) {
+        User sender = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
+        return Notification.builder()
+                .sender(sender)
+                .receiver(post.getUser())
+                .content("Bài viết của bạn đã bị xóa")
+                .notificationType(NotificationType.POST)
+                .createdTime(LocalDateTime.now())
+                .isRead(false)
+                .build();
     }
 
     @Override
