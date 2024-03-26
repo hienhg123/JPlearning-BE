@@ -224,7 +224,7 @@ public class CourseServiceImpl implements CourseService {
             return true;
         }
         //check duration
-        if(bill.get(0).getExpireAt().toInstant().atZone(ZoneId.systemDefault()).toLocalDate().isAfter(LocalDate.now())){
+        if(bill.get(0).getExpireAt().isAfter(LocalDateTime.now())){
             return true;
         }
         return false;
