@@ -10,4 +10,6 @@ public interface PostInteractionService {
     ResponseEntity<?> commentPost(Map<String, String> requestMap);
 
     ResponseEntity<?> favoritePost(Map<String, String> requestMap);
+
+    ResponseEntity<?> likeComment(Map<String, String> requestMap);
 }
