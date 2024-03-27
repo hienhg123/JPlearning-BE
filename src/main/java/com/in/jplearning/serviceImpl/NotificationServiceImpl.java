@@ -95,7 +95,6 @@ public class NotificationServiceImpl implements NotificationService {
                 .receiver(receiver)
                 .content(requestMap.get("content"))
                 .isRead(false)
-                .url(requestMap.get("url"))
                 .sender(sender)
                 .createdTime(LocalDateTime.now())
                 .build();

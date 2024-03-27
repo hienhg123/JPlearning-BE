@@ -11,9 +11,9 @@ public interface ExerciseService {
     ResponseEntity<List<Exercises>> getJLPTTest();
 
 
-    ResponseEntity<Exercises> getExerciseByIdWithReadingQuestion(Long exerciseID);
+    ResponseEntity<?> getExerciseByIdWithReadingQuestion(Long exerciseID);
 
-    ResponseEntity<Exercises> getExerciseByIdWithListeningQuestion(Long exerciseID);
+    ResponseEntity<?> getExerciseByIdWithListeningQuestion(Long exerciseID);
 
-    ResponseEntity<Exercises> getExerciseByIdWithGrammarQuestion(Long exerciseID);
+    ResponseEntity<?> getExerciseByIdWithGrammarQuestion(Long exerciseID);
 }

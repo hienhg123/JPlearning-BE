@@ -99,13 +99,12 @@ public class TrainerServiceImpl implements TrainerService {
                 }
             }
             //save into verify request table
-            Date currentDate = getDate();
             VerifyRequest verifyRequest = VerifyRequest.builder()
                     .verificationType(VerificationType.JLPT_CERTIFICATE_VERIFICATION)
                     .approved(false)
                     .url(verifyUrl)
                     .trainer(trainer)
-                    .requestTimestamp(currentDate)
+                    .requestTimestamp(LocalDateTime.now())
                     .build();
             trainerDAO.save(trainer);
             verifyRequestDAO.save(verifyRequest);
@@ -184,10 +183,6 @@ public class TrainerServiceImpl implements TrainerService {
         }
     }
 
-    private Date getDate() {
-        LocalDate currentDate = LocalDate.now();
-        return Date.from(currentDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
-    }
     private void uploadToS3(List<MultipartFile> files,String uuid) throws IOException {
         List<CompletableFuture<PutObjectResponse>> uploadFutures = files.stream()
                 .map(file -> {

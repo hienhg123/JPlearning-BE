@@ -56,8 +56,4 @@ public class Post implements Serializable {
     List<PostLike> postLikes;
 
 
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
-    List<PostFavorite> postFavorites;
-
-
 }

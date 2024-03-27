@@ -33,7 +33,7 @@ public class VerifyRequest implements Serializable {
     @Column(nullable = false,columnDefinition = "LONGTEXT")
     private String url;
     private boolean approved;
-    private Date requestTimestamp;
+    private LocalDateTime requestTimestamp;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "trainer_fk",referencedColumnName = "trainer_ID")

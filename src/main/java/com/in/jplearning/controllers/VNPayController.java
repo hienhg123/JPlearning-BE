@@ -45,4 +45,8 @@ public class VNPayController {
     ) {
         return vnPayService.getBillHistoryByUser(pageNumber, pageSize);
     }
+    @GetMapping("/oldBill")
+    public ResponseEntity<Bill> getOldBill(){
+        return vnPayService.getOldBild();
+    }
 }

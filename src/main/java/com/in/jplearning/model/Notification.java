@@ -34,7 +34,6 @@ public class Notification {
     @JoinColumn(name = "receiver_id",referencedColumnName = "user_ID")
     private User receiver;
 
-    private String url;
     private LocalDateTime createdTime;
     @Enumerated(EnumType.STRING)
     private NotificationType notificationType;

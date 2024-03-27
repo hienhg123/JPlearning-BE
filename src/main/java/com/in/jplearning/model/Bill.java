@@ -10,6 +10,7 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Entity
@@ -26,8 +27,8 @@ public class Bill implements Serializable {
     private Long billID;
     private String billNumber;
     private Long total;
-    private Date createdAt;
-    private Date expireAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime expireAt;
     private String paymentMethod;
 
     @JsonIgnore

@@ -17,4 +17,5 @@ public interface VNPayService {
     ResponseEntity<Page<Map<String, Object>>> getBillHistoryByUser(int pageNumber, int pageSize);
 
 
+    ResponseEntity<Bill> getOldBild();
 }

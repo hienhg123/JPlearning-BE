@@ -3,10 +3,13 @@ package com.in.jplearning.serviceImpl;
 import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.config.VNPayConfig;
 import com.in.jplearning.constants.JPConstants;
+import com.in.jplearning.enums.NotificationType;
 import com.in.jplearning.model.Bill;
+import com.in.jplearning.model.Notification;
 import com.in.jplearning.model.Premium;
 import com.in.jplearning.model.User;
 import com.in.jplearning.repositories.BillDAO;
+import com.in.jplearning.repositories.NotificationDAO;
 import com.in.jplearning.repositories.PremiumDAO;
 import com.in.jplearning.repositories.UserDAO;
 import com.in.jplearning.service.VNPayService;
@@ -24,6 +27,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.Period;
 import java.time.ZoneId;
 import java.util.*;
@@ -41,6 +45,10 @@ public class VNPayServiceImpl implements VNPayService {
     private final UserDAO userDAO;
 
     private final JwtAuthFilter jwtAuthFilter;
+
+    private static final int MONTHS_IN_YEAR = 12;
+
+    private final NotificationDAO notificationDAO;
 
     @Override
     public ResponseEntity<?> createPayment(Long premiumID) {
@@ -129,24 +137,26 @@ public class VNPayServiceImpl implements VNPayService {
                 //check if payment sucess
                 if ("00".equals(vnp_ResponseCode)) {
                     Premium premium = premiumDAO.findById(Long.parseLong(premiumIDRaw)).get();
-                    Date currentDate = getDate();
                     Bill bill = new Bill();
                     //check if first time buying
                     if (billDAO.getUserLatestBill(jwtAuthFilter.getCurrentUser(), PageRequest.of(0, 1)).isEmpty()) {
-                        Date expireDate = getExpireDate(currentDate,premium,0);
-                        bill = generateBill(premium,currentDate,expireDate);
+                        LocalDateTime expireDate = getExpireDate(premium,0);
+                        bill = generateBill(premium,expireDate);
                     } else {
                         Bill oldBill = billDAO.getUserLatestBill(jwtAuthFilter.getCurrentUser(), PageRequest.of(0, 1)).get(0);
+                        log.info(oldBill.getBillID().toString());
                         //get the remaining month
                         int remaining = remainingMoth(oldBill.getExpireAt());
-                        //set the latest bill expert to today
-                        Date expireDate = getExpireDate(currentDate,premium,remaining);
-                        oldBill.setExpireAt(currentDate);
+                        //set the latest bill expire to today
+                        LocalDateTime expireDate = getExpireDate(premium,remaining);
+                        oldBill.setExpireAt(LocalDateTime.now());
                         billDAO.save(oldBill);
-                        bill = generateBill(premium,currentDate,expireDate);
+                        bill = generateBill(premium,expireDate);
                     }
+                    Notification notification = generateNotification(premium.getDuration());
                     //save into bill
                     billDAO.save(bill);
+                    notificationDAO.save(notification);
                     response.sendRedirect("http://localhost:4200/checkout-success");
                     return JPLearningUtils.getResponseEntity("Thanh toán thành công", HttpStatus.OK);
                 } else {
@@ -159,6 +169,20 @@ public class VNPayServiceImpl implements VNPayService {
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    private Notification generateNotification(Integer duration) {
+        User receiver = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
+        User sender = userDAO.findById(Long.parseLong("1")).get();
+        return Notification.builder()
+                .isRead(false)
+                .sender(sender)
+                .receiver(receiver)
+                .notificationType(NotificationType.TRANSACTION)
+                .createdTime(LocalDateTime.now())
+                .content("Bạn đã mua thành công gói " + duration + "tháng")
+                .build();
+    }
+
     @Override
     public ResponseEntity<Page<Map<String, Object>>> getBillHistoryByUser(int pageNumber, int pageSize) {
         try {
@@ -194,7 +218,12 @@ public class VNPayServiceImpl implements VNPayService {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
 
-    private Bill generateBill(Premium premium, Date currentDate, Date expireDate) {
+    @Override
+    public ResponseEntity<Bill> getOldBild() {
+        return new ResponseEntity<>(billDAO.getUserLatestBill(jwtAuthFilter.getCurrentUser(), PageRequest.of(0, 1)).get(0), HttpStatus.OK);
+    }
+
+    private Bill generateBill(Premium premium, LocalDateTime expireDate) {
         User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
         String billNumber = UUID.randomUUID().toString().replaceAll("-", "");
         return Bill.builder()
@@ -202,30 +231,26 @@ public class VNPayServiceImpl implements VNPayService {
                 .premium(premium)
                 .user(user)
                 .paymentMethod("VNPAY")
-                .createdAt(currentDate)
+                .createdAt(LocalDateTime.now())
                 .expireAt(expireDate)
                 .total(premium.getPrice())
                 .build();
     }
-    private Date getExpireDate(Date currentDate,Premium premium,int remaining){
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(currentDate);
-        calendar.add(Calendar.MONTH, premium.getDuration());
-        calendar.add(Calendar.MONTH, remaining);
-        Date expireAt = calendar.getTime();
-        return expireAt;
+    private LocalDateTime getExpireDate(Premium premium,int remaining){
+        LocalDateTime currentDate = LocalDateTime.now();
+        LocalDateTime expireDateTime = currentDate
+                .plusMonths(premium.getDuration())
+                .plusMonths(remaining);
+        return expireDateTime;
     }
-    private int remainingMoth(Date expertDate){
+    private int remainingMoth(LocalDateTime expertDate){
         LocalDate currentDate = LocalDate.now();
-        LocalDate expireAt = expertDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        Period period = Period.between(currentDate.withDayOfMonth(1), expireAt.withDayOfMonth(1));
-        int monthsDiff = period.getMonths();
-        return monthsDiff;
-    }
+        LocalDate expireDate = expertDate.toLocalDate();
 
-    private Date getDate() {
-        LocalDate currentDate = LocalDate.now();
-        return Date.from(currentDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        int yearsDiff = expireDate.getYear() - currentDate.getYear();
+        int monthsDiff = expireDate.getMonthValue() - currentDate.getMonthValue();
+        monthsDiff += yearsDiff * MONTHS_IN_YEAR;
+        return monthsDiff;
     }
 
 

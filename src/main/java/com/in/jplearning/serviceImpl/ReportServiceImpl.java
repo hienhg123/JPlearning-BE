@@ -21,6 +21,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
@@ -107,7 +109,7 @@ public class ReportServiceImpl implements ReportService {
         Report report = new Report();
         report.setReportType(ReportType.valueOf(reportDetails.get("reportType")));
         report.setReportContent(reportDetails.get("reportContent"));
-        report.setCreatedAt(new Date());
+        report.setCreatedAt(LocalDateTime.now());
         return report;
     }
 }
