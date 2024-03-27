@@ -35,7 +35,7 @@ public class PostComment implements Serializable {
     @JoinColumn(name = "post_fk",referencedColumnName = "post_ID")
     private Post post;
 
-    @JsonIgnore
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_fk",referencedColumnName = "user_ID")
     private User user;
@@ -48,5 +48,8 @@ public class PostComment implements Serializable {
 
     @OneToMany(mappedBy = "parentComment", cascade = CascadeType.ALL)
     private List<PostComment> childComments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "postComment" , cascade = CascadeType.ALL)
+    private List<PostLike> postLikes = new ArrayList<>();
 
 }

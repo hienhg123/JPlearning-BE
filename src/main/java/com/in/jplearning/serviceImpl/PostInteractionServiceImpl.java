@@ -130,6 +130,31 @@ public class PostInteractionServiceImpl implements PostInteractionService {
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @Override
+    public ResponseEntity<?> likeComment(Map<String, String> requestMap) {
+        try{
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            Optional<PostComment> postCommentOptional = postCommentDAO.findById(Long.parseLong(requestMap.get("commentID")));
+            if(postCommentOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Bình luận không tồn tại", HttpStatus.NOT_FOUND);
+            }
+            //check if user exist
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+            }
+            PostLike postLike = PostLike.builder()
+                    .user(userOptional.get())
+                    .postComment(postCommentOptional.get())
+                    .build();
+            postLikeDAO.save(postLike);
+            return JPLearningUtils.getResponseEntity("", HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     private PostComment getFromMapWithParentComment(Map<String, String> requestMap, Post post, User user, PostComment postComment) {
 
         return PostComment.builder()

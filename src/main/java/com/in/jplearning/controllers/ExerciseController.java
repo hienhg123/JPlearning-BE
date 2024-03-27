@@ -38,7 +38,7 @@ public class ExerciseController {
         return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
     @GetMapping("/getJLPTExercise/{exerciseID}/grammar")
-    public ResponseEntity<Exercises> getExerciseByIdWithGrammarQuestion(@PathVariable Long exerciseID){
+    public ResponseEntity<?> getExerciseByIdWithGrammarQuestion(@PathVariable Long exerciseID){
         try{
             return exerciseService.getExerciseByIdWithGrammarQuestion(exerciseID);
 
@@ -48,7 +48,7 @@ public class ExerciseController {
         return new ResponseEntity<>(new Exercises(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
     @GetMapping(path = "/getJLPTExercise/{exerciseID}/reading")
-    public ResponseEntity<Exercises> getExerciseByIdWithReadingQuestion(@PathVariable Long exerciseID){
+    public ResponseEntity<?> getExerciseByIdWithReadingQuestion(@PathVariable Long exerciseID){
         try{
             return exerciseService.getExerciseByIdWithReadingQuestion(exerciseID);
 
@@ -58,7 +58,7 @@ public class ExerciseController {
         return new ResponseEntity<>(new Exercises(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
     @GetMapping(path = "/getJLPTExercise/{exerciseID}/listening")
-    public ResponseEntity<Exercises> getExerciseByIdWithListeningQuestion(@PathVariable Long exerciseID){
+    public ResponseEntity<?> getExerciseByIdWithListeningQuestion(@PathVariable Long exerciseID){
         try{
             return exerciseService.getExerciseByIdWithListeningQuestion(exerciseID);
 

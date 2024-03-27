@@ -33,5 +33,10 @@ public class PostLike implements Serializable {
     @JoinColumn(name = "post_fk",referencedColumnName = "post_ID")
     private Post post;
 
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "comment_fk",referencedColumnName = "comment_ID")
+    private PostComment postComment;
+
 
 }
