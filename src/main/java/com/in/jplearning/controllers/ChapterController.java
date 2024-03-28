@@ -36,7 +36,7 @@ public class ChapterController {
         return new ResponseEntity<>(new Chapter(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    @GetMapping("/")
+    @GetMapping("/progressTracking")
     public ResponseEntity<List<Map<String, Object>>> progressTracking() {
         return chapterService.progressTracking();
     }

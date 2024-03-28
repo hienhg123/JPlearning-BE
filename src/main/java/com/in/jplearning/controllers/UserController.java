@@ -75,7 +75,7 @@ public class UserController {
         return new ResponseEntity<>(response,HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    @PostMapping("/changePassword")
+    @PutMapping("/changePassword")
     public ResponseEntity<String> changePassword(@RequestBody Map<String, String> requestMap) {
         try {
             return userService.changePassword(requestMap);
