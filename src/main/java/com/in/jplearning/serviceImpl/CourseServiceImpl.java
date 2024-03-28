@@ -133,12 +133,13 @@ public class CourseServiceImpl implements CourseService {
 
     private boolean isPremiumExpire(User user) {
         //get user premium
-        List<Bill> bill = billDAO.getUserLatestBill(user.getEmail(),PageRequest.of(0,1));
-        if(bill.isEmpty()){
-            return true;
+        Bill bill = billDAO.getUserLatestBill(user.getEmail(),PageRequest.of(0,1)).get(0);
+        //check if bill is exist
+        if(bill == null){
+            return false;
         }
-        //check duration
-        if(bill.get(0).getExpireAt().isAfter(LocalDateTime.now())){
+        //check if bill is expire or not
+        if(bill.getExpireAt().isAfter(LocalDateTime.now())){
             return true;
         }
         return false;
