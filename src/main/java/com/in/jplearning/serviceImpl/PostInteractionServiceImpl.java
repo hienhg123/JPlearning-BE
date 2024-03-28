@@ -38,15 +38,15 @@ public class PostInteractionServiceImpl implements PostInteractionService {
 
     @Override
     public ResponseEntity<?> likePost(Map<String, String> requestMap) {
-        try{
+        try {
             Optional<Post> postOptional = postDAO.findById(Long.parseLong(requestMap.get("postID")));
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             //check if exist
-            if(postOptional.isEmpty()){
+            if (postOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Bài viết không tồn tại", HttpStatus.NOT_FOUND);
             }
             //check if user exist
-            if(userOptional.isEmpty()){
+            if (userOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập để yêu thích bài viết", HttpStatus.UNAUTHORIZED);
             }
             //get the like and save to the database
@@ -56,11 +56,11 @@ public class PostInteractionServiceImpl implements PostInteractionService {
                     .build();
             //send the notification to the post's author
             String content = "Đã thích bài viết của bài";
-            Notification notification = getNotification(postOptional,userOptional,content,requestMap.get("notificationType"));
+            Notification notification = getNotification(postOptional, userOptional, content, requestMap.get("notificationType"));
             postLikeDAO.save(postLike);
             notificationDAO.save(notification);
             return JPLearningUtils.getResponseEntity("", HttpStatus.OK);
-        }catch (Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -68,37 +68,37 @@ public class PostInteractionServiceImpl implements PostInteractionService {
 
     @Override
     public ResponseEntity<?> commentPost(Map<String, String> requestMap) {
-        try{
+        try {
             Optional<Post> postOptional = postDAO.findById(Long.parseLong(requestMap.get("postID")));
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             //check if exist
-            if(postOptional.isEmpty()){
+            if (postOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Bài viết không tồn tại", HttpStatus.NOT_FOUND);
             }
             //check if user exist
-            if(userOptional.isEmpty()){
+            if (userOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập để có thể bình luận", HttpStatus.UNAUTHORIZED);
             }
             String content = "";
             PostComment postComment = new PostComment();
             //check parent comment
-            if(requestMap.get("parentId").isEmpty() || requestMap.get("parentId").equals("")){
+            if (requestMap.get("parentId").isEmpty() || requestMap.get("parentId").equals("")) {
                 content = "Đã bình luận vào bài viết của bạn";
-                postComment = getFromMapWithoutParentComment(requestMap,postOptional.get(),userOptional.get());
+                postComment = getFromMapWithoutParentComment(requestMap, postOptional.get(), userOptional.get());
             } else {
                 Optional<PostComment> postCommentOptional = postCommentDAO.findById(Long.parseLong(requestMap.get("parentId")));
                 //check if empty
-                if(postCommentOptional.isEmpty()){
+                if (postCommentOptional.isEmpty()) {
                     return JPLearningUtils.getResponseEntity("Bình luận không tồn tại", HttpStatus.NOT_FOUND);
                 }
                 content = "Đã trời lời bạn";
-                postComment = getFromMapWithParentComment(requestMap,postOptional.get(),userOptional.get(),postCommentOptional.get());
+                postComment = getFromMapWithParentComment(requestMap, postOptional.get(), userOptional.get(), postCommentOptional.get());
             }
-            Notification notification = getNotification(postOptional,userOptional,content,requestMap.get("notificationType"));
+            Notification notification = getNotification(postOptional, userOptional, content, requestMap.get("notificationType"));
             postCommentDAO.save(postComment);
             notificationDAO.save(notification);
             return JPLearningUtils.getResponseEntity("", HttpStatus.OK);
-        }catch (Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -106,16 +106,22 @@ public class PostInteractionServiceImpl implements PostInteractionService {
 
     @Override
     public ResponseEntity<?> favoritePost(Map<String, String> requestMap) {
-        try{
+        try {
             Optional<Post> postOptional = postDAO.findById(Long.parseLong(requestMap.get("postID")));
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            Optional<PostFavorite> postFavoriteOptional = postFavoriteDAO.findByUserEmailAndPostID(jwtAuthFilter.getCurrentUser(), Long.parseLong(requestMap.get("postID")));
             //check if exist
-            if(postOptional.isEmpty()){
+            if (postOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Bài viết không tồn tại", HttpStatus.NOT_FOUND);
             }
             //check if user exist
-            if(userOptional.isEmpty()){
+            if (userOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập để lưu bài viết", HttpStatus.UNAUTHORIZED);
+            }
+            //check if user have like this post
+            if (postFavoriteOptional.isPresent()) {
+                postFavoriteDAO.deleteById(postFavoriteOptional.get().getPostFavoriteID());
+                return JPLearningUtils.getResponseEntity("Thay đổi thành công", HttpStatus.OK);
             }
             //save into the database
             PostFavorite postFavorite = PostFavorite.builder()
@@ -123,8 +129,9 @@ public class PostInteractionServiceImpl implements PostInteractionService {
                     .user(userOptional.get())
                     .build();
             postFavoriteDAO.save(postFavorite);
-            return JPLearningUtils.getResponseEntity("Lưu thành công",HttpStatus.OK);
-        }catch (Exception ex){
+            return JPLearningUtils.getResponseEntity("Lưu thành công", HttpStatus.OK);
+
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -132,14 +139,14 @@ public class PostInteractionServiceImpl implements PostInteractionService {
 
     @Override
     public ResponseEntity<?> likeComment(Map<String, String> requestMap) {
-        try{
+        try {
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             Optional<PostComment> postCommentOptional = postCommentDAO.findById(Long.parseLong(requestMap.get("commentID")));
-            if(postCommentOptional.isEmpty()){
+            if (postCommentOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Bình luận không tồn tại", HttpStatus.NOT_FOUND);
             }
             //check if user exist
-            if(userOptional.isEmpty()){
+            if (userOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
             }
             PostLike postLike = PostLike.builder()
@@ -148,7 +155,7 @@ public class PostInteractionServiceImpl implements PostInteractionService {
                     .build();
             postLikeDAO.save(postLike);
             return JPLearningUtils.getResponseEntity("", HttpStatus.OK);
-        }catch (Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
 
@@ -175,7 +182,7 @@ public class PostInteractionServiceImpl implements PostInteractionService {
                 .build();
     }
 
-    private Notification getNotification(Optional<Post> postOptional, Optional<User> userOptional,String content,String notificationType) {
+    private Notification getNotification(Optional<Post> postOptional, Optional<User> userOptional, String content, String notificationType) {
         User sender = userOptional.get();
         User receiver = postOptional.get().getUser();
         return Notification.builder()
