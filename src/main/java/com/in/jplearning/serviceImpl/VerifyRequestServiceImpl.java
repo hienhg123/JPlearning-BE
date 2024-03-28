@@ -1,6 +1,7 @@
 package com.in.jplearning.serviceImpl;
 
 import com.in.jplearning.config.JwtAuthFilter;
+import com.in.jplearning.enums.Status;
 import com.in.jplearning.model.VerifyRequest;
 import com.in.jplearning.repositories.VerifyRequestDAO;
 import com.in.jplearning.service.VerifyRequestService;
@@ -31,7 +32,7 @@ public class VerifyRequestServiceImpl implements VerifyRequestService {
             //check if manager
             if(jwtAuthFilter.isManager()){
                 Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("requestTimestamp").descending());
-                return new ResponseEntity<>(verifyRequestDAO.findByApproved(false,pageable),HttpStatus.OK);
+                return new ResponseEntity<>(verifyRequestDAO.getAllPendingRequest(pageable),HttpStatus.OK);
             }
             return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
         }catch (Exception ex){
