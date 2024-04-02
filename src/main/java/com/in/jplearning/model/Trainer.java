@@ -33,6 +33,7 @@ public class Trainer implements Serializable {
     private JLPTLevel jlptLevel;
     private Date dob;
     private boolean isVerify;
+    private int point;
     @JsonIgnore
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_fk", referencedColumnName = "user_id")

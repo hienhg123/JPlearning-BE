@@ -29,7 +29,7 @@ public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_ID")
-    private Long userID;
+        private Long userID;
     @Column(columnDefinition = "NVARCHAR(255)")
     private String firstName;
     @Column(columnDefinition = "NVARCHAR(255)")
@@ -68,6 +68,10 @@ public class User implements UserDetails {
     }
 
     @JsonIgnore
+    public void setActive(boolean isActive) {
+        this.isActive = isActive;
+    }
+
     @Override
     public String getUsername() {
         return email;

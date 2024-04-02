@@ -21,9 +21,6 @@ public interface UserDAO extends JpaRepository<User,Long> {
 
 
     List<User> findByRole(Role role);
-    @Query(value = "select u.email from User u where u.role ='ADMIN'")
-    List<String> findAllAdminEmail();
-
 
     @Query(value = "update User u set u.isActive = :isActive where u.userID  = :id")
     @Transactional
