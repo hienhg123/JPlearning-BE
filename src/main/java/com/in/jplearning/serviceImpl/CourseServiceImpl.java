@@ -58,7 +58,7 @@ public class CourseServiceImpl implements CourseService {
 
     @Transactional
     @Override
-    public ResponseEntity<?> createCourse(String courseName, String courseDescription, String courseLevel, Boolean isFree, List<MultipartFile> files, Map<String, Object> requestChapter) {
+    public ResponseEntity<?> createCourse(String courseName, String courseDescription, String courseLevel, Boolean isFree, Boolean isDraft, List<MultipartFile> files, Map<String, Object> requestChapter) {
         try {
 
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
@@ -71,7 +71,7 @@ public class CourseServiceImpl implements CourseService {
                 return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
             }
             //get the course
-            Course course = getCourseFromMap(courseName, courseDescription, courseLevel, isFree);
+            Course course = getCourseFromMap(courseName, courseDescription, courseLevel, isFree,isDraft);
             //get the course chapter
             List<Map<String, Object>> chapters = (List<Map<String, Object>>) requestChapter.get("chapters");
             List<Chapter> chapterList = chapters.stream().map(chapterMap -> mapToChapter(chapterMap, course,files))
@@ -92,7 +92,7 @@ public class CourseServiceImpl implements CourseService {
         log.info("Inside getAllCourse");
         try {
             // Retrieve all courses from the database
-            List<Course> courses = courseDAO.findAll();
+            List<Course> courses = courseDAO.findAllByIsDraft(false);
 
             return new ResponseEntity<>(courses, HttpStatus.OK);
         } catch (Exception ex) {
@@ -172,12 +172,13 @@ public class CourseServiceImpl implements CourseService {
         return false;
     }
 
-    private Course getCourseFromMap(String courseName, String courseDescription, String courseLevel, Boolean isFree) {
+    private Course getCourseFromMap(String courseName, String courseDescription, String courseLevel, Boolean isFree, Boolean isDraft) {
         return Course.builder()
                 .courseName(courseName)
                 .courseDescription(courseDescription)
                 .courseLevel(JLPTLevel.valueOf(courseLevel))
                 .isFree(isFree)
+                .isDraft(isDraft)
                 .build();
 
     }
@@ -208,18 +209,22 @@ public class CourseServiceImpl implements CourseService {
         List<MultipartFile> upload = new ArrayList<>();
         //get the file of each if not null then set
         if (lessonMap.containsKey("vocabularyMaterial")) {
+            String key = courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("vocabularyMaterial");
             lesson.setVocabularyMaterial(cloudFront + "/" + random + "_" + lessonMap.get("vocabularyMaterial"));
         }
         //check listening
         if (lessonMap.containsKey("listeningMaterial")) {
+            String key = courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("listeningMaterial");
             lesson.setListeningMaterial(cloudFront + "/" + random + "_" + lessonMap.get("listeningMaterial"));
         }
         //check grammar
         if (lessonMap.containsKey("grammarMaterial")) {
+            String key = courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("grammarMaterial");
             lesson.setGrammarMaterial(cloudFront + "/" + random + "_" + lessonMap.get("grammarMaterial"));
         }
         //check video
         if (lessonMap.containsKey("videoMaterial")) {
+            String key = courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("videoMaterial");
             lesson.setVideoMaterial(cloudFront + "/" + random + "_" + lessonMap.get("videoMaterial"));
         }
         //loop throw each file

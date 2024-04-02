@@ -18,5 +18,5 @@ public interface CourseService {
     ResponseEntity<String> enroll(Map<String, String> requestMap);
 
 
-    ResponseEntity<?> createCourse(String courseName, String courseDescription, String courseLevel, Boolean isFree, List<MultipartFile> files, Map<String, Object> chapters);
+    ResponseEntity<?> createCourse(String courseName, String courseDescription, String courseLevel, Boolean isFree, Boolean isDraft, List<MultipartFile> files, Map<String, Object> chapters);
 }

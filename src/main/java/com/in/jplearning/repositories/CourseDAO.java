@@ -13,4 +13,6 @@ public interface CourseDAO extends JpaRepository<Course,Long> {
 
     @Query(value = "select c from Course c where c.courseName LIKE %?1%")
     List<Course> searchByValue(String value);
+
+    List<Course> findAllByIsDraft(boolean isDraft);
 }
