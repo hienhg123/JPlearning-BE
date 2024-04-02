@@ -1,6 +1,7 @@
 package com.in.jplearning.service;
 
 import com.in.jplearning.model.User;
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
@@ -12,7 +13,7 @@ import java.util.Optional;
 public interface UserService {
 
     ResponseEntity<String> register(Map<String, String> requestMap);
-    ResponseEntity<List<User>> getAllUser();
+    ResponseEntity<Page<Map<String, Object>>> getAllUsers(int pageNumber, int pageSize);
     ResponseEntity<String> login(Map<String, String> requestMap);
     ResponseEntity<String> getUserProfile();
     ResponseEntity<String> checkToken();
@@ -21,4 +22,7 @@ public interface UserService {
     ResponseEntity<String> updateProfile(MultipartFile userPicture, Map<String, String> requestMap);
     ResponseEntity<String> validateOtp(Map<String, String> requestMap);
     ResponseEntity<String> resetPassword(Map<String, String> requestMap);
+
+    ResponseEntity<String> updateUser(Map<String, String> requestMap);
+
 }

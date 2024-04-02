@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.in.jplearning.constants.JPConstants;
 import com.in.jplearning.model.Chapter;
 import com.in.jplearning.model.Course;
+import com.in.jplearning.model.CourseFeedBack;
 import com.in.jplearning.service.CourseService;
 import com.in.jplearning.utils.JPLearningUtils;
 import lombok.AllArgsConstructor;
@@ -62,6 +63,22 @@ public class CourseController {
             ex.printStackTrace();
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG,HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    @GetMapping("/rating")
+    public ResponseEntity<List<Map<String, Object>>> getAllCourseWithDetails() {
+        return courseService.getAllCourseWithDetails();
+    }
+
+    @GetMapping("/rating/{courseID}")
+    public ResponseEntity<Map<String, Object>> getCourseDetailsById(@PathVariable Long courseID) {
+        return courseService.getCourseDetailsById(courseID);
+    }
+
+    @PostMapping("/add/{courseId}")
+    public ResponseEntity<String> addCourseFeedback(@PathVariable Long courseId,
+                                                    @RequestBody CourseFeedBack feedback
+                                                    ) {
+        return courseService.addCourseFeedback(courseId, feedback);
     }
 
 }

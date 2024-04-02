@@ -24,6 +24,7 @@ public class ChapterServiceImpl implements ChapterService {
     private final UserDAO userDAO;
     private final JwtAuthFilter jwtAuthFilter;
     private final CourseDAO courseDAO;
+    private final CourseEnrollDAO courseEnrollDAO;
 
     @Override
     public ResponseEntity<Chapter> getChapterLesson(Long chapterID) {
@@ -36,69 +37,57 @@ public class ChapterServiceImpl implements ChapterService {
     }
 
     @Override
-    public List<Map<String, Object>> getCoursesWithProgressByUser(String userEmail) {
-        User user = userDAO.findByEmail(userEmail).orElse(null);
-        if (user == null) {
-            // Handle the case where user is not found
-            return Collections.emptyList();
+    public ResponseEntity<List<Map<String, Object>>> progressTracking() {
+        try {
+            List<Map<String, Object>> courseDetailsList = new ArrayList<>();
+            List<Course> courses = courseDAO.findAll();
+
+            for (Course course : courses) {
+                Map<String, Object> courseDetails = new HashMap<>();
+                courseDetails.put("courseName", course.getCourseName());
+
+                // Calculate the count of enrolled users for each course
+                Long enrollCount = courseEnrollDAO.countByCourse(course);
+                courseDetails.put("enrolledUsersCount", enrollCount);
+
+                // Calculate the progress for each course
+                double progress = calculateCourseProgress(course);
+                courseDetails.put("courseProgress", progress);
+
+                courseDetailsList.add(courseDetails);
+            }
+
+            return new ResponseEntity<>(courseDetailsList, HttpStatus.OK);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return new ResponseEntity<>(Collections.emptyList(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
 
-        List<Course> courses = courseDAO.findAll();
-        List<Map<String, Object>> courseProgressList = new ArrayList<>();
+    private double calculateCourseProgress(Course course) {
+        int totalChapters = course.getChapterList().size();
+        int completedChapters = 0;
 
-        for (Course course : courses) {
-            List<Chapter> chapters = course.getChapterList();
-            int totalChapters = chapters.size();
-            int finishedChapters = 0;
+        for (Chapter chapter : course.getChapterList()) {
+            List<UserChapterProgress> userChapterProgressList = userChapterProgressDAO.findByChapter(chapter);
+            boolean chapterCompleted = false;
 
-            for (Chapter chapter : chapters) {
-                List<UserChapterProgress> userChapterProgressList
-                        = userChapterProgressDAO.findByUserAndChapterAndIsFinished(user, chapter, true);
-                if (!userChapterProgressList.isEmpty()) {
-                    finishedChapters++;
+            for (UserChapterProgress userChapterProgress : userChapterProgressList) {
+                if (userChapterProgress.getIsFinished()) {
+                    chapterCompleted = true;
+                    break; // Break the loop if at least one user has finished the chapter
                 }
             }
 
-            double courseProgress = totalChapters == 0 ? 0.0 : ((double) finishedChapters / totalChapters) * 100;
-
-            Map<String, Object> courseProgressMap = new HashMap<>();
-            courseProgressMap.put("courseName", course.getCourseName());
-            courseProgressMap.put("courseDescription", course.getCourseDescription());
-            courseProgressMap.put("progress", courseProgress);
-            courseProgressList.add(courseProgressMap);
-        }
-
-        return courseProgressList;
-    }
-
-
-
-    @Override
-    public double calculateCourseProgressByUser(User user, Course course) {
-        List<Chapter> chapters = course.getChapterList();
-        int totalChapters = chapters.size();
-        int finishedChapters = 0;
-
-        List<UserChapterProgress> userChapterProgressList = userChapterProgressDAO.findByUser(user);
-
-        for (Chapter chapter : chapters) {
-            for (UserChapterProgress progress : userChapterProgressList) {
-                if (progress.getChapter().equals(chapter) && progress.getIsFinished()) {
-                    finishedChapters++;
-                    break; // No need to check other progress entries for this chapter
-                }
+            if (chapterCompleted) {
+                completedChapters++;
             }
         }
 
-        if (totalChapters == 0) {
-            return 0.0; // Avoid division by zero
-        }
-
-        return ((double) finishedChapters / totalChapters) * 100;
+        double progress = totalChapters > 0 ? (double) completedChapters / totalChapters : 0.0;
+        // Cap progress at 100%
+        return Math.min(((double) completedChapters / totalChapters) * 100, 100.0);
     }
-
-
-
 
 }
 

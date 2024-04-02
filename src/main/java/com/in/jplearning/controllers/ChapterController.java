@@ -36,16 +36,9 @@ public class ChapterController {
         return new ResponseEntity<>(new Chapter(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    @GetMapping(path = "/courseProgress")
-    public ResponseEntity<List<Map<String, Object>>> getCourseProgress(Principal principal) {
-        try {
-            String userEmail = jwtAuthFilter.getCurrentUser(); // Assuming this method extracts the user's email from the JWT token
-            List<Map<String, Object>> courseProgressList = chapterService.getCoursesWithProgressByUser(userEmail);
-            return new ResponseEntity<>(courseProgressList, HttpStatus.OK);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
+    @GetMapping("/")
+    public ResponseEntity<List<Map<String, Object>>> progressTracking() {
+        return chapterService.progressTracking();
     }
+
 }
