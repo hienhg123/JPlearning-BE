@@ -52,13 +52,14 @@ public class CourseController {
                                           @RequestParam("courseDescription") String courseDescription,
                                           @RequestParam("courseLevel") String courseLevel,
                                           @RequestParam("isFree") Boolean isFree,
+                                          @RequestParam("isFree") Boolean isDraft,
                                           @RequestParam("files") List<MultipartFile> files,
                                           @RequestParam("chapters") String chaptersJson){
         try{
             ObjectMapper objectMapper = new ObjectMapper();
             Map<String, Object> chapters = objectMapper.readValue(chaptersJson, new TypeReference<>() {
             });
-            return courseService.createCourse(courseName,courseDescription,courseLevel,isFree,files,chapters);
+            return courseService.createCourse(courseName,courseDescription,courseLevel,isFree,isDraft,files,chapters);
         }catch (Exception ex){
             ex.printStackTrace();
         }

@@ -26,5 +26,5 @@ public interface CourseService {
     ResponseEntity<String> addCourseFeedback(Long courseId, CourseFeedBack feedback);
 
 
-    ResponseEntity<?> createCourse(String courseName, String courseDescription, String courseLevel, Boolean isFree, List<MultipartFile> files, Map<String, Object> chapters);
+    ResponseEntity<?> createCourse(String courseName, String courseDescription, String courseLevel, Boolean isFree, Boolean isDraft, List<MultipartFile> files, Map<String, Object> chapters);
 }
