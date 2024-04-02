@@ -4,12 +4,13 @@ import com.in.jplearning.model.Course;
 import com.in.jplearning.model.CourseFeedBack;
 import com.in.jplearning.model.User;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
 
 public interface CourseService {
-    ResponseEntity<String> createCourse(Map<String, String> requestMap);
+
 
     ResponseEntity<List<Course>> getAllCourse();
 
@@ -25,4 +26,5 @@ public interface CourseService {
     ResponseEntity<String> addCourseFeedback(Long courseId, CourseFeedBack feedback);
 
 
+    ResponseEntity<?> createCourse(String courseName, String courseDescription, String courseLevel, Boolean isFree, List<MultipartFile> files, Map<String, Object> chapters);
 }
