@@ -80,31 +80,22 @@ public class UserServiceImpl implements UserService {
             if (jwtAuthFilter.isAdmin()) {
                 log.info("Fetching all users.");
 
-                // Get all users
-                List<User> allUsers = userDAO.findByRole(Role.USER);
+                // Get a page of users from the database with the role "USER"
+                Page<User> userPage = userDAO.findByRole(Role.USER, PageRequest.of(pageNumber, pageSize));
 
-                // Calculate the start and end indices for the sublist
-                int startIndex = pageNumber * pageSize;
-                int endIndex = Math.min((pageNumber + 1) * pageSize, allUsers.size());
+                // Convert the page of users to a page of user information maps
+                Page<Map<String, Object>> userPageInfo = userPage.map(user -> {
+                    Map<String, Object> userInfoMap = new HashMap<>();
+                    userInfoMap.put("userID", user.getUserID());
+                    userInfoMap.put("fullName", user.getFirstName() + " " + user.getLastName());
+                    userInfoMap.put("email", user.getEmail());
+                    userInfoMap.put("isActive", user.isActive());
+                    // You can add more properties to the map if needed
+                    return userInfoMap;
+                });
 
-                // Create a sublist of users for the current page
-                List<User> usersForPage = allUsers.subList(startIndex, endIndex);
-
-                // Convert the sublist of users to a list of user information maps
-                List<Map<String, Object>> userInfoList = usersForPage.stream()
-                        .map(user -> {
-                            Map<String, Object> userInfoMap = new HashMap<>();
-                            userInfoMap.put("userID", user.getUserID());
-                            userInfoMap.put("fullName", user.getFirstName() + " " + user.getLastName());
-                            userInfoMap.put("email", user.getEmail());
-                            userInfoMap.put("isActive", user.isActive());
-                            // You can add more properties to the map if needed
-                            return userInfoMap;
-                        })
-                        .toList(); // Requires Java 16 or newer, otherwise use .collect(Collectors.toList());
-
-                // Return the list of user information maps
-                return ResponseEntity.ok(new PageImpl<>(userInfoList));
+                // Return the page of user information maps
+                return ResponseEntity.ok(userPageInfo);
             } else {
                 // User is not authorized to access this endpoint
                 log.error("Unauthorized access. Current user is not an admin.");
@@ -121,31 +112,37 @@ public class UserServiceImpl implements UserService {
     @Override
     public ResponseEntity<String> updateUser(Map<String, String> requestMap) {
         try {
-            //check if admin
+            // Check if admin
             if (jwtAuthFilter.isAdmin()) {
                 Long userId = Long.parseLong(requestMap.get("id"));
                 Optional<User> userOptional = userDAO.findById(userId);
 
-                //check if the user exists
+                // Check if the user exists
                 if (userOptional.isPresent()) {
                     User user = userOptional.get();
-                    boolean newStatus = Boolean.parseBoolean(requestMap.get("status"));
+                    boolean newStatus = Boolean.parseBoolean(requestMap.get("isActive"));
 
                     // Update the isActive status using the setter method
                     user.setActive(newStatus);
                     userDAO.save(user);
-                    return JPLearningUtils.getResponseEntity("User Status Updated Successfully", HttpStatus.OK);
+                    return JPLearningUtils.getResponseEntity("Thay đổi trạng thái thành công", HttpStatus.OK);
                 } else {
                     return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.UNAUTHORIZED);
                 }
             } else {
                 return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
             }
-        } catch (Exception ex) {
+        } catch (NumberFormatException ex) {
+            // Handle number format exception (e.g., if the ID cannot be parsed)
             ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity("Invalid user ID format", HttpStatus.BAD_REQUEST);
+        } catch (Exception ex) {
+            // Handle other exceptions
+            ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
 
 
 
@@ -204,9 +201,9 @@ public class UserServiceImpl implements UserService {
 
                     user.setPassword(encodedNewPassword);
                     userDAO.save(user);
-                    return JPLearningUtils.getResponseEntity("Password Update Successfully", HttpStatus.OK);
+                    return JPLearningUtils.getResponseEntity("Cập nhật mật khẩu thành công", HttpStatus.OK);
                 } else {
-                    return JPLearningUtils.getResponseEntity("Incorrect old password", HttpStatus.BAD_GATEWAY);
+                    return JPLearningUtils.getResponseEntity("Mật khẩu cũ sai ", HttpStatus.BAD_GATEWAY);
                 }
             } else {
                 return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);

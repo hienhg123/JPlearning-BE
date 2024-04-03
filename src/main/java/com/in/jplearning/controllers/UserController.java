@@ -113,7 +113,7 @@ public class UserController {
             return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-    @PostMapping("/userManagement")
+    @PutMapping("/userManagement")
     public ResponseEntity<String> updateUser(@RequestBody Map<String, String> requestMap) {
         return userService.updateUser(requestMap);
     }

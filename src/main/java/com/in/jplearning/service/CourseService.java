@@ -24,5 +24,5 @@ public interface CourseService {
 
     ResponseEntity<String> addCourseFeedback(Long courseId, CourseFeedBack feedback);
 
-
+    ResponseEntity<?> getAllFeedbackForCourse(Long courseId, int pageNumber, int pageSize);
 }

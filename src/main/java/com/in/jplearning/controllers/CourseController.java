@@ -71,4 +71,15 @@ public class CourseController {
         return courseService.addCourseFeedback(courseId, feedback);
     }
 
+    @GetMapping(path = "/feedback/{courseId}/{pageNumber}/{pageSize}")
+    public ResponseEntity<?> getAllFeedback(@PathVariable Long courseId, @PathVariable int pageNumber, @PathVariable int pageSize) {
+        try {
+            return courseService.getAllFeedbackForCourse(courseId, pageNumber, pageSize);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
 }
