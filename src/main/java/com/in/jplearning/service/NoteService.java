@@ -17,4 +17,6 @@ public interface NoteService {
     ResponseEntity<Note> goToLesson(Long noteID);
 
     ResponseEntity<String> deleteNote(Long noteID);
+
+    ResponseEntity<?> getByLesson(Long lessonID);
 }

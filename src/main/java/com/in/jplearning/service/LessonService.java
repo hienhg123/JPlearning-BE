@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface LessonService {
 
-    ResponseEntity<Lesson> getLesson(Long lessonID);
+    ResponseEntity<?> getLesson(Long lessonID);
 }

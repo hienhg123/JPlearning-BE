@@ -10,6 +10,7 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -31,7 +32,7 @@ public class Chapter implements Serializable {
     @JsonIgnore
     private Course course;
 
-    @OneToMany(mappedBy = "chapter")
+    @OneToMany(mappedBy = "chapter",cascade = CascadeType.ALL)
     @JsonIgnoreProperties("chapter")
-    private List<Lesson> lessonList;
+    private List<Lesson> lessonList = new ArrayList<>();
 }

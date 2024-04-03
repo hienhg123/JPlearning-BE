@@ -2,6 +2,7 @@ package com.in.jplearning.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.in.jplearning.enums.Status;
 import com.in.jplearning.enums.VerificationType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -32,7 +33,8 @@ public class VerifyRequest implements Serializable {
     private VerificationType verificationType;
     @Column(nullable = false,columnDefinition = "LONGTEXT")
     private String url;
-    private boolean approved;
+    @Enumerated(EnumType.STRING)
+    private Status status;
     private LocalDateTime requestTimestamp;
 
     @ManyToOne(fetch = FetchType.EAGER)

@@ -73,5 +73,15 @@ public class NoteController {
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+    @GetMapping("/getUserNoteByLesson/{lessonID}")
+    public ResponseEntity<?> getByLesson(@PathVariable Long lessonID) {
+        try {
+            return noteService.getByLesson(lessonID);
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }
 

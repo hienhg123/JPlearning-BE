@@ -12,13 +12,11 @@ import java.util.List;
 
 public interface VerifyRequestDAO extends JpaRepository<VerifyRequest,Long> {
 
-    @Query(value = "SELECT vr FROM VerifyRequest vr WHERE vr.approved = false ORDER BY vr.requestTimestamp DESC")
+    @Query(value = "SELECT vr FROM VerifyRequest vr WHERE vr.status = 'PENDING'")
     Page<VerifyRequest> getAllPendingRequest(Pageable pageable);
-
-    Page<VerifyRequest> findByApproved(Boolean isApproved, Pageable pageable);
 
     @Transactional
     @Modifying
-    @Query(value = "Update VerifyRequest vr set vr.approved = ?1 where vr.requestID =?2")
+    @Query(value = "Update VerifyRequest vr set vr.status = ?1 where vr.requestID =?2")
     Integer updateStatus(boolean approved, long requestID);
 }

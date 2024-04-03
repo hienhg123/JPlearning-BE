@@ -10,4 +10,8 @@ public interface TrainerService {
     ResponseEntity<String> registerAsTrainer(List<MultipartFile> pictureFiles, Map<String, String> requestMap);
 
     ResponseEntity<String> updateStatus(Map<String, String> requestMap);
+
+    ResponseEntity<?> getAllTrainer(int pageNumber, int pageSize);
+
+    ResponseEntity<String> updateTrainerStatus(Map<String, String> requestMap);
 }

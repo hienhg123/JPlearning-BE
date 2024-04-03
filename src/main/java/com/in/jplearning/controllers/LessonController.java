@@ -21,12 +21,12 @@ public class LessonController {
     private final LessonService lessonService;
 
     @GetMapping(path = "/getLessonById/{lessonID}")
-    public ResponseEntity<Lesson> getLesson(@PathVariable Long lessonID){
+    public ResponseEntity<?> getLesson(@PathVariable Long lessonID){
         try{
             return lessonService.getLesson(lessonID);
         } catch (Exception ex){
             ex.printStackTrace();
         }
-        return new ResponseEntity<>(new Lesson(),HttpStatus.INTERNAL_SERVER_ERROR);
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG,HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

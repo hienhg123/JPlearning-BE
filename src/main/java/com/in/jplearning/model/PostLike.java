@@ -23,7 +23,6 @@ public class PostLike implements Serializable {
     @Column(name = "like_ID")
     private Long likeID;
 
-    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_fk",referencedColumnName = "user_ID")
     private User user;

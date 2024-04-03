@@ -10,7 +10,7 @@ import java.util.List;
 public interface ChapterDAO extends JpaRepository<Chapter, Long> {
 
 
-    @Query("select c from Chapter c left join c.lessonList a where c.chapterID = ?1 order by a.lessonOrder ASC")
+    @Query("select c from Chapter c left join c.lessonList a where c.chapterID = ?1")
     Chapter getChapterLessonByOrder(Long chapterID);
     @Query("SELECT COUNT(c) FROM Chapter c WHERE c.course = :course")
     int countAllChaptersByCourse(Course course);

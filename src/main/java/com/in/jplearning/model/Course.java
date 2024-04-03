@@ -36,12 +36,18 @@ public class Course implements Serializable {
     @Enumerated(EnumType.STRING)
     private JLPTLevel courseLevel;
     private Boolean isFree;
+    private Boolean isDraft;
     @JsonIgnoreProperties("course")
-    @OneToMany(mappedBy = "course")
-    private List<Chapter> chapterList;
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)
+    private List<Chapter> chapterList = new ArrayList<>();
 
     @OneToMany(mappedBy = "course")
     private Set<CourseEnroll> courseEnrolls;
+
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_fk",referencedColumnName = "user_ID")
+    private User createBy;
 
     @OneToMany(mappedBy = "course")
     private Set<CourseFeedBack> courseFeedbacks;
@@ -74,6 +80,5 @@ public class Course implements Serializable {
             averageRating = 0.0;
         }
     }
-
 
 }
