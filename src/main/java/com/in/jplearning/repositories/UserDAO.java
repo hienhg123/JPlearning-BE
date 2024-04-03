@@ -4,6 +4,8 @@ package com.in.jplearning.repositories;
 import com.in.jplearning.enums.JLPTLevel;
 import com.in.jplearning.enums.Role;
 import com.in.jplearning.model.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -20,7 +22,7 @@ public interface UserDAO extends JpaRepository<User,Long> {
     Optional<User> findById(Long userId) ;
 
 
-    List<User> findByRole(Role role);
+    Page<User> findByRole(Role role, Pageable pageable);
 
     @Query(value = "update User u set u.isActive = :isActive where u.userID  = :id")
     @Transactional

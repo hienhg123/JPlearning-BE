@@ -75,7 +75,7 @@ public class UserController {
         return new ResponseEntity<>(response,HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    @PostMapping("/changePassword")
+    @PutMapping("/changePassword")
     public ResponseEntity<String> changePassword(@RequestBody Map<String, String> requestMap) {
         try {
             return userService.changePassword(requestMap);
@@ -113,7 +113,7 @@ public class UserController {
             return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-    @PostMapping("/userManagement")
+    @PutMapping("/userManagement")
     public ResponseEntity<String> updateUser(@RequestBody Map<String, String> requestMap) {
         return userService.updateUser(requestMap);
     }

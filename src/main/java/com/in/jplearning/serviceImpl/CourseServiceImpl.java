@@ -10,7 +10,10 @@ import com.in.jplearning.service.CourseService;
 import com.in.jplearning.utils.JPLearningUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -240,6 +243,39 @@ public class CourseServiceImpl implements CourseService {
             return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @Override
+    public ResponseEntity<?> getAllFeedbackForCourse(Long courseId, int pageNumber, int pageSize) {
+        try {
+            // Get the course by its ID
+            Optional<Course> courseOptional = courseDAO.findById(courseId);
+            if (!courseOptional.isPresent()) {
+                return JPLearningUtils.getResponseEntity("Course not found", HttpStatus.NOT_FOUND);
+            }
+            Course course = courseOptional.get();
+
+            // Retrieve feedback for the given course using pagination
+            Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("createdAt").descending());
+            Page<CourseFeedBack> feedbackPage = courseFeedbackDAO.findByCourse(course, pageable);
+
+            // Convert the page of feedback entities to a page of feedback information maps
+            Page<Map<String, Object>> feedbackPageInfo = feedbackPage.map(feedback -> {
+                Map<String, Object> feedbackInfoMap = new HashMap<>();
+                feedbackInfoMap.put("comment", feedback.getComment());
+                feedbackInfoMap.put("fullName", feedback.getUser().getFirstName() + " " + feedback.getUser().getLastName());
+                // You can add more properties to the map if needed
+                return feedbackInfoMap;
+            });
+
+            // Return the page of feedback information maps
+            return ResponseEntity.ok(feedbackPageInfo);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            log.error("Error occurred while fetching feedback for the course.", ex);
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 
 
 
