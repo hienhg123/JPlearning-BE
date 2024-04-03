@@ -35,8 +35,6 @@ public class NoteServiceImpl implements NoteService {
         try {
             //get the current user
             User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
-            log.info("id:" + user.getUserID());
-            //get note by user idlog.info();
             return new ResponseEntity<>(noteDAO.getAllUserNote(user.getUserID()), HttpStatus.OK);
 
         } catch (Exception ex) {
