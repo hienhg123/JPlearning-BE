@@ -3,6 +3,7 @@ package com.in.jplearning.serviceImpl;
 import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.constants.JPConstants;
 import com.in.jplearning.model.Bill;
+import com.in.jplearning.model.Course;
 import com.in.jplearning.model.Lesson;
 import com.in.jplearning.model.User;
 import com.in.jplearning.repositories.BillDAO;
@@ -22,6 +23,7 @@ import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -51,7 +53,19 @@ public class LessonServiceImpl implements LessonService {
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-
+    @Override
+    public ResponseEntity<?> findCourseByLessonID(Long lessonID) {
+        try{
+            Optional<Course> courseOptional = lessonDAO.findCourseByLessonId(lessonID);
+            if(courseOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Không tồn tại", HttpStatus.NOT_FOUND);
+            }
+            return new ResponseEntity<>(courseOptional.get(), HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
 
 }

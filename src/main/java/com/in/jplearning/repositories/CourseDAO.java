@@ -15,4 +15,5 @@ public interface CourseDAO extends JpaRepository<Course,Long> {
     List<Course> searchByValue(String value);
 
     List<Course> findAllByIsDraft(boolean isDraft);
+
 }
