@@ -30,8 +30,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
-import java.time.ZoneId;
-import java.util.*;
+
 
 @Service
 @Slf4j
@@ -224,7 +223,7 @@ public class CourseServiceImpl implements CourseService {
 
             // Obtain the course using courseId
             Optional<Course> courseOptional = courseDAO.findById(courseId);
-            if (!courseOptional.isPresent()) {
+            if (courseOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Course not found", HttpStatus.BAD_REQUEST);
             }
             Course course = courseOptional.get();
@@ -260,10 +259,7 @@ public class CourseServiceImpl implements CourseService {
             return false;
         }
         //check if bill is expire or not
-        if (bill.getExpireAt().isAfter(LocalDateTime.now())) {
-            return true;
-        }
-        return false;
+        return bill.getExpireAt().isAfter(LocalDateTime.now());
     }
 
     private Course getCourseFromMap(String courseName, String courseDescription, String courseLevel, Boolean isFree, Boolean isDraft) {
@@ -303,30 +299,30 @@ public class CourseServiceImpl implements CourseService {
         List<MultipartFile> upload = new ArrayList<>();
         //get the file of each if not null then set
         if (lessonMap.containsKey("vocabularyMaterial")) {
-            String key = courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("vocabularyMaterial");
-            lesson.setVocabularyMaterial(cloudFront + "/" + random + "_" + lessonMap.get("vocabularyMaterial"));
+            String key = cloudFront + courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("vocabularyMaterial");
+            lesson.setVocabularyMaterial(key);
         }
         //check listening
         if (lessonMap.containsKey("listeningMaterial")) {
-            String key = courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("listeningMaterial");
-            lesson.setListeningMaterial(cloudFront + "/" + random + "_" + lessonMap.get("listeningMaterial"));
+            String key = cloudFront + courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("listeningMaterial");
+            lesson.setListeningMaterial(key);
         }
         //check grammar
         if (lessonMap.containsKey("grammarMaterial")) {
-            String key = courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("grammarMaterial");
-            lesson.setGrammarMaterial(cloudFront + "/" + random + "_" + lessonMap.get("grammarMaterial"));
+            String key = cloudFront + courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("grammarMaterial");
+            lesson.setGrammarMaterial(key);
         }
         //check video
         if (lessonMap.containsKey("videoMaterial")) {
-            String key = courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("videoMaterial");
-            lesson.setVideoMaterial(cloudFront + "/" + random + "_" + lessonMap.get("videoMaterial"));
+            String key = cloudFront + courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("videoMaterial");
+            lesson.setVideoMaterial(key);
         }
         //loop throw each file
         for (MultipartFile file : multipartFiles) {
             //loop to check each key
             for(String key : lessonMap.keySet()){
                 //check if equal
-                if(file.getOriginalFilename().equals(lessonMap.get(key))){
+                if(Objects.equals(file.getOriginalFilename(), lessonMap.get(key))){
                     upload.add(file);
                     break;
                 }
@@ -337,7 +333,7 @@ public class CourseServiceImpl implements CourseService {
         return lesson;
     }
 
-    private void uploadToS3(List<MultipartFile> files, String uuid, String courseName, String chapterTitles, String lessonTitles) throws IOException {
+    private void uploadToS3(List<MultipartFile> files, String uuid, String courseName, String chapterTitles, String lessonTitles){
         List<CompletableFuture<PutObjectResponse>> uploadFutures = files.stream()
                 .map(file -> {
                     try {

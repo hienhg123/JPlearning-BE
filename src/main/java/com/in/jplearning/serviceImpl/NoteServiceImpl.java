@@ -68,9 +68,9 @@ public class NoteServiceImpl implements NoteService {
             if (!note.isEmpty()) {
                 note.get().setNote(requestMap.get("note"));
                 noteDAO.save(note.get());
-                return JPLearningUtils.getResponseEntity("Update success fully", HttpStatus.OK);
+                return JPLearningUtils.getResponseEntity("Cập nhật thành công", HttpStatus.OK);
             } else {
-                return JPLearningUtils.getResponseEntity("Note not exist", HttpStatus.OK);
+                return JPLearningUtils.getResponseEntity("Ghi chú không tồn tại", HttpStatus.OK);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -91,13 +91,32 @@ public class NoteServiceImpl implements NoteService {
     @Override
     public ResponseEntity<String> deleteNote(Long noteID) {
         try {
+            Optional<Note> note = noteDAO.findById(noteID);
+            if(note.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Ghi chú không tồn tại", HttpStatus.OK);
+            }
             noteDAO.deleteById(noteID);
-            return JPLearningUtils.getResponseEntity("Note deleted", HttpStatus.OK);
+            return JPLearningUtils.getResponseEntity("Xóa thành công", HttpStatus.OK);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
 
+    }
+
+    @Override
+    public ResponseEntity<?> getByLesson(Long lessonID) {
+        try{
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            //check if logon
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+            }
+            return new ResponseEntity<>(noteDAO.getUserNoteByLessonID(userOptional.get().getUserID(),lessonID), HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     private Note mapToNote(Map<String, String> requestMap) {
