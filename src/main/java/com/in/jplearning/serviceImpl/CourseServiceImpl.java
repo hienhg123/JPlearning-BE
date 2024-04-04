@@ -212,7 +212,7 @@ public class CourseServiceImpl implements CourseService {
             // Obtain the user using the email
             User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
             if (user == null) {
-                return JPLearningUtils.getResponseEntity("User not found", HttpStatus.BAD_REQUEST);
+                return JPLearningUtils.getResponseEntity("Không tìm được", HttpStatus.BAD_REQUEST);
             }
 
             if (feedback.getCreatedAt() == null) {
@@ -221,13 +221,13 @@ public class CourseServiceImpl implements CourseService {
 
             // Validate rating
             if (feedback.getRating() < 1 || feedback.getRating() > 5) {
-                return JPLearningUtils.getResponseEntity("Rating must be between 1 and 5", HttpStatus.BAD_REQUEST);
+                return JPLearningUtils.getResponseEntity("", HttpStatus.BAD_REQUEST);
             }
 
             // Obtain the course using courseId
             Optional<Course> courseOptional = courseDAO.findById(courseId);
             if (courseOptional.isEmpty()) {
-                return JPLearningUtils.getResponseEntity("Course not found", HttpStatus.BAD_REQUEST);
+                return JPLearningUtils.getResponseEntity("Không tìm thấy khóa học ", HttpStatus.BAD_REQUEST);
             }
             Course course = courseOptional.get();
 
@@ -250,7 +250,7 @@ public class CourseServiceImpl implements CourseService {
             // Get the course by its ID
             Optional<Course> courseOptional = courseDAO.findById(courseId);
             if (!courseOptional.isPresent()) {
-                return JPLearningUtils.getResponseEntity("Course not found", HttpStatus.NOT_FOUND);
+                return JPLearningUtils.getResponseEntity("Không tìm thấy khóa học", HttpStatus.NOT_FOUND);
             }
             Course course = courseOptional.get();
 

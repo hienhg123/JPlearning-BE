@@ -44,6 +44,7 @@ public class ChapterServiceImpl implements ChapterService {
 
             for (Course course : courses) {
                 Map<String, Object> courseDetails = new HashMap<>();
+                courseDetails.put("courseID", course.getCourseID());
                 courseDetails.put("courseName", course.getCourseName());
 
                 // Calculate the count of enrolled users for each course
@@ -66,6 +67,10 @@ public class ChapterServiceImpl implements ChapterService {
 
     private double calculateCourseProgress(Course course) {
         int totalChapters = course.getChapterList().size();
+        if (totalChapters == 0) {
+            return 0.0;
+        }
+
         int completedChapters = 0;
 
         for (Chapter chapter : course.getChapterList()) {
@@ -84,10 +89,13 @@ public class ChapterServiceImpl implements ChapterService {
             }
         }
 
-        double progress = totalChapters > 0 ? (double) completedChapters / totalChapters : 0.0;
+        double progress = (double) completedChapters / totalChapters;
         // Cap progress at 100%
-        return Math.min(((double) completedChapters / totalChapters) * 100, 100.0);
+        double cappedProgress = Math.min(progress * 100, 100.0);
+        // Round the capped progress to the nearest integer
+        return Math.round(cappedProgress);
     }
+
 
 }
 
