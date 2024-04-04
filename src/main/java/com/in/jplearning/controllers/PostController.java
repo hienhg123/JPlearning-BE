@@ -50,15 +50,34 @@ public class PostController {
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    @GetMapping("/getByUser")
-    public ResponseEntity<List<Map<String, Object>>> getByUser() {
-        return postService.getByUser();
+    @GetMapping("/getByUserPostDraft/{pageNumber}/{pageSize}")
+    public ResponseEntity<?> getByUserPostDraft(@PathVariable int pageNumber, @PathVariable int pageSize) {
+       try{
+           return postService.getByUserPostDraft(pageNumber,pageSize);
+       }catch (Exception ex) {
+          ex.printStackTrace();
+       }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    @GetMapping("/getByUserPostNotDraft/{pageNumber}/{pageSize}")
+    public ResponseEntity<?> getByUserPostNotDraft(@PathVariable int pageNumber, @PathVariable int pageSize) {
+        try{
+            return postService.getByUserPostNotDraft(pageNumber,pageSize);
+        }catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
 
-    @PutMapping("/{postId}")
-    public ResponseEntity<String> updatePost(@PathVariable Long postId, @RequestBody Map<String, String> requestMap) {
-        return postService.updatePost(postId, requestMap);
+    @PutMapping("updatePost")
+    public ResponseEntity<String> updatePost(@RequestBody Map<String, String> requestMap) {
+        try{
+            return postService.updatePost(requestMap);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @DeleteMapping("deletePost/{postId}")

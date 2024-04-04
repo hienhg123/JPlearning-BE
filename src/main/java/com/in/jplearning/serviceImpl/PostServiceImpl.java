@@ -17,6 +17,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
@@ -59,7 +60,6 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public ResponseEntity<String> createPost(Map<String, String> requestMap){
-        log.info("Inside createPost {}", requestMap);
         try{
             User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
             //check if user is trainer
@@ -80,6 +80,9 @@ public class PostServiceImpl implements PostService {
             return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+
+
     @Override
     public ResponseEntity<?> uploadFiles(MultipartFile file) {
         try{
@@ -96,63 +99,71 @@ public class PostServiceImpl implements PostService {
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+
+
     @Override
-    public ResponseEntity<String> updatePost(Long postId, Map<String, String> requestMap) {
+    public ResponseEntity<String> updatePost(Map<String, String> requestMap) {
         try {
-            // Fetch the post from the database
-            Optional<Post> optionalPost = postDAO.findById(postId);
-            if (optionalPost.isPresent()) {
-                Post post = optionalPost.get();
-
-                // Check if the logged-in user is the owner of the post
-                String currentUserEmail = jwtAuthFilter.getCurrentUser();
-                if (post.getUser().getEmail().equals(currentUserEmail)) {
-                    // Update post properties
-                    post.setTitle(requestMap.get("title"));
-                    post.setPostContent(requestMap.get("postContent"));
-
-                    // Save the updated post
-                    postDAO.save(post);
-
-                    return JPLearningUtils.getResponseEntity("Cập nhật thành công", HttpStatus.OK);
-                } else {
-                    return JPLearningUtils.getResponseEntity("Unauthorized user", HttpStatus.UNAUTHORIZED);
-                }
-            } else {
-                return JPLearningUtils.getResponseEntity("Không tìm thấy bài đăng", HttpStatus.NOT_FOUND);
+            Optional<Post> postOptional = postDAO.findById(Long.parseLong(requestMap.get("postID")));
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            Trainer trainer = trainerDAO.getByUserId(userOptional.get().getUserID());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập",HttpStatus.UNAUTHORIZED);
             }
+            if(postOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Bài đăng không tồn tại",HttpStatus.NOT_FOUND);
+            }
+            //check if user is trainer
+            if(trainer == null){
+                return JPLearningUtils.getResponseEntity("Chỉ có trainer mới được đăng bài", HttpStatus.BAD_REQUEST);
+            }
+            Post post = postOptional.get();
+            post.setPostContent(requestMap.get("postContent"));
+            post.setTitle(requestMap.get("title"));
+            post.setIsDraft(Boolean.parseBoolean(requestMap.get("draft")));
+            post.setPostType(PostType.valueOf(requestMap.get("postType")));
+            post.setLevel(JLPTLevel.valueOf(requestMap.get("level")));
+            postDAO.save(post);
+            //check if draft
+            if(requestMap.get("draft").isEmpty()){
+                return JPLearningUtils.getResponseEntity("Lưu thay đổi thành công", HttpStatus.OK);
+            }
+            return JPLearningUtils.getResponseEntity("Đăng thành công", HttpStatus.OK);
         } catch (Exception ex) {
             ex.printStackTrace();
-            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
 
     @Override
-    public ResponseEntity<List<Map<String, Object>>> getByUser() {
-        try {
-            User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
-
-            if (user != null) {
-                log.info("id: " + user.getUserID());
-
-                List<Post> posts = postDAO.findByUser(user);
-
-                List<Map<String, Object>> postsList = new ArrayList<>();
-
-                for (Post post : posts) {
-                    Map<String, Object> postMap = mapPostToDto(post);
-                    postsList.add(postMap);
-                }
-
-                return new ResponseEntity<>(postsList, HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+    public ResponseEntity<?> getByUserPostNotDraft(int pageNumber,int pageSize) {
+        try{
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
             }
-        } catch (Exception ex) {
+            Pageable pageable = PageRequest.of(pageNumber, pageSize);
+            return new ResponseEntity<>(postDAO.getByUserPostNotDraft(jwtAuthFilter.getCurrentUser(), pageable), HttpStatus.OK);
+        }catch (Exception ex){
             ex.printStackTrace();
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    @Override
+    public ResponseEntity<?> getByUserPostDraft(int pageNumber, int pageSize) {
+        try{
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+            }
+            Pageable pageable = PageRequest.of(pageNumber, pageSize);
+            return new ResponseEntity<>(postDAO.getByUserPostDraft(jwtAuthFilter.getCurrentUser(), pageable), HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
@@ -216,8 +227,8 @@ public class PostServiceImpl implements PostService {
     @Override
     public ResponseEntity<?> getAllPost(int pageNumber, int pageSize) {
         try {
-            Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("createdAt").descending());
-            return new ResponseEntity<>(postDAO.findAll(pageable), HttpStatus.OK);
+            Pageable pageable = PageRequest.of(pageNumber, pageSize);
+            return new ResponseEntity<>(postDAO.getAllPost(pageable), HttpStatus.OK);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
