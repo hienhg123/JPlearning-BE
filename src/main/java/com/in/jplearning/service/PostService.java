@@ -25,4 +25,6 @@ public interface PostService {
     ResponseEntity<?> uploadFiles(MultipartFile file);
 
     ResponseEntity<?> getByUserPostNotDraft(int pageNumber, int pageSize);
+
+    ResponseEntity<?> getUserFavorite(int pageNumber, int pageSize);
 }

@@ -12,4 +12,8 @@ public interface PostInteractionService {
     ResponseEntity<?> favoritePost(Map<String, String> requestMap);
 
     ResponseEntity<?> likeComment(Map<String, String> requestMap);
+
+    ResponseEntity<?> deleteComment(Long commentID);
+
+    ResponseEntity<?> updateComment(Map<String, String> requestMap);
 }

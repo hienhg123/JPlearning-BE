@@ -49,6 +49,16 @@ public class PostController {
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+    @GetMapping(path = "/getUserFavorite/{pageNumber}/{pageSize}")
+    public ResponseEntity<?> getUserFavorite(@PathVariable int pageNumber, @PathVariable int pageSize){
+        try{
+            return postService.getUserFavorite(pageNumber,pageSize);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
 
     @GetMapping("/getByUserPostDraft/{pageNumber}/{pageSize}")
     public ResponseEntity<?> getByUserPostDraft(@PathVariable int pageNumber, @PathVariable int pageSize) {
@@ -83,11 +93,6 @@ public class PostController {
     @DeleteMapping("deletePost/{postId}")
     public ResponseEntity<String> deletePost(@PathVariable Long postId) {
         return postService.deletePost(postId);
-    }
-
-    @GetMapping("/favorites")
-    public ResponseEntity<List<Map<String, Object>>> getByUserFavorites() {
-        return postService.getByUserFavorites();
     }
 
     @GetMapping(path = "/getPostById/{postID}")

@@ -86,7 +86,7 @@ public class PostInteractionServiceImpl implements PostInteractionService {
                 return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập để có thể bình luận", HttpStatus.UNAUTHORIZED);
             }
             String content = "";
-            PostComment postComment = new PostComment();
+            PostComment postComment;
             //check parent comment
             if (requestMap.get("parentId").isEmpty() || requestMap.get("parentId").equals("")) {
                 content = "Đã bình luận vào bài viết của bạn";
@@ -165,6 +165,38 @@ public class PostInteractionServiceImpl implements PostInteractionService {
             ex.printStackTrace();
         }
 
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
+    public ResponseEntity<?> deleteComment(Long commentID) {
+        try{
+            Optional<PostComment> postCommentOptional = postCommentDAO.findById(commentID);
+            if(postCommentOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Không tìm thấy bình luận", HttpStatus.NOT_FOUND);
+            }
+            postCommentDAO.deleteById(commentID);
+            return JPLearningUtils.getResponseEntity("",HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
+    public ResponseEntity<?> updateComment(Map<String, String> requestMap) {
+        try{
+            Optional<PostComment> postCommentOptional = postCommentDAO.findById(Long.parseLong(requestMap.get("commentID")));
+            if(postCommentOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Không tìm thấy bình luận", HttpStatus.NOT_FOUND);
+            }
+            PostComment postComment = postCommentOptional.get();
+            postComment.setCommentContent(requestMap.get("commentContent"));
+            postCommentDAO.save(postComment);
+            return JPLearningUtils.getResponseEntity("",HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 

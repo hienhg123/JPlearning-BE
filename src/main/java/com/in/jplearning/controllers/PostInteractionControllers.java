@@ -37,6 +37,16 @@ public class PostInteractionControllers {
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
 
     }
+    @PutMapping("/update-comment")
+    public ResponseEntity<?> updateComment(@RequestBody Map<String,String> requestMap){
+        try{
+            return postInteractionService.updateComment(requestMap);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+
+    }
     @PostMapping("/favorite-post")
     public ResponseEntity<?> favoritePost(@RequestBody Map<String,String> requestMap){
         try{
@@ -50,6 +60,15 @@ public class PostInteractionControllers {
     public ResponseEntity<?> likeComment(@RequestBody Map<String,String> requestMap){
         try{
             return postInteractionService.likeComment(requestMap);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    @DeleteMapping("/delete-comment/{commentID}")
+    public ResponseEntity<?> deleteComment(@PathVariable Long commentID){
+        try{
+            return postInteractionService.deleteComment(commentID);
         }catch (Exception ex){
             ex.printStackTrace();
         }
