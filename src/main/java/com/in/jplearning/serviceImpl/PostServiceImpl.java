@@ -151,6 +151,22 @@ public class PostServiceImpl implements PostService {
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @Override
+    public ResponseEntity<?> getUserFavorite(int pageNumber, int pageSize) {
+        try {
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+            }
+            Pageable pageable = PageRequest.of(pageNumber, pageSize);
+            return new ResponseEntity<>(postFavoriteDAO.findPostsByUserFavorite(userOptional.get(),pageable), HttpStatus.OK);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     @Override
     public ResponseEntity<?> getByUserPostDraft(int pageNumber, int pageSize) {
         try{
