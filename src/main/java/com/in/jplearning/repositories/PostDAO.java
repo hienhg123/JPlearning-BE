@@ -2,6 +2,8 @@ package com.in.jplearning.repositories;
 
 import com.in.jplearning.model.Post;
 import com.in.jplearning.model.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -36,5 +38,14 @@ public interface PostDAO extends JpaRepository<Post,Long> {
 
     @Query("select p from Post p where p.title LIKE %?1% and p.isDraft = false")
     List<Post> searchByValue(String value);
+
+    @Query("select p from Post p where p.isDraft = false order by p.createdAt desc ")
+    Page<Post> getAllPost(Pageable pageable);
+
+    @Query("select p from Post p where p.user.email = ?1 and p.isDraft = true order by p.createdAt desc")
+    Page<Post> getByUserPostDraft(String email,Pageable pageable);
+
+    @Query("select p from Post p where p.user.email = ?1 and p.isDraft = false order by p.createdAt desc")
+    Page<Post> getByUserPostNotDraft(String email,Pageable pageable);
 
 }
