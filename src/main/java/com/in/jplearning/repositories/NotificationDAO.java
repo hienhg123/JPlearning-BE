@@ -8,6 +8,6 @@ import java.util.List;
 
 public interface NotificationDAO extends JpaRepository<Notification,Long> {
 
-    @Query(value = "select n from Notification n where n.receiver.userID =?1")
+    @Query(value = "select n from Notification n where n.receiver.userID =?1 order by n.createdTime DESC")
     List<Notification> getByUser(Long userID);
 }

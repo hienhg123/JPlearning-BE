@@ -34,6 +34,16 @@ public class UserExerciseController {
         return userExerciseService.getExerciseInfoByCurrentUser();
     }
 
+    @GetMapping("/getJLPTTestHistory")
+    public ResponseEntity<?> submitExercise(){
+        try{
+            return userExerciseService.getJLPTTestHistory();
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
 
 
 }

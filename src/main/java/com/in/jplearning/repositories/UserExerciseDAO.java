@@ -1,5 +1,6 @@
 package com.in.jplearning.repositories;
 
+import com.in.jplearning.model.User;
 import com.in.jplearning.model.User_Exercise;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,4 +17,7 @@ public interface UserExerciseDAO extends JpaRepository<User_Exercise,Long> {
             "JOIN ue.exercises e " +
             "WHERE ue.user.userID = ?1 AND ue.exercises.exerciseType = 'JLPT_TEST'")
     List<Object[]> getUserExerciseInfo(Long userID);
+
+    @Query("select ue from User_Exercise ue where ue.user = ?1")
+    List<User_Exercise> getJLPTHistoryByUser(User user);
 }

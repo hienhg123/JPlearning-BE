@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface TrainerDAO extends JpaRepository<Trainer,Long> {
 
-    @Query("select t from Trainer t where t.user.userID =?1")
+    @Query("select t from Trainer t where t.user.userID =?1 and t.isVerify = true")
     Trainer getByUserId(Long userID);
 
     @Transactional

@@ -1,6 +1,7 @@
 package com.in.jplearning.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.in.jplearning.enums.ExerciseType;
 import com.in.jplearning.enums.QuestionType;
 import jakarta.persistence.*;
@@ -21,6 +22,7 @@ import java.util.Date;
 @DynamicUpdate
 @DynamicInsert
 @Builder
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class User_Exercise implements Serializable {
 
     @Id

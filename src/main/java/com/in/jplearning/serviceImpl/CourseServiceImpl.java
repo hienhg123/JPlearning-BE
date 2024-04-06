@@ -84,6 +84,9 @@ public class CourseServiceImpl implements CourseService {
             course.setChapterList(chapterList);
             course.setCreateBy(userOptional.get());
             courseDAO.save(course);
+            if(isDraft){
+                return JPLearningUtils.getResponseEntity("Tạo bản nháp thành công", HttpStatus.OK);
+            }
             return JPLearningUtils.getResponseEntity("Tạo thành công", HttpStatus.OK);
         } catch (Exception ex) {
             ex.printStackTrace();

@@ -39,7 +39,11 @@ public class NotificationServiceImpl implements NotificationService {
     public ResponseEntity<List<Notification>> getUserNotification() {
         try {
             User receiver = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
-            return new ResponseEntity<>(notificationDAO.getByUser(receiver.getUserID()), HttpStatus.OK);
+            List<Notification> notifications = notificationDAO.getByUser(receiver.getUserID());
+            if (notifications.size() > 5) {
+                notifications = notifications.subList(0, 5);
+            }
+            return new ResponseEntity<>(notifications, HttpStatus.OK);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
