@@ -9,4 +9,6 @@ public interface UserExerciseService {
 
     ResponseEntity<String> submitExercise(Map<String, String> requestMap);
     ResponseEntity<List<Map<String, Object>>> getExerciseInfoByCurrentUser();
+
+    ResponseEntity<?> getJLPTTestHistory();
 }

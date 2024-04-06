@@ -71,7 +71,7 @@ public class PostServiceImpl implements PostService {
             Post post = getPostFromMap(requestMap,user);
             postDAO.save(post);
             //check if draft
-            if(requestMap.get("draft").isEmpty()){
+            if(requestMap.get("draft").equalsIgnoreCase("true")){
                 return JPLearningUtils.getResponseEntity("Lưu bản nháp thành công", HttpStatus.OK);
             }
             return JPLearningUtils.getResponseEntity("Đăng bài thành công", HttpStatus.OK);

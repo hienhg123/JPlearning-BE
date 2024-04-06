@@ -88,6 +88,25 @@ public class UserExerciseImpl implements UserExerciseService {
         }
     }
 
+    @Override
+    public ResponseEntity<?> getJLPTTestHistory() {
+        try{
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            List<User_Exercise> userExerciseList = userExerciseDAO.getJLPTHistoryByUser(userOptional.get());
+            List<Long> exerciseIDList = new ArrayList<>();
+            for(User_Exercise user_exercise : userExerciseList){
+                exerciseIDList.add(user_exercise.getExercises().getExercisesID());
+            }
+            Set<Long> exerciseIDSet = new LinkedHashSet<>(exerciseIDList);
+            exerciseIDList.clear();
+            exerciseIDList.addAll(exerciseIDSet);
+            return new ResponseEntity<>(exerciseIDList, HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
+    }
+
 
     private User_Exercise getDataFromMap(Map<String, String> requestMap, Long userID, int numberOfAttempts) {
         Exercises exercises = new Exercises();

@@ -14,4 +14,6 @@ public interface TrainerService {
     ResponseEntity<?> getAllTrainer(int pageNumber, int pageSize);
 
     ResponseEntity<String> updateTrainerStatus(Map<String, String> requestMap);
+
+    ResponseEntity<String> checkTrainer();
 }
