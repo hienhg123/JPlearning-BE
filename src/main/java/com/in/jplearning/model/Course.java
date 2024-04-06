@@ -37,6 +37,7 @@ public class Course implements Serializable {
     private JLPTLevel courseLevel;
     private Boolean isFree;
     private Boolean isDraft;
+    private String img;
     @JsonIgnoreProperties("course")
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)
     private List<Chapter> chapterList = new ArrayList<>();

@@ -79,5 +79,16 @@ public class FlashCardSetController {
         return new ResponseEntity<>(flashCards, HttpStatus.OK);
     }
 
+    @DeleteMapping("/deleteFlashCardSet/{flashCardSetId}")
+    public ResponseEntity<String> deleteFlashCardSet(@PathVariable Long flashCardSetId) {
+        try {
+            return flashCardSetService.deleteFlashCardSet(flashCardSetId);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
 
 }

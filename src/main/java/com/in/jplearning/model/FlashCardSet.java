@@ -29,14 +29,13 @@ public class FlashCardSet implements Serializable {
     private String flashCardSetName;
     private String flashCardDescription;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER,cascade = CascadeType.ALL)
     @JoinTable(name = "user_flashcard_set",
             joinColumns = @JoinColumn(name = "flashCardSet_fk", referencedColumnName = "flashCardSet_ID"),
             inverseJoinColumns = @JoinColumn(name = "user_fk", referencedColumnName = "user_ID")
     )
-
-    @JsonIgnore
     private Set<User> userSet = new HashSet<>();
+
 
     @OneToMany(mappedBy = "flashCardSet", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<FlashCard> flashCards = new HashSet<>();

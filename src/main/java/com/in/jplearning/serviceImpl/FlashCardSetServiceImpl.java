@@ -5,6 +5,7 @@ import com.in.jplearning.constants.JPConstants;
 import com.in.jplearning.dtos.FlashCardSetDTO;
 import com.in.jplearning.model.FlashCard;
 import com.in.jplearning.model.FlashCardSet;
+import com.in.jplearning.model.Note;
 import com.in.jplearning.model.User;
 import com.in.jplearning.repositories.FlashCardDAO;
 import com.in.jplearning.repositories.FlashCardSetDAO;
@@ -13,6 +14,7 @@ import com.in.jplearning.service.FlashCardSetService;
 import com.in.jplearning.utils.JPLearningUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -147,38 +149,46 @@ public class FlashCardSetServiceImpl implements FlashCardSetService {
 
             // Update existing FlashCards or add new ones
             for (Map<String, String> flashCardData : flashCardDataList) {
-                String flashCardIdString = String.valueOf(flashCardData.get("flashCardID"));
-                log.info(flashCardIdString);
+                // Check if both question and answer are provided
+                String question = flashCardData.get("question");
+                String answer = flashCardData.get("answer");
+                if (question != null && answer != null && !question.isEmpty() && !answer.isEmpty()) {
+                    String flashCardIdString = String.valueOf(flashCardData.get("flashCardID"));
+                    log.info(flashCardIdString);
 
-                if (!flashCardIdString.isEmpty() ) {
-                    try {
-                        Long flashCardId = Long.parseLong(flashCardIdString);
+                    if (!flashCardIdString.isEmpty()) {
+                        try {
+                            Long flashCardId = Long.parseLong(flashCardIdString);
 
-                        // Check if the FlashCard exists in the FlashCardSet
-                        Optional<FlashCard> existingFlashCardOptional = flashCardDAO.findById(flashCardId);
+                            // Check if the FlashCard exists in the FlashCardSet
+                            Optional<FlashCard> existingFlashCardOptional = flashCardDAO.findById(flashCardId);
 
-                        if (existingFlashCardOptional.isPresent()) {
-                            // If it exists, update the fields
-                            FlashCard existingFlashCard = existingFlashCardOptional.get();
-                            existingFlashCard.setQuestion(flashCardData.get("question"));
-                            existingFlashCard.setAnswer(flashCardData.get("answer"));
-                            // Save the updated FlashCard
-                            flashCardDAO.save(existingFlashCard);
-                        } else {
-                            // If it doesn't exist, create a new FlashCard and associate it with the FlashCardSet
-                            FlashCard newFlashCard = mapToFlashCard(flashCardData);
-                            newFlashCard.setFlashCardSet(flashCardSet);
-                            flashCardDAO.save(newFlashCard);
+                            if (existingFlashCardOptional.isPresent()) {
+                                // If it exists, update the fields
+                                FlashCard existingFlashCard = existingFlashCardOptional.get();
+                                existingFlashCard.setQuestion(question);
+                                existingFlashCard.setAnswer(answer);
+                                // Save the updated FlashCard
+                                flashCardDAO.save(existingFlashCard);
+                            } else {
+                                // If it doesn't exist, create a new FlashCard and associate it with the FlashCardSet
+                                FlashCard newFlashCard = mapToFlashCard(flashCardData);
+                                newFlashCard.setFlashCardSet(flashCardSet);
+                                flashCardDAO.save(newFlashCard);
+                            }
+                        } catch (NumberFormatException e) {
+                            // Handle the case where flashCardID is not a valid Long
+                            return JPLearningUtils.getResponseEntity("Không tồn tại: " + flashCardIdString, HttpStatus.BAD_REQUEST);
                         }
-                    } catch (NumberFormatException e) {
-                        // Handle the case where flashCardID is not a valid Long
-                        return JPLearningUtils.getResponseEntity("Không tồn tại: " + flashCardIdString, HttpStatus.BAD_REQUEST);
+                    } else {
+                        // Generate a new ID and create a new FlashCard
+                        FlashCard newFlashCard = mapToFlashCard(flashCardData);
+                        newFlashCard.setFlashCardSet(flashCardSet);
+                        flashCardDAO.save(newFlashCard);
                     }
                 } else {
-                    // Generate a new ID and create a new FlashCard
-                    FlashCard newFlashCard = mapToFlashCard(flashCardData);
-                    newFlashCard.setFlashCardSet(flashCardSet);
-                    flashCardDAO.save(newFlashCard);
+                    // Handle case where question or answer is missing
+                    return JPLearningUtils.getResponseEntity("Câu hỏi và câu trả lời không thể để trống", HttpStatus.BAD_REQUEST);
                 }
             }
             // Save the updated FlashCardSet
@@ -190,6 +200,7 @@ public class FlashCardSetServiceImpl implements FlashCardSetService {
             return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 
 
 
@@ -211,12 +222,23 @@ public class FlashCardSetServiceImpl implements FlashCardSetService {
 
             // Map form data to List of FlashCards
             List<Map<String, String>> flashCardDataList = (List<Map<String, String>>) requestMap.get("flashCards");
-            List<FlashCard> flashCards = flashCardDataList.stream()
-                    .map(this::mapToFlashCard)
-                    .collect(Collectors.toList());
+            List<FlashCard> flashCards = new ArrayList<>();
 
-            // Set the FlashCardSet for each FlashCard
-            flashCards.forEach(flashCard -> flashCard.setFlashCardSet(flashCardSet));
+            for (Map<String, String> flashCardData : flashCardDataList) {
+                // Check if both question and answer are provided
+                String question = flashCardData.get("question");
+                String answer = flashCardData.get("answer");
+                if (question != null && answer != null && !question.isEmpty() && !answer.isEmpty()) {
+                    FlashCard flashCard = mapToFlashCard(flashCardData);
+                    if (flashCard != null) {
+                        flashCard.setFlashCardSet(flashCardSet);
+                        flashCards.add(flashCard);
+                    }
+                } else {
+                    // Handle case where question or answer is missing
+                    return JPLearningUtils.getResponseEntity("Câu hỏi và câu trả lời không thể để trống", HttpStatus.BAD_REQUEST);
+                }
+            }
 
             // Set the current user to the FlashCardSet
             String currentUserEmail = jwtAuthFilter.getCurrentUser();
@@ -226,7 +248,36 @@ public class FlashCardSetServiceImpl implements FlashCardSetService {
             // Save the list of FlashCards
             flashCardDAO.saveAll(flashCards);
 
-            return JPLearningUtils.getResponseEntity("Save successfully", HttpStatus.OK);
+            return JPLearningUtils.getResponseEntity("Tạo thành công", HttpStatus.OK);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @Override
+    @Transactional
+    public ResponseEntity<String> deleteFlashCardSet(Long flashCardSetId) {
+        try {
+            Optional<FlashCardSet> flashCardSetOptional = flashCardSetDAO.findById(flashCardSetId);
+            if (flashCardSetOptional.isEmpty()) {
+                return JPLearningUtils.getResponseEntity("FlashCardSet không tồn tại", HttpStatus.NOT_FOUND);
+            }
+            FlashCardSet flashCardSet = flashCardSetOptional.get();
+
+            flashCardDAO.deleteByFlashCardSet(flashCardSet);
+
+            // Directly remove associations between this FlashCardSet and Users from the database
+            flashCardSetDAO.deleteAssociationsWithUsers(flashCardSetId);
+
+            // Now, it's safe to delete the FlashCardSet since all associations have been cleared
+            flashCardSetDAO.deleteById(flashCardSetId);
+
+            return JPLearningUtils.getResponseEntity("Xóa FlashCard thành công", HttpStatus.OK);
+        } catch (DataAccessException ex) {
+            ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception ex) {
             ex.printStackTrace();
             return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
