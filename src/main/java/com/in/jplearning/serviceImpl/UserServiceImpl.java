@@ -34,6 +34,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -295,15 +296,16 @@ public class UserServiceImpl implements UserService {
             // Check if the user exists
             if (userOptional.isPresent()) {
                 User user = userOptional.get();
-                String fullName = user.getFirstName() + " " + user.getLastName();
-
-
+                SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+                String formattedDOB = dateFormat.format(user.getDob());
                 // Create a Map with desired fields
                 Map<String, Object> userProfile = new HashMap<>();
-                userProfile.put("fullName", fullName);
+                userProfile.put("firstName", user.getFirstName());
+                userProfile.put("lastName", user.getLastName());
                 userProfile.put("phoneNumber", user.getPhoneNumber());
                 userProfile.put("level", user.getLevel());
                 userProfile.put("gender", user.getGender());
+                userProfile.put("dob", formattedDOB);
                 userProfile.put("userPicture", user.getUserPicture());
 
                 // Convert Map to JSON and return it
@@ -323,64 +325,53 @@ public class UserServiceImpl implements UserService {
     @Override
     public ResponseEntity<String> updateProfile(MultipartFile userPicture, Map<String, String> requestMap) {
         try {
-            // Retrieve the user by ID
+            // Retrieve the user by email
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
-
-            // Check if the user exists
-            if (userOptional.isPresent()) {
-                User user = userOptional.get();
-
-                // Update user information based on the request
-                if (requestMap.containsKey("firstName")) {
-                    user.setFirstName(requestMap.get("firstName"));
-                }
-
-                if (requestMap.containsKey("lastName")) {
-                    user.setLastName(requestMap.get("lastName"));
-                }
-
-                if (requestMap.containsKey("phoneNumber")) {
-                    user.setPhoneNumber(requestMap.get("phoneNumber"));
-                }
-
-                if (requestMap.containsKey("dob")) {
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-                    Date dob = dateFormat.parse(requestMap.get("dob"));
-                    user.setDob(dob);
-                }
-
-                if (requestMap.containsKey("level")) {
-                    String levelString = requestMap.get("level");
-                    JLPTLevel level = JLPTLevel.valueOf(levelString);
-                    user.setLevel(level);
-                }
-
-                if (requestMap.containsKey("gender")) {
-                    user.setGender(requestMap.get("gender"));
-                }
-
-                // Check if userPicture is not null before interacting with AWS S3
-                if (userPicture != null && !userPicture.isEmpty()) {
-                    // Save user picture to AWS S3 and get the URL
-                    if (!isValidImageFormat(userPicture.getOriginalFilename())) {
-                        return ResponseEntity.badRequest().body("Sai định dảng ảnh vui lòng kiểu tra lại");
-                    }
-                    String userPictureUrl = saveUserPictureToS3(user.getUserID(),userPicture); // Use userId here
-                    user.setUserPicture(userPictureUrl);
-                }
-
-                // Save the updated user
-                userDAO.save(user);
-
-                return ResponseEntity.ok("Cập nhật thành công");
-            } else {
-                return ResponseEntity.badRequest().body("Người dùng không tồn tại");
+            if (userOptional.isEmpty()) {
+                return JPLearningUtils.getResponseEntity("Người dùng không tồn tại", HttpStatus.OK);
             }
+            User user = userOptional.get();
+            //check the request
+            if (requestMap.containsKey("firstName")) {
+                user.setFirstName(requestMap.get("firstName"));
+            }
+
+            if (requestMap.containsKey("lastName")) {
+                user.setLastName(requestMap.get("lastName"));
+            }
+
+            if (requestMap.containsKey("phoneNumber")) {
+                user.setPhoneNumber(requestMap.get("phoneNumber"));
+            }
+
+            if (requestMap.containsKey("dob")) {
+                user.setDob(parseDate(requestMap.get("dob")));
+            }
+
+            if (requestMap.containsKey("level")) {
+                user.setLevel(JLPTLevel.valueOf(requestMap.get("level")));
+            }
+
+            if (requestMap.containsKey("gender")) {
+                user.setGender(requestMap.get("gender"));
+            }
+
+            // Check if userPicture is not null before interacting with AWS S3
+            if (userPicture != null && !userPicture.isEmpty()) {
+                // Save user picture to AWS S3 and get the URL
+                if (!isValidImageFormat(userPicture.getOriginalFilename())) {
+                    return JPLearningUtils.getResponseEntity("Sai định dảng ảnh vui lòng kiểu tra lại", HttpStatus.BAD_REQUEST);
+                }
+                String userPictureUrl = saveUserPictureToS3(user.getUserID(), userPicture); // Use userId here
+                user.setUserPicture(userPictureUrl);
+            }
+            return JPLearningUtils.getResponseEntity("Thay đổi thành công", HttpStatus.OK);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Something went wrong");
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
 
     private String saveUserPictureToS3(Long userId, MultipartFile userPicture) throws IOException {
         try {
@@ -442,6 +433,16 @@ public class UserServiceImpl implements UserService {
             code += String.valueOf(random.nextInt(10));
         }
         return code;
+    }
+
+    private Date parseDate(String dob) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            return sdf.parse(dob);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
 

@@ -17,6 +17,6 @@ public interface FlashCardSetService {
     Map<String, Object> getFlashCardsByFlashCardSetId(Long flashCardSetId);
 
     List<FlashCardSet> getAllFlashCardSets();
-
+    ResponseEntity<String> deleteFlashCardSet(Long flashCardSetId);
     ResponseEntity<FlashCardSet> findByID(Long flashcardSetID);
 }

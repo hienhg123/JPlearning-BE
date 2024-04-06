@@ -58,7 +58,7 @@ public class UserController {
 
         return userService.getUserProfile();
     }
-    @PutMapping("/update-profile")
+    @PutMapping("/updateProfile")
     public ResponseEntity<String> updateProfile(@RequestPart(name = "userPicture", required = false) MultipartFile userPicture,
                                                 @RequestParam Map<String, String> requestMap) {
         return userService.updateProfile(userPicture, requestMap);
