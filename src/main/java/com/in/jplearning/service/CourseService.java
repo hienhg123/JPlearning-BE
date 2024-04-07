@@ -29,7 +29,7 @@ public interface CourseService {
     ResponseEntity<?> getAllFeedbackForCourse(Long courseId, int pageNumber, int pageSize);
 
 
-    ResponseEntity<?> createCourse(String courseName, String courseDescription, String courseLevel, Boolean isFree, Boolean isDraft, List<MultipartFile> files, Map<String, Object> chapters);
+    ResponseEntity<?> createCourse(String courseName, String courseDescription, String courseLevel, String isFree, String isDraft, List<MultipartFile> files, List<Map<String, Object>> chapters);
 
     ResponseEntity<?> getUserEnrollCourse();
 
