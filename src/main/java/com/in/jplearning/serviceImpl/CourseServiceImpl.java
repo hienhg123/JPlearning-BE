@@ -63,7 +63,7 @@ public class CourseServiceImpl implements CourseService {
 
     @Transactional
     @Override
-    public ResponseEntity<?> createCourse(String courseName, String courseDescription, String courseLevel, Boolean isFree, Boolean isDraft, List<MultipartFile> files, Map<String, Object> requestChapter) {
+    public ResponseEntity<?> createCourse(String courseName, String courseDescription, String courseLevel, String isFree, String isDraft, List<MultipartFile> files, List<Map<String, Object>> chapters) {
         try {
 
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
@@ -78,13 +78,15 @@ public class CourseServiceImpl implements CourseService {
             //get the course
             Course course = getCourseFromMap(courseName, courseDescription, courseLevel, isFree,isDraft);
             //get the course chapter
-            List<Map<String, Object>> chapters = (List<Map<String, Object>>) requestChapter.get("chapters");
-            List<Chapter> chapterList = chapters.stream().map(chapterMap -> mapToChapter(chapterMap, course,files))
-                    .collect(Collectors.toList());
+            List<Chapter> chapterList = new ArrayList<>();
+            for (Map<String, Object> chapterMap : chapters) {
+                Chapter chapter = mapToChapter(chapterMap, course, files);
+                chapterList.add(chapter);
+            }
             course.setChapterList(chapterList);
             course.setCreateBy(userOptional.get());
             courseDAO.save(course);
-            if(isDraft){
+            if(Boolean.parseBoolean(isDraft)){
                 return JPLearningUtils.getResponseEntity("Tạo bản nháp thành công", HttpStatus.OK);
             }
             return JPLearningUtils.getResponseEntity("Tạo thành công", HttpStatus.OK);
@@ -333,13 +335,13 @@ public class CourseServiceImpl implements CourseService {
         return bill.getExpireAt().isAfter(LocalDateTime.now());
     }
 
-    private Course getCourseFromMap(String courseName, String courseDescription, String courseLevel, Boolean isFree, Boolean isDraft) {
+    private Course getCourseFromMap(String courseName, String courseDescription, String courseLevel, String isFree, String isDraft) {
         return Course.builder()
                 .courseName(courseName)
                 .courseDescription(courseDescription)
                 .courseLevel(JLPTLevel.valueOf(courseLevel))
-                .isFree(isFree)
-                .isDraft(isDraft)
+                .isFree(Boolean.parseBoolean(isFree))
+                .isDraft(Boolean.parseBoolean(isDraft))
                 .build();
 
     }
@@ -369,23 +371,23 @@ public class CourseServiceImpl implements CourseService {
         lesson.setLessonDescription(lessonMap.get("lessonDescription").toString());
         List<MultipartFile> upload = new ArrayList<>();
         //get the file of each if not null then set
-        if (lessonMap.containsKey("vocabularyMaterial")) {
-            String key = cloudFront + courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("vocabularyMaterial");
+        if (lessonMap.get("vocabularyMaterial") != null) {
+            String key = cloudFront +"/" + courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("vocabularyMaterial");
             lesson.setVocabularyMaterial(key);
         }
         //check listening
-        if (lessonMap.containsKey("listeningMaterial")) {
-            String key = cloudFront + courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("listeningMaterial");
+        if (lessonMap.get("listeningMaterial") !=null) {
+            String key = cloudFront + "/" + courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("listeningMaterial");
             lesson.setListeningMaterial(key);
         }
         //check grammar
-        if (lessonMap.containsKey("grammarMaterial")) {
-            String key = cloudFront + courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("grammarMaterial");
+        if (lessonMap.get("grammarMaterial") != null) {
+            String key = cloudFront + "/" + courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("grammarMaterial");
             lesson.setGrammarMaterial(key);
         }
         //check video
-        if (lessonMap.containsKey("videoMaterial")) {
-            String key = cloudFront + courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("videoMaterial");
+        if (lessonMap.get("videoMaterial") != null) {
+            String key = cloudFront + "/" + courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("videoMaterial");
             lesson.setVideoMaterial(key);
         }
         //loop throw each file
@@ -399,7 +401,7 @@ public class CourseServiceImpl implements CourseService {
                 }
             }
         }
-//        uploadToS3(upload, random, courseName, chapter.getChapterTitle(), lesson.getLessonTitle());
+        uploadToS3(upload, random, courseName, chapter.getChapterTitle(), lesson.getLessonTitle());
         lesson.setChapter(chapter);
         return lesson;
     }

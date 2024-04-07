@@ -51,14 +51,13 @@ public class CourseController {
     public ResponseEntity<?> createCourse(@RequestParam("courseName") String courseName,
                                           @RequestParam("courseDescription") String courseDescription,
                                           @RequestParam("courseLevel") String courseLevel,
-                                          @RequestParam("isFree") Boolean isFree,
-                                          @RequestParam("isDraft") Boolean isDraft,
+                                          @RequestParam("isFree") String isFree,
+                                          @RequestParam("isDraft") String isDraft,
                                           @RequestPart("files") List<MultipartFile> files,
                                           @RequestParam("chapters") String chaptersJson){
         try{
             ObjectMapper objectMapper = new ObjectMapper();
-            Map<String, Object> chapters = objectMapper.readValue(chaptersJson, new TypeReference<>() {
-            });
+            List<Map<String, Object>> chapters = objectMapper.readValue(chaptersJson, new TypeReference<List<Map<String, Object>>>() {});
             return courseService.createCourse(courseName,courseDescription,courseLevel,isFree,isDraft,files,chapters);
         }catch (Exception ex){
             ex.printStackTrace();

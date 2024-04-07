@@ -26,9 +26,13 @@ public class Lesson implements Serializable {
     private String lessonTitle;
     @Column(columnDefinition = "NVARCHAR(255)")
     private String lessonDescription;
+    @Column(columnDefinition = "TEXT")
     private String vocabularyMaterial;
+    @Column(columnDefinition = "TEXT")
     private String listeningMaterial;
+    @Column(columnDefinition = "TEXT")
     private String grammarMaterial;
+    @Column(columnDefinition = "TEXT")
     private String videoMaterial;
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "chapter_fk",nullable = false,referencedColumnName = "chapter_ID")
