@@ -9,4 +9,7 @@ import java.util.Optional;
 public interface PostLikeDAO extends JpaRepository<PostLike,Long> {
     @Query("select l from PostLike l where l.user.email =?1 and l.post.postID = ?2")
     Optional<PostLike> findByEmailAndPostId(String email, Long postID);
+
+    @Query("select l from PostLike l where l.user.email =?1 and l.postComment.commentID = ?2")
+    Optional<PostLike> findByEmailAndCommentId(String email, Long commentID);
 }

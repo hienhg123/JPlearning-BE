@@ -148,12 +148,17 @@ public class PostInteractionServiceImpl implements PostInteractionService {
         try {
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             Optional<PostComment> postCommentOptional = postCommentDAO.findById(Long.parseLong(requestMap.get("commentID")));
+            Optional<PostLike> postLikeOptional = postLikeDAO.findByEmailAndCommentId(jwtAuthFilter.getCurrentUser(),Long.parseLong(requestMap.get("commentID")));
             if (postCommentOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Bình luận không tồn tại", HttpStatus.NOT_FOUND);
             }
             //check if user exist
             if (userOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+            }
+            if(postLikeOptional.isPresent()){
+                postLikeDAO.deleteById(postLikeOptional.get().getLikeID());
+                return JPLearningUtils.getResponseEntity("", HttpStatus.OK);
             }
             PostLike postLike = PostLike.builder()
                     .user(userOptional.get())

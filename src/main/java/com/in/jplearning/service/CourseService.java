@@ -31,4 +31,7 @@ public interface CourseService {
 
     ResponseEntity<?> createCourse(String courseName, String courseDescription, String courseLevel, Boolean isFree, Boolean isDraft, List<MultipartFile> files, Map<String, Object> chapters);
 
+    ResponseEntity<?> getUserEnrollCourse();
+
+    ResponseEntity<?> isEnroll(Long courseID);
 }

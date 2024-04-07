@@ -96,6 +96,38 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
+    public ResponseEntity<?> getUserEnrollCourse() {
+        try{
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+            }
+            return new ResponseEntity<>(courseEnrollDAO.getCourseEnrollByUser(userOptional.get()), HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+       return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
+    public ResponseEntity<?> isEnroll(Long courseID) {
+        try{
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+            }
+            Optional<CourseEnroll> courseEnroll = courseEnrollDAO.findByUserAndCourse(userOptional.get().getUserID(),courseID);
+            if(courseEnroll.isEmpty()){
+                return JPLearningUtils.getResponseEntity("false", HttpStatus.OK);
+            }
+            return JPLearningUtils.getResponseEntity("true", HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
     public ResponseEntity<List<Course>> getAllCourse() {
         log.info("Inside getAllCourse");
         try {
@@ -367,7 +399,7 @@ public class CourseServiceImpl implements CourseService {
                 }
             }
         }
-        uploadToS3(upload, random, courseName, chapter.getChapterTitle(), lesson.getLessonTitle());
+//        uploadToS3(upload, random, courseName, chapter.getChapterTitle(), lesson.getLessonTitle());
         lesson.setChapter(chapter);
         return lesson;
     }

@@ -6,6 +6,7 @@ import com.in.jplearning.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface CourseEnrollDAO extends JpaRepository<CourseEnroll,Long> {
@@ -14,5 +15,8 @@ public interface CourseEnrollDAO extends JpaRepository<CourseEnroll,Long> {
     Optional<CourseEnroll> findByUserAndCourse(Long userID, Long courseID);
 
     Long countByCourse(Course course);
+
+    @Query("select ce.course from CourseEnroll ce where ce.user =?1 order by ce.joinTime DESC ")
+    List<Course> getCourseEnrollByUser(User user);
 
 }

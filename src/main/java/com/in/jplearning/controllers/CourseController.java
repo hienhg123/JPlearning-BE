@@ -52,8 +52,8 @@ public class CourseController {
                                           @RequestParam("courseDescription") String courseDescription,
                                           @RequestParam("courseLevel") String courseLevel,
                                           @RequestParam("isFree") Boolean isFree,
-                                          @RequestParam("isFree") Boolean isDraft,
-                                          @RequestParam("files") List<MultipartFile> files,
+                                          @RequestParam("isDraft") Boolean isDraft,
+                                          @RequestPart("files") List<MultipartFile> files,
                                           @RequestParam("chapters") String chaptersJson){
         try{
             ObjectMapper objectMapper = new ObjectMapper();
@@ -86,6 +86,24 @@ public class CourseController {
     public ResponseEntity<?> getAllFeedback(@PathVariable Long courseId, @PathVariable int pageNumber, @PathVariable int pageSize) {
         try {
             return courseService.getAllFeedbackForCourse(courseId, pageNumber, pageSize);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @GetMapping(path = "/getUserEnrollCourse")
+    public ResponseEntity<?> getUserEnrollCourse() {
+        try {
+            return courseService.getUserEnrollCourse();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @GetMapping(path = "/isEnroll/{courseID}")
+    public ResponseEntity<?> isEnroll(@PathVariable Long courseID) {
+        try {
+            return courseService.isEnroll(courseID);
         } catch (Exception ex) {
             ex.printStackTrace();
             return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);

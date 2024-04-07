@@ -58,9 +58,7 @@ public class User implements UserDetails {
     @ManyToMany(mappedBy = "userSet")
     private Set<FlashCardSet> cardSets = new HashSet<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "premium_fk",referencedColumnName = "premium_ID")
-    private Premium premium;
+
     @JsonIgnore
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
