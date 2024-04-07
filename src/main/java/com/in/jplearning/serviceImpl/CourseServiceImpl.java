@@ -234,6 +234,8 @@ public class CourseServiceImpl implements CourseService {
             Double averageRating = courseFeedbackDAO.calculateAverageRating(course);
             courseDetails.put("averageRating", averageRating);
 
+            Long totalFeedbackCount = courseFeedbackDAO.countByCourse(course);
+            courseDetails.put("totalFeedbackCount", totalFeedbackCount);
             return new ResponseEntity<>(courseDetails, HttpStatus.OK);
         } catch (Exception ex) {
             ex.printStackTrace();

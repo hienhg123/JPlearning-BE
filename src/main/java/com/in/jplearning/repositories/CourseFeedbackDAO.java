@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 public interface CourseFeedbackDAO extends JpaRepository<CourseFeedBack,Long> {
     @Query("SELECT AVG(cf.rating) FROM CourseFeedBack cf WHERE cf.course = :course")
     Double calculateAverageRating(@Param("course") Course course);
+    Long countByCourse(Course course);
 
     Page<CourseFeedBack> findByCourse(Course course, Pageable pageable);
 }
