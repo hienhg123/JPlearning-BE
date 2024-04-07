@@ -31,7 +31,5 @@ public class Premium implements Serializable {
     private Integer duration;
     private String image;
 
-    @JsonIgnore
-    @OneToMany(fetch = FetchType.LAZY,mappedBy = "premium")
-    private Set<User> users = new HashSet<>();
+
 }
