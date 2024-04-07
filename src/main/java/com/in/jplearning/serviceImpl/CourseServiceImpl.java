@@ -322,13 +322,18 @@ public class CourseServiceImpl implements CourseService {
         CourseEnroll courseEnroll = CourseEnroll.builder()
                 .user(user)
                 .course(course)
+                .joinTime(LocalDateTime.now())
                 .build();
         courseEnrollDAO.save(courseEnroll);
     }
 
     private boolean isPremiumExpire(User user) {
         //get user premium
-        Bill bill = billDAO.getUserLatestBill(user.getEmail(), PageRequest.of(0, 1)).get(0);
+        List<Bill> bills = billDAO.getUserLatestBill(user.getEmail(), PageRequest.of(0, 1));
+        if(bills.isEmpty()){
+            return false;
+        }
+        Bill bill = bills.get(0);
         //check if bill is exist
         if (bill == null) {
             return false;
