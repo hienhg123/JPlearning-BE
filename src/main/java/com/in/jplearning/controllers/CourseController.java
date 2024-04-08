@@ -108,6 +108,32 @@ public class CourseController {
             return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
+    @GetMapping(path = "/getCreatedCourse")
+    public ResponseEntity<?> getCreatedCourse() {
+        try {
+            return courseService.getCreatedCourse();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @GetMapping(path = "/getDraftCourse")
+    public ResponseEntity<?> getDraftCourse() {
+        try {
+            return courseService.getDraftCourse();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @DeleteMapping(path = "/deleteCourse/{courseID}")
+    public ResponseEntity<?> deleteCourse(@PathVariable Long courseID) {
+        try {
+            return courseService.deleteCourse(courseID);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
 }
