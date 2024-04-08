@@ -298,6 +298,9 @@ public class UserServiceImpl implements UserService {
                 User user = userOptional.get();
                 SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
                 String formattedDOB = dateFormat.format(user.getDob());
+                if (user.getDob() != null) {
+                    formattedDOB = dateFormat.format(user.getDob());
+                }
                 // Create a Map with desired fields
                 Map<String, Object> userProfile = new HashMap<>();
                 userProfile.put("firstName", user.getFirstName());
