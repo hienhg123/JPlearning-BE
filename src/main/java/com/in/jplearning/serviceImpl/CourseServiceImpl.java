@@ -130,6 +130,68 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
+    public ResponseEntity<?> getCreatedCourse() {
+        try{
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if (userOptional.isEmpty()) {
+                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+            }
+            Trainer trainer = trainerDAO.getByUserId(userOptional.get().getUserID());
+            //check if manager or trainer
+            if (!jwtAuthFilter.isManager() || trainer == null) {
+                return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
+            }
+            return new ResponseEntity<>(courseDAO.getCreatedCourse(userOptional.get().getUserID()), HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
+    public ResponseEntity<?> getDraftCourse() {
+        try{
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if (userOptional.isEmpty()) {
+                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+            }
+            Trainer trainer = trainerDAO.getByUserId(userOptional.get().getUserID());
+            //check if manager or trainer
+            if (!jwtAuthFilter.isManager() || trainer == null) {
+                return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
+            }
+            return new ResponseEntity<>(courseDAO.getDraftCourse(userOptional.get().getUserID()), HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
+    public ResponseEntity<?> deleteCourse(Long courseID) {
+        try{
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            Optional<Course> courseOptional = courseDAO.findById(courseID);
+            if (userOptional.isEmpty()) {
+                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+            }
+            Trainer trainer = trainerDAO.getByUserId(userOptional.get().getUserID());
+            //check if manager or trainer
+            if (!jwtAuthFilter.isManager() || trainer == null) {
+                return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
+            }
+            if(courseOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Khóa học không tồn tại", HttpStatus.NOT_FOUND);
+            }
+            courseDAO.deleteById(courseID);
+            return JPLearningUtils.getResponseEntity("Xóa thành công", HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
     public ResponseEntity<List<Course>> getAllCourse() {
         log.info("Inside getAllCourse");
         try {

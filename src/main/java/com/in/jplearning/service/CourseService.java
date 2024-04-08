@@ -34,4 +34,10 @@ public interface CourseService {
     ResponseEntity<?> getUserEnrollCourse();
 
     ResponseEntity<?> isEnroll(Long courseID);
+
+    ResponseEntity<?> getCreatedCourse();
+
+    ResponseEntity<?> getDraftCourse();
+
+    ResponseEntity<?> deleteCourse(Long courseID);
 }
