@@ -39,10 +39,13 @@ public class ChapterServiceImpl implements ChapterService {
     @Override
     public ResponseEntity<List<Map<String, Object>>> progressTracking() {
         try {
-            List<Map<String, Object>> courseDetailsList = new ArrayList<>();
-            List<Course> courses = courseDAO.findAll();
+            User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
 
-            for (Course course : courses) {
+            List<Map<String, Object>> courseDetailsList = new ArrayList<>();
+
+            List<Course> enrolledCourses = courseEnrollDAO.getCourseEnrollByUser(user);
+
+            for (Course course : enrolledCourses) {
                 Map<String, Object> courseDetails = new HashMap<>();
                 courseDetails.put("courseID", course.getCourseID());
                 courseDetails.put("courseName", course.getCourseName());

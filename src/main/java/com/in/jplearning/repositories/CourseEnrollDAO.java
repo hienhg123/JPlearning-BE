@@ -15,6 +15,8 @@ public interface CourseEnrollDAO extends JpaRepository<CourseEnroll,Long> {
     Optional<CourseEnroll> findByUserAndCourse(Long userID, Long courseID);
 
     Long countByCourse(Course course);
+    List<CourseEnroll> findByCourse(Course course);
+
 
     @Query("select ce.course from CourseEnroll ce where ce.user =?1 order by ce.joinTime DESC ")
     List<Course> getCourseEnrollByUser(User user);
