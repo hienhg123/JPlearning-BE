@@ -72,11 +72,11 @@ public class CourseServiceImpl implements CourseService {
             }
             Trainer trainer = trainerDAO.getByUserId(userOptional.get().getUserID());
             //check if manager or trainer
-            if (!jwtAuthFilter.isManager() || trainer == null) {
+            if (!jwtAuthFilter.isManager() && trainer == null) {
                 return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
             }
             //get the course
-            Course course = getCourseFromMap(courseName, courseDescription, courseLevel, isFree,isDraft);
+            Course course = getCourseFromMap(courseName, courseDescription, courseLevel, isFree, isDraft);
             //get the course chapter
             List<Chapter> chapterList = new ArrayList<>();
             for (Map<String, Object> chapterMap : chapters) {
@@ -86,10 +86,10 @@ public class CourseServiceImpl implements CourseService {
             course.setChapterList(chapterList);
             course.setCreateBy(userOptional.get());
             courseDAO.save(course);
-            if(Boolean.parseBoolean(isDraft)){
+            if (Boolean.parseBoolean(isDraft)) {
                 return JPLearningUtils.getResponseEntity("Tạo bản nháp thành công", HttpStatus.OK);
             }
-            return JPLearningUtils.getResponseEntity("Tạo thành công", HttpStatus.OK);
+            return JPLearningUtils.getResponseEntity("Xuất bản thành công", HttpStatus.OK);
         } catch (Exception ex) {
             ex.printStackTrace();
 
@@ -99,31 +99,31 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public ResponseEntity<?> getUserEnrollCourse() {
-        try{
+        try {
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
-            if(userOptional.isEmpty()){
+            if (userOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
             }
             return new ResponseEntity<>(courseEnrollDAO.getCourseEnrollByUser(userOptional.get()), HttpStatus.OK);
-        }catch (Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
-       return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
     public ResponseEntity<?> isEnroll(Long courseID) {
-        try{
+        try {
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
-            if(userOptional.isEmpty()){
+            if (userOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
             }
-            Optional<CourseEnroll> courseEnroll = courseEnrollDAO.findByUserAndCourse(userOptional.get().getUserID(),courseID);
-            if(courseEnroll.isEmpty()){
+            Optional<CourseEnroll> courseEnroll = courseEnrollDAO.findByUserAndCourse(userOptional.get().getUserID(), courseID);
+            if (courseEnroll.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("false", HttpStatus.OK);
             }
             return JPLearningUtils.getResponseEntity("true", HttpStatus.OK);
-        }catch (Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -131,18 +131,18 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public ResponseEntity<?> getCreatedCourse() {
-        try{
+        try {
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             if (userOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
             }
             Trainer trainer = trainerDAO.getByUserId(userOptional.get().getUserID());
             //check if manager or trainer
-            if (!jwtAuthFilter.isManager() || trainer == null) {
+            if (!jwtAuthFilter.isManager() && trainer == null) {
                 return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
             }
             return new ResponseEntity<>(courseDAO.getCreatedCourse(userOptional.get().getUserID()), HttpStatus.OK);
-        }catch (Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -150,18 +150,18 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public ResponseEntity<?> getDraftCourse() {
-        try{
+        try {
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             if (userOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
             }
             Trainer trainer = trainerDAO.getByUserId(userOptional.get().getUserID());
             //check if manager or trainer
-            if (!jwtAuthFilter.isManager() || trainer == null) {
+            if (!jwtAuthFilter.isManager() && trainer == null) {
                 return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
             }
             return new ResponseEntity<>(courseDAO.getDraftCourse(userOptional.get().getUserID()), HttpStatus.OK);
-        }catch (Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -170,7 +170,7 @@ public class CourseServiceImpl implements CourseService {
     @Transactional
     @Override
     public ResponseEntity<?> deleteCourse(Long courseID) {
-        try{
+        try {
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             Optional<Course> courseOptional = courseDAO.findById(courseID);
             List<CourseEnroll> courseEnrolls = courseEnrollDAO.getByCourseID(courseID);
@@ -179,16 +179,52 @@ public class CourseServiceImpl implements CourseService {
             }
             Trainer trainer = trainerDAO.getByUserId(userOptional.get().getUserID());
             //check if manager or trainer
-            if (!jwtAuthFilter.isManager() || trainer == null) {
+            if (!jwtAuthFilter.isManager() && trainer == null) {
                 return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
             }
-            if(courseOptional.isEmpty()){
+            if (courseOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Khóa học không tồn tại", HttpStatus.NOT_FOUND);
             }
             courseEnrollDAO.deleteAll(courseEnrolls);
             courseDAO.deleteById(courseID);
             return JPLearningUtils.getResponseEntity("Xóa thành công", HttpStatus.OK);
-        }catch (Exception ex){
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Transactional
+    @Override
+    public ResponseEntity<?> updateCourse(String courseID, String courseName, String courseDescription, String courseLevel,
+                                          String isFree, String isDraft, List<MultipartFile> files, List<Map<String, Object>> chapters) {
+        try {
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            Optional<Course> courseOptional = courseDAO.findById(Long.parseLong(courseID));
+            if (userOptional.isEmpty()) {
+                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+            }
+            if (courseOptional.isEmpty()) {
+                return JPLearningUtils.getResponseEntity("Khóa học không tồn tại", HttpStatus.NOT_FOUND);
+            }
+            Trainer trainer = trainerDAO.getByUserId(userOptional.get().getUserID());
+            //check if manager or trainer
+            if (!jwtAuthFilter.isManager() && trainer == null) {
+                return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
+            }
+            Course course = courseOptional.get();
+            course.setCourseName(courseName);
+            course.setCourseDescription(courseDescription);
+            course.setCourseLevel(JLPTLevel.valueOf(courseLevel));
+            course.setIsFree(Boolean.parseBoolean(isFree));
+            course.setIsDraft(Boolean.parseBoolean(isDraft));
+            updateChaptersAndLessons(course, chapters, files);
+            courseDAO.save(course);
+            if (Boolean.parseBoolean(isDraft)) {
+                return JPLearningUtils.getResponseEntity("Tạo bản nháp thành công", HttpStatus.OK);
+            }
+            return JPLearningUtils.getResponseEntity("Xuất bản thành công", HttpStatus.OK);
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -200,7 +236,6 @@ public class CourseServiceImpl implements CourseService {
         try {
             // Retrieve all courses from the database
             List<Course> courses = courseDAO.findAllByIsDraft(false);
-
             return new ResponseEntity<>(courses, HttpStatus.OK);
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -221,13 +256,19 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public ResponseEntity<String> enroll(Map<String, String> requestMap) {
         try {
+            Optional<Course> courseOptional = courseDAO.findById(Long.parseLong(requestMap.get("courseID")));
+            if(courseOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Khóa học không tồn tại", HttpStatus.NOT_FOUND);
+            }
             //get course
-            Course course = courseDAO.findById(Long.parseLong(requestMap.get("courseID"))).get();
+            Course course = courseOptional.get();
             //get user
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+            }
             User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
             //get course enroll
             Optional<CourseEnroll> courseEnroll = courseEnrollDAO.findByUserAndCourse(user.getUserID(), course.getCourseID());
-            log.info(String.valueOf(courseEnroll.isPresent()));
             //check if user exist
             if (courseEnroll.isEmpty()) {
                 //check if course is free
@@ -381,8 +422,6 @@ public class CourseServiceImpl implements CourseService {
     }
 
 
-
-
     private void enrollCourse(Course course, User user) {
         CourseEnroll courseEnroll = CourseEnroll.builder()
                 .user(user)
@@ -395,7 +434,7 @@ public class CourseServiceImpl implements CourseService {
     private boolean isPremiumExpire(User user) {
         //get user premium
         List<Bill> bills = billDAO.getUserLatestBill(user.getEmail(), PageRequest.of(0, 1));
-        if(bills.isEmpty()){
+        if (bills.isEmpty()) {
             return false;
         }
         Bill bill = bills.get(0);
@@ -440,11 +479,11 @@ public class CourseServiceImpl implements CourseService {
         List<MultipartFile> upload = new ArrayList<>();
         //get the file of each if not null then set
         if (lessonMap.get("vocabularyMaterial") != null) {
-            String key = cloudFront +"/" + courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("vocabularyMaterial");
+            String key = cloudFront + "/" + courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("vocabularyMaterial");
             lesson.setVocabularyMaterial(key);
         }
         //check listening
-        if (lessonMap.get("listeningMaterial") !=null) {
+        if (lessonMap.get("listeningMaterial") != null) {
             String key = cloudFront + "/" + courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("listeningMaterial");
             lesson.setListeningMaterial(key);
         }
@@ -461,9 +500,9 @@ public class CourseServiceImpl implements CourseService {
         //loop throw each file
         for (MultipartFile file : multipartFiles) {
             //loop to check each key
-            for(String key : lessonMap.keySet()){
+            for (String key : lessonMap.keySet()) {
                 //check if equal
-                if(Objects.equals(file.getOriginalFilename(), lessonMap.get(key))){
+                if (Objects.equals(file.getOriginalFilename(), lessonMap.get(key))) {
                     upload.add(file);
                     break;
                 }
@@ -474,7 +513,7 @@ public class CourseServiceImpl implements CourseService {
         return lesson;
     }
 
-    private void uploadToS3(List<MultipartFile> files, String uuid, String courseName, String chapterTitles, String lessonTitles){
+    private void uploadToS3(List<MultipartFile> files, String uuid, String courseName, String chapterTitles, String lessonTitles) {
         List<CompletableFuture<PutObjectResponse>> uploadFutures = files.stream()
                 .map(file -> {
                     try {
@@ -495,9 +534,70 @@ public class CourseServiceImpl implements CourseService {
                 AsyncRequestBody.fromInputStream(file.getInputStream(), file.getSize(), executorService));
     }
 
+    private void updateChaptersAndLessons(Course course, List<Map<String, Object>> chapters, List<MultipartFile> files) {
+        List<Chapter> existingChapters = course.getChapterList();
+        for (Map<String, Object> chapterMap : chapters) {
+            //check if exist
+            Optional<Chapter> existingChapterOptional = existingChapters.stream()
+                    .filter(chapter -> chapter.getChapterID().equals(Long.parseLong(chapterMap.get("chapterID").toString())))
+                    .findFirst();
+            Chapter chapter;
+            if (existingChapterOptional.isPresent()) {
+                // Update existing chapter properties
+                chapter = existingChapterOptional.get();
+            } else {
+                // Create a new chapter instance
+                chapter = new Chapter();
+                chapter.setCourse(course);
+            }
+            chapter.setChapterTitle(chapterMap.get("chapterTitle").toString());
+            chapter.setChapterDescription(chapterMap.get("chapterDescription").toString());
+            // Update lessons of the chapter
+            updateLessons(chapter, chapterMap, files,course.getCourseName());
+            if (existingChapterOptional.isEmpty()) {
+                // Add the new chapter to the course's chapter list
+                existingChapters.add(chapter);
+            }
+        }
+    }
 
-
-
-
-
+    private void updateLessons(Chapter chapter, Map<String, Object> chapterMap, List<MultipartFile> files, String courseName) {
+        List<Lesson> existingLessons = chapter.getLessonList();
+        List<MultipartFile> upload = new ArrayList<>();
+        List<Map<String, Object>> lessons = (List<Map<String, Object>>) chapterMap.get("lessonList");
+        for (Map<String, Object> lessonMap : lessons) {
+            // Check if the lesson exists in the database
+            Optional<Lesson> existingLessonOptional = existingLessons.stream()
+                    .filter(lesson -> lesson.getLessonID().equals(Long.parseLong(lessonMap.get("lessonID").toString())))
+                    .findFirst();
+            Lesson lesson;
+            String random = UUID.randomUUID().toString();
+            if (existingLessonOptional.isPresent()) {
+                // Update existing lesson properties
+                lesson = existingLessonOptional.get();
+            } else {
+                // Create a new lesson instance
+                lesson = new Lesson();
+                lesson.setChapter(chapter);
+            }
+            lesson.setLessonTitle(lessonMap.get("lessonTitle").toString());
+            lesson.setLessonDescription(lessonMap.get("lessonDescription").toString());
+            lesson.setVocabularyMaterial(getMaterialUrl(courseName,random,lessonMap.get("vocabularyMaterial").toString(), chapter, lesson));
+            lesson.setListeningMaterial(getMaterialUrl(courseName,random,lessonMap.get("listeningMaterial").toString(), chapter, lesson));
+            lesson.setGrammarMaterial(getMaterialUrl(courseName,random,lessonMap.get("grammarMaterial").toString(), chapter, lesson));
+            lesson.setVideoMaterial(getMaterialUrl(courseName,random,lessonMap.get("videoMaterial").toString(), chapter, lesson));
+            if (existingLessonOptional.isEmpty()) {
+                // Add the new lesson to the chapter's lesson list
+                existingLessons.add(lesson);
+            }
+            uploadToS3(files,random,courseName,chapter.getChapterTitle(),lesson.getLessonTitle());
+        }
+    }
+    private String getMaterialUrl(String courseName,String random,String material, Chapter chapter, Lesson lesson) {
+        if (material != null) {
+            String key = cloudFront + "/" + courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + material;
+            return key;
+        }
+        return null;
+    }
 }
