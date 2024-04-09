@@ -167,11 +167,13 @@ public class CourseServiceImpl implements CourseService {
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @Transactional
     @Override
     public ResponseEntity<?> deleteCourse(Long courseID) {
         try{
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             Optional<Course> courseOptional = courseDAO.findById(courseID);
+            List<CourseEnroll> courseEnrolls = courseEnrollDAO.getByCourseID(courseID);
             if (userOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
             }
@@ -183,6 +185,7 @@ public class CourseServiceImpl implements CourseService {
             if(courseOptional.isEmpty()){
                 return JPLearningUtils.getResponseEntity("Khóa học không tồn tại", HttpStatus.NOT_FOUND);
             }
+            courseEnrollDAO.deleteAll(courseEnrolls);
             courseDAO.deleteById(courseID);
             return JPLearningUtils.getResponseEntity("Xóa thành công", HttpStatus.OK);
         }catch (Exception ex){
@@ -396,10 +399,6 @@ public class CourseServiceImpl implements CourseService {
             return false;
         }
         Bill bill = bills.get(0);
-        //check if bill is exist
-        if (bill == null) {
-            return false;
-        }
         //check if bill is expire or not
         return bill.getExpireAt().isAfter(LocalDateTime.now());
     }
