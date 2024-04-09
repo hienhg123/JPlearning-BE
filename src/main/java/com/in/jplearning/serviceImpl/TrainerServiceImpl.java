@@ -70,11 +70,18 @@ public class TrainerServiceImpl implements TrainerService {
             String uuid = UUID.randomUUID().toString();
             String verifyUrl = "";
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+
+
             //get current user
             if (userOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
             }
             User user = userOptional.get();
+            Optional<VerifyRequest> verifyRequestOptional = verifyRequestDAO.getByUserId(userOptional.get().getUserID());
+            //check if user have sent the request
+            if(verifyRequestOptional.isPresent()){
+                return JPLearningUtils.getResponseEntity("Yêu cầu của bạn đang chờ được xử lí", HttpStatus.BAD_REQUEST);
+            }
             //check if user is already trainer
             if (checkExist(user)) {
                 return JPLearningUtils.getResponseEntity("Bạn đã là trainer", HttpStatus.BAD_REQUEST);
@@ -109,7 +116,7 @@ public class TrainerServiceImpl implements TrainerService {
                     .build();
             trainerDAO.save(trainer);
             verifyRequestDAO.save(verifyRequest);
-            uploadToS3(pictureFiles, uuid);
+//            uploadToS3(pictureFiles, uuid);
             return JPLearningUtils.getResponseEntity("Đăng kí thành công, yêu cầu của bạn sẽ được xử lí trong vòng 24 giờ", HttpStatus.OK);
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -129,9 +136,9 @@ public class TrainerServiceImpl implements TrainerService {
                 //check if user empty
                 if (trainer != null) {
                     trainerDAO.updateStatus(Boolean.parseBoolean(requestMap.get("isVerify")), trainer.getTrainerID());
-                    verifyRequestDAO.updateStatus(Boolean.parseBoolean(requestMap.get("status")), Long.parseLong(requestMap.get("requestID")));
+                    verifyRequestDAO.updateStatus(Status.valueOf(requestMap.get("status")), Long.parseLong(requestMap.get("requestID")));
                     //check if approve or reject
-                    if (Boolean.parseBoolean(String.valueOf(requestMap.get("status").equals(Status.APPROVED)))) {
+                    if (requestMap.get("status").equals(Status.APPROVED)) {
                         notificationDAO.save(getNotificationFromMap(trainer.getUser().getUserID(), "Tài khoản của bạn đã được xác thực"));
                     } else {
                         notificationDAO.save(getNotificationFromMap(trainer.getUser().getUserID(), "Tài khoản của bạn không được chấp nhận"));

@@ -58,5 +58,4 @@ public class Post implements Serializable {
     @OneToMany(mappedBy = "post")
     List<PostFavorite> postFavorites;
 
-
 }

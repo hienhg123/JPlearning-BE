@@ -13,10 +13,7 @@ public interface PostService {
     ResponseEntity<String> createPost(Map<String, String> requestMap);
     ResponseEntity<?> getByUserPostDraft( int pageNumber, int pageSize);
     ResponseEntity<String> updatePost(Map<String, String> requestMap);
-    ResponseEntity<String> deletePost(Long postId);
     ResponseEntity<List<Map<String, Object>>> getByUserFavorites();
-
-
 
     ResponseEntity<?> getAllPost(int pageNumber, int pageSize);
 
@@ -27,4 +24,6 @@ public interface PostService {
     ResponseEntity<?> getByUserPostNotDraft(int pageNumber, int pageSize);
 
     ResponseEntity<?> getUserFavorite(int pageNumber, int pageSize);
+
+    ResponseEntity<?> deletePost(Long postId);
 }

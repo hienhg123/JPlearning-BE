@@ -21,4 +21,6 @@ public interface PostFavoriteDAO extends JpaRepository<PostFavorite,Long> {
     @Query("SELECT pf.post FROM PostFavorite pf WHERE pf.user = ?1  ORDER BY pf.post.postID DESC")
     Page<Post> findPostsByUserFavorite(User user, Pageable pageable);
 
+    @Query("select pf From PostFavorite pf where pf.post.postID=?1")
+    List<PostFavorite> getByPostID(Long postId);
 }
