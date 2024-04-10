@@ -40,5 +40,5 @@ public interface CourseService {
 
     ResponseEntity<?> deleteCourse(Long courseID);
 
-    ResponseEntity<?> updateCourse(String courseID, String courseName, String courseDescription, String courseLevel, String isFree, String isDraft, List<MultipartFile> files, List<Map<String, Object>> chapters);
+    ResponseEntity<?> updateCourse(String courseID, String courseName, String courseDescription, String courseLevel, String isFree, String isDraft, List<MultipartFile> files, List<Map<String, Object>> chapters, List<Long> chapterIdList, List<Long> lessonIdList);
 }

@@ -26,4 +26,6 @@ public interface PostService {
     ResponseEntity<?> getUserFavorite(int pageNumber, int pageSize);
 
     ResponseEntity<?> deletePost(Long postId);
+
+    ResponseEntity<?> getFeaturedPost();
 }

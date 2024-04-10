@@ -43,7 +43,15 @@ public class UserExerciseController {
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
-
+    @PostMapping("/submitJLPT")
+    public ResponseEntity<String> submitJLPT(@RequestBody Map<String,String> requestMap){
+        try{
+            return userExerciseService.submitJLPT(requestMap);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
 
 }

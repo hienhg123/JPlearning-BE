@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface VerifyRequestDAO extends JpaRepository<VerifyRequest,Long> {
@@ -22,5 +23,5 @@ public interface VerifyRequestDAO extends JpaRepository<VerifyRequest,Long> {
     Integer updateStatus(Status status, long requestID);
 
     @Query(value = "select vr from VerifyRequest vr where vr.trainer.user.userID =?1 and vr.status ='PENDING'")
-    Optional<VerifyRequest> getByUserId(Long userID);
+    List<VerifyRequest> getByUserId(Long userID);
 }

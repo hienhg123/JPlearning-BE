@@ -39,6 +39,7 @@ public class User_Exercise implements Serializable {
     @Enumerated(EnumType.STRING)
     private QuestionType questionType;
     private int mark;
+    private int maxPoint;
     private Date submittedAt;
     private int numberOfAttempts;
     public String getTitle() {
