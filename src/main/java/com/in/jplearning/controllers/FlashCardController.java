@@ -46,4 +46,9 @@ public class FlashCardController {
         return ResponseEntity.ok("FlashCard updated successfully");
     }
 
+    @DeleteMapping("/{flashCardId}")
+    public ResponseEntity<String> deleteFlashCard(@PathVariable("flashCardId") Long flashCardId) {
+        return flashCardService.deleteFlashCard(flashCardId);
+    }
+
 }
