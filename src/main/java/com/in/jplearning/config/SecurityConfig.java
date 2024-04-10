@@ -2,6 +2,7 @@ package com.in.jplearning.config;
 
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -17,6 +18,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
+@Slf4j
 public class SecurityConfig implements WebMvcConfigurer {
     private final JwtAuthFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
@@ -25,6 +27,7 @@ public class SecurityConfig implements WebMvcConfigurer {
             , "/user/resetPassword", "course/getAllCourses", "course/getCourse/{courseID}", "/premium/getAllPremium"
             , "posts/uploadFile", "/posts/getPostById/{postID}", "/posts/getAllPost/{pageNumber}/{pageSize}"
             ,"/posts/getFeaturedPost", "/practice/exercise/getJLPTExercise","/payment/vnpay/paymentCallback", "/search/**"};
+            , "/practice/exercise/getJLPTExercise", "/search/**","/user/profile"};
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

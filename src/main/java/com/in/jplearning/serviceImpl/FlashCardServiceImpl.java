@@ -1,14 +1,19 @@
 package com.in.jplearning.serviceImpl;
 
 
+import com.in.jplearning.constants.JPConstants;
 import com.in.jplearning.model.FlashCard;
 import com.in.jplearning.model.FlashCardSet;
 import com.in.jplearning.repositories.FlashCardDAO;
 import com.in.jplearning.repositories.FlashCardSetDAO;
 import com.in.jplearning.service.FlashCardService;
+import com.in.jplearning.utils.JPLearningUtils;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -71,6 +76,34 @@ public class FlashCardServiceImpl implements FlashCardService {
         flashCardDAO.save(flashCardToUpdate);
         flashCardSetDAO.save(flashCardSet);
     }
+
+    @Override
+    public ResponseEntity<String> deleteFlashCard(Long flashCardId) {
+        try {
+            // Check if the flashcard exists
+            FlashCard flashCard = flashCardDAO.findById(flashCardId)
+                    .orElseThrow(() -> new EntityNotFoundException("FlashCard not found with id: " + flashCardId));
+
+            // Remove the flashcard from its flashcard set
+            FlashCardSet flashCardSet = flashCard.getFlashCardSet();
+            if (flashCardSet != null) {
+                flashCardSet.getFlashCards().remove(flashCard);
+                flashCardSetDAO.save(flashCardSet);
+            }
+
+            // Delete the flashcard
+            flashCardDAO.delete(flashCard);
+
+            return JPLearningUtils.getResponseEntity("Xóa FlashCard thành công", HttpStatus.OK);
+        } catch (DataAccessException ex) {
+            ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 
 
 
