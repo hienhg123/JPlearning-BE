@@ -10,6 +10,6 @@ public interface FlashCardService {
 
     List<FlashCard> getFlashCardsByFlashCardSetId(Long flashCardSetId);
     void updateFlashCardInSet(Long flashCardSetId, Long flashCardId, FlashCard updatedFlashCard);
-
+    ResponseEntity<String> deleteFlashCard(Long flashCardId);
 
 }

@@ -108,7 +108,6 @@ public class ReportServiceImpl implements ReportService {
     private Report mapToReport(Map<String, String> reportDetails) {
         Report report = new Report();
         report.setReportType(ReportType.valueOf(reportDetails.get("reportType")));
-        report.setReportContent(reportDetails.get("reportContent"));
         report.setCreatedAt(LocalDateTime.now());
         return report;
     }
