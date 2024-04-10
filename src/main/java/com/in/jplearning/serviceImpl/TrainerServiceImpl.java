@@ -77,10 +77,13 @@ public class TrainerServiceImpl implements TrainerService {
                 return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
             }
             User user = userOptional.get();
-            Optional<VerifyRequest> verifyRequestOptional = verifyRequestDAO.getByUserId(userOptional.get().getUserID());
+            List<VerifyRequest> verifyRequestList = verifyRequestDAO.getByUserId(userOptional.get().getUserID());
             //check if user have sent the request
-            if(verifyRequestOptional.isPresent()){
-                return JPLearningUtils.getResponseEntity("Yêu cầu của bạn đang chờ được xử lí", HttpStatus.BAD_REQUEST);
+            if(!verifyRequestList.isEmpty()){
+                VerifyRequest verifyRequest = verifyRequestList.get(verifyRequestList.size()-1);
+                if(verifyRequest.getStatus().equals(Status.PENDING)){
+                    return JPLearningUtils.getResponseEntity("Yêu cầu của bạn đang chờ được xử lí", HttpStatus.BAD_REQUEST);
+                }
             }
             //check if user is already trainer
             if (checkExist(user)) {
@@ -116,7 +119,7 @@ public class TrainerServiceImpl implements TrainerService {
                     .build();
             trainerDAO.save(trainer);
             verifyRequestDAO.save(verifyRequest);
-//            uploadToS3(pictureFiles, uuid);
+            uploadToS3(pictureFiles, uuid);
             return JPLearningUtils.getResponseEntity("Đăng kí thành công, yêu cầu của bạn sẽ được xử lí trong vòng 24 giờ", HttpStatus.OK);
         } catch (Exception ex) {
             ex.printStackTrace();

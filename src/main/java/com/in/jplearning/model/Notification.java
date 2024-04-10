@@ -1,5 +1,6 @@
 package com.in.jplearning.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.in.jplearning.enums.NotificationType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -37,6 +38,10 @@ public class Notification {
     private LocalDateTime createdTime;
     @Enumerated(EnumType.STRING)
     private NotificationType notificationType;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_fk",referencedColumnName = "post_ID")
+    private Post relatedPost;
 
 
 }

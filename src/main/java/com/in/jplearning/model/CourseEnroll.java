@@ -1,5 +1,6 @@
 package com.in.jplearning.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,6 +31,7 @@ public class CourseEnroll implements Serializable {
     @JoinColumn(name = "user_fk",referencedColumnName = "user_ID")
     private User user;
 
+    @JsonIgnoreProperties("courseEnrolls")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_fk",referencedColumnName = "course_ID")
     private Course course;
