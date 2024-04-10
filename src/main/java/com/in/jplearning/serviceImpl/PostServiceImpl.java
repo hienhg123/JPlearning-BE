@@ -13,23 +13,19 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
-import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 
 import java.io.IOException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -44,6 +40,10 @@ public class PostServiceImpl implements PostService {
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDAO userDAO;
     private final PostFavoriteDAO postFavoriteDAO;
+
+    private final PostLikeDAO postLikeDAO;
+
+    private final PostCommentDAO postCommentDAO;
 
     private final String cloudFront = "https://d3vco6mbl6bsb7.cloudfront.net";
 
@@ -167,6 +167,36 @@ public class PostServiceImpl implements PostService {
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @Transactional
+    @Override
+    public ResponseEntity<?> deletePost(Long postId) {
+        try{
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            Optional<Post> postOptional = postDAO.findById(postId);
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+            }
+            if(postOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Bài đăng không tồn tại", HttpStatus.NOT_FOUND);
+            }
+            if(!postOptional.get().getUser().equals(userOptional.get())){
+                return JPLearningUtils.getResponseEntity("Bạn không có quyền xóa bài viết này", HttpStatus.NOT_FOUND);
+            }
+            List<PostComment> postCommentList = postCommentDAO.getByPostID(postId);
+            List<PostLike> postLikeList = postLikeDAO.getByPostID(postId);
+            List<PostFavorite> postFavorites = postFavoriteDAO.getByPostID(postId);
+            //delete all the constrain
+            postFavoriteDAO.deleteAll(postFavorites);
+            postLikeDAO.deleteAll(postLikeList);
+            postCommentDAO.deleteAll(postCommentList);
+            postDAO.deleteById(postId);
+            return JPLearningUtils.getResponseEntity("Xóa bài viết thành công", HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     @Override
     public ResponseEntity<?> getByUserPostDraft(int pageNumber, int pageSize) {
         try{
@@ -206,40 +236,6 @@ public class PostServiceImpl implements PostService {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-
-    @Override
-    public ResponseEntity<String> deletePost(Long postId) {
-        try {
-            Optional<Post> optionalPost = postDAO.findById(postId);
-            if (optionalPost.isEmpty()) {
-                return JPLearningUtils.getResponseEntity("Không tim thấy bài đăng", HttpStatus.NOT_FOUND);
-            }
-            if(!jwtAuthFilter.isManager()){
-                return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
-            }
-            Notification notification = getFromMap(optionalPost.get());
-            notificationDAO.save(notification);
-            postDAO.deleteById(postId);
-            return JPLearningUtils.getResponseEntity("Xóa thành công", HttpStatus.OK);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    private Notification getFromMap(Post post) {
-        User sender = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
-        return Notification.builder()
-                .sender(sender)
-                .receiver(post.getUser())
-                .content("Bài viết của bạn đã bị xóa")
-                .notificationType(NotificationType.POST)
-                .createdTime(LocalDateTime.now())
-                .isRead(false)
-                .build();
-    }
-
     @Override
     public ResponseEntity<?> getAllPost(int pageNumber, int pageSize) {
         try {

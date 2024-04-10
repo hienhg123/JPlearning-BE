@@ -89,10 +89,14 @@ public class PostController {
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
-
     @DeleteMapping("deletePost/{postId}")
-    public ResponseEntity<String> deletePost(@PathVariable Long postId) {
-        return postService.deletePost(postId);
+    public ResponseEntity<?> deletePost(@PathVariable Long postId) {
+        try{
+            return postService.deletePost(postId);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @GetMapping(path = "/getPostById/{postID}")

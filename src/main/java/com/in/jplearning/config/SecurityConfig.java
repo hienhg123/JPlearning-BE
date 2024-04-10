@@ -26,6 +26,7 @@ public class SecurityConfig implements WebMvcConfigurer {
     private static final String[] WHITE_LIST = {"/user/register", "/user/login", "/user/forgetPassword", "/user/validateOtp"
             , "/user/resetPassword", "course/getAllCourses", "course/getCourse/{courseID}", "/premium/getAllPremium"
             , "posts/uploadFile", "/posts/getPostById/{postID}", "/posts/getAllPost/{pageNumber}/{pageSize}"
+
             , "/practice/exercise/getJLPTExercise", "/search/**","/user/profile"};
 
     @Bean
