@@ -9,7 +9,9 @@ import com.in.jplearning.constants.JPConstants;
 
 import com.in.jplearning.enums.JLPTLevel;
 import com.in.jplearning.enums.Role;
+import com.in.jplearning.model.Bill;
 import com.in.jplearning.model.User;
+import com.in.jplearning.repositories.BillDAO;
 import com.in.jplearning.repositories.UserDAO;
 import com.in.jplearning.service.UserService;
 import com.in.jplearning.utils.EmailUtils;
@@ -36,6 +38,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
 
 
@@ -52,6 +55,8 @@ public class UserServiceImpl implements UserService {
     private final AuthenticationManager authenticationManager;
     private final S3Config s3Config;
     private final EmailUtils emailUtils;
+
+    private final BillDAO billDAO;
     private final String cloudFront = "https://ddzgswoq4gt6i.cloudfront.net/";
     @Override
     public ResponseEntity<String> register(Map<String, String> requestMap) {
@@ -144,18 +149,29 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-
-
+    @Override
+    public ResponseEntity<?> checkPremium() {
+        try{
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+            }
+            return new ResponseEntity<>(isPremiumExpire(userOptional.get()), HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
 
     @Override
     public ResponseEntity<String> login(Map<String, String> requestMap) {
+        Optional<User> userOptional = userDAO.findByEmail(requestMap.get("email"));
         //check if user exist
-        if(userDAO.findByEmail(requestMap.get("email")).isEmpty()){
-            return new ResponseEntity<String>("Tài khoản không tồn tại", HttpStatus.BAD_REQUEST);
+        if(userOptional.isEmpty()){
+            return JPLearningUtils.getResponseEntity("Tài khoản không tồn tại", HttpStatus.BAD_REQUEST);
         }
-        User user = userDAO.findByEmail(requestMap.get("email")).get();
-        log.info("Inside login");
+        User user = userOptional.get();
         try {
             Authentication auth = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(requestMap.get("email")
@@ -168,7 +184,7 @@ public class UserServiceImpl implements UserService {
                     return new ResponseEntity<String>("{\"token\":\"" +
                             jwtUtil.generateToken(user.getUsername(), user.getRole()) + "\"}", HttpStatus.OK);
                 } else {
-                    return new ResponseEntity<String>("Tài khoản đã bị khóa", HttpStatus.BAD_REQUEST);
+                    return JPLearningUtils.getResponseEntity("Tài khoản đã bị khóa", HttpStatus.BAD_REQUEST);
                 }
             }
         } catch (Exception ex) {
@@ -467,6 +483,20 @@ public class UserServiceImpl implements UserService {
         } else {
             return false;
         }
+    }
+    private boolean isPremiumExpire(User user) {
+        //get user premium
+        List<Bill> bills = billDAO.getUserLatestBill(user.getEmail(), PageRequest.of(0, 1));
+        if(bills.isEmpty()){
+            return false;
+        }
+        Bill bill = bills.get(0);
+        //check if bill is exist
+        if (bill == null) {
+            return false;
+        }
+        //check if bill is expire or not
+        return bill.getExpireAt().isAfter(LocalDateTime.now());
     }
 
 

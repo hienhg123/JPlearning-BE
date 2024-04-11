@@ -34,10 +34,19 @@ public class ReportController {
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
-    @DeleteMapping("deleteReport/{reportID}")
-    public ResponseEntity<String> deleteReport(@PathVariable Long reportID){
+    @DeleteMapping("deleteReport/{postID}")
+    public ResponseEntity<String> deleteReport(@PathVariable Long postID){
         try{
-            return reportService.deleteReport(reportID);
+            return reportService.deleteReport(postID);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    @DeleteMapping("deleteTrainerPost/{postID}")
+    public ResponseEntity<?> deleteTrainerPost(@PathVariable Long postID){
+        try{
+            return reportService.deleteTrainerPost(postID);
         }catch (Exception ex){
             ex.printStackTrace();
         }

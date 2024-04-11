@@ -2,7 +2,6 @@ package com.in.jplearning.service;
 
 import com.in.jplearning.model.Course;
 import com.in.jplearning.model.CourseFeedBack;
-import com.in.jplearning.model.User;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -34,4 +33,12 @@ public interface CourseService {
     ResponseEntity<?> getUserEnrollCourse();
 
     ResponseEntity<?> isEnroll(Long courseID);
+
+    ResponseEntity<?> getCreatedCourse();
+
+    ResponseEntity<?> getDraftCourse();
+
+    ResponseEntity<?> deleteCourse(Long courseID);
+
+    ResponseEntity<?> updateCourse(String courseID, String courseName, String courseDescription, String courseLevel, String isFree, String isDraft, List<MultipartFile> files, List<Map<String, Object>> chapters);
 }

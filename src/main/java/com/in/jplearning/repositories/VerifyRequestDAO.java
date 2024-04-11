@@ -1,5 +1,6 @@
 package com.in.jplearning.repositories;
 
+import com.in.jplearning.enums.Status;
 import com.in.jplearning.model.VerifyRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -8,7 +9,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.Optional;
 
 public interface VerifyRequestDAO extends JpaRepository<VerifyRequest,Long> {
 
@@ -18,5 +19,8 @@ public interface VerifyRequestDAO extends JpaRepository<VerifyRequest,Long> {
     @Transactional
     @Modifying
     @Query(value = "Update VerifyRequest vr set vr.status = ?1 where vr.requestID =?2")
-    Integer updateStatus(boolean approved, long requestID);
+    Integer updateStatus(Status status, long requestID);
+
+    @Query(value = "select vr from VerifyRequest vr where vr.trainer.user.userID =?1 and vr.status ='PENDING'")
+    Optional<VerifyRequest> getByUserId(Long userID);
 }

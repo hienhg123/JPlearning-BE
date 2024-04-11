@@ -53,12 +53,30 @@ public class CourseController {
                                           @RequestParam("courseLevel") String courseLevel,
                                           @RequestParam("isFree") String isFree,
                                           @RequestParam("isDraft") String isDraft,
-                                          @RequestPart("files") List<MultipartFile> files,
+                                          @RequestPart(value = "files", required = false) List<MultipartFile> files,
                                           @RequestParam("chapters") String chaptersJson){
         try{
             ObjectMapper objectMapper = new ObjectMapper();
             List<Map<String, Object>> chapters = objectMapper.readValue(chaptersJson, new TypeReference<List<Map<String, Object>>>() {});
             return courseService.createCourse(courseName,courseDescription,courseLevel,isFree,isDraft,files,chapters);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG,HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    @PostMapping(path = "/updateCourse")
+    public ResponseEntity<?> updateCourse(@RequestParam("courseID") String courseID,
+                                          @RequestParam("courseName") String courseName,
+                                          @RequestParam("courseDescription") String courseDescription,
+                                          @RequestParam("courseLevel") String courseLevel,
+                                          @RequestParam("isFree") String isFree,
+                                          @RequestParam("isDraft") String isDraft,
+                                          @RequestPart(value = "files", required = false) List<MultipartFile> files,
+                                          @RequestParam("chapters") String chaptersJson){
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            List<Map<String, Object>> chapters = objectMapper.readValue(chaptersJson, new TypeReference<List<Map<String, Object>>>() {});
+            return courseService.updateCourse(courseID,courseName,courseDescription,courseLevel,isFree, isDraft,files,chapters);
         }catch (Exception ex){
             ex.printStackTrace();
         }
@@ -108,6 +126,32 @@ public class CourseController {
             return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
+    @GetMapping(path = "/getCreatedCourse")
+    public ResponseEntity<?> getCreatedCourse() {
+        try {
+            return courseService.getCreatedCourse();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @GetMapping(path = "/getDraftCourse")
+    public ResponseEntity<?> getDraftCourse() {
+        try {
+            return courseService.getDraftCourse();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @DeleteMapping(path = "/deleteCourse/{courseID}")
+    public ResponseEntity<?> deleteCourse(@PathVariable Long courseID) {
+        try {
+            return courseService.deleteCourse(courseID);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
 }

@@ -38,7 +38,7 @@ public class UserController {
     }
 
     @PostMapping(path = "/login")
-    public ResponseEntity<String> login(@RequestBody  Map<String, String> requestMap) {
+    public ResponseEntity<String> login(@RequestBody Map<String, String> requestMap) {
         try {
             return userService.login(requestMap);
         } catch (Exception ex) {
@@ -50,7 +50,7 @@ public class UserController {
     @GetMapping(path = "/getAllUser/{pageNumber}/{pageSize}")
     public ResponseEntity<Page<Map<String, Object>>> getAllUsers(
             @PathVariable int pageNumber, @PathVariable int pageSize) {
-        return userService.getAllUsers(pageNumber,pageSize);
+        return userService.getAllUsers(pageNumber, pageSize);
     }
 
     @GetMapping(path = "/profile")
@@ -58,21 +58,23 @@ public class UserController {
 
         return userService.getUserProfile();
     }
+
     @PutMapping("/updateProfile")
     public ResponseEntity<String> updateProfile(@RequestPart(name = "userPicture", required = false) MultipartFile userPicture,
                                                 @RequestParam Map<String, String> requestMap) {
         return userService.updateProfile(userPicture, requestMap);
     }
+
     @PostMapping(path = "/forgetPassword")
-    public ResponseEntity<Map<String,String>> forgetPassword(@RequestBody  Map<String, String> requestMap){
+    public ResponseEntity<Map<String, String>> forgetPassword(@RequestBody Map<String, String> requestMap) {
         Map<String, String> response = new HashMap<>();
-        response.put("message","Something went wrong");
-        try{
+        response.put("message", "Something went wrong");
+        try {
             return userService.forgetPassword(requestMap);
-        }catch (Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
-        return new ResponseEntity<>(response,HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @PutMapping("/changePassword")
@@ -84,8 +86,9 @@ public class UserController {
             return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
     @GetMapping(path = "/checkToken")
-    public ResponseEntity<String> checkToken(){
+    public ResponseEntity<String> checkToken() {
         try {
             return userService.checkToken();
         } catch (Exception ex) {
@@ -94,30 +97,39 @@ public class UserController {
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-        @PostMapping(path = "/validateOtp")
-        public ResponseEntity<String> validateOtp(@RequestBody Map <String, String> requestMap){
-            try {
-                return userService.validateOtp(requestMap);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    @PostMapping(path = "/validateOtp")
+    public ResponseEntity<String> validateOtp(@RequestBody Map<String, String> requestMap) {
+        try {
+            return userService.validateOtp(requestMap);
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
-        @PutMapping(path = "/resetPassword")
-        public ResponseEntity<String> resetPassword(@RequestBody Map <String,String> requestMap){
-            try {
-                return userService.resetPassword(requestMap);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @PutMapping(path = "/resetPassword")
+    public ResponseEntity<String> resetPassword(@RequestBody Map<String, String> requestMap) {
+        try {
+            return userService.resetPassword(requestMap);
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
     @PutMapping("/userManagement")
     public ResponseEntity<String> updateUser(@RequestBody Map<String, String> requestMap) {
         return userService.updateUser(requestMap);
     }
-
+    @GetMapping("/checkPremium")
+    public ResponseEntity<?> checkPremium() {
+        try {
+            return userService.checkPremium();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
 
 }

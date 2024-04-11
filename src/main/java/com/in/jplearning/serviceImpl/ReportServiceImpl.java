@@ -2,13 +2,10 @@ package com.in.jplearning.serviceImpl;
 
 import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.constants.JPConstants;
+import com.in.jplearning.enums.NotificationType;
 import com.in.jplearning.enums.ReportType;
-import com.in.jplearning.model.Post;
-import com.in.jplearning.model.Report;
-import com.in.jplearning.model.User;
-import com.in.jplearning.repositories.PostDAO;
-import com.in.jplearning.repositories.ReportDAO;
-import com.in.jplearning.repositories.UserDAO;
+import com.in.jplearning.model.*;
+import com.in.jplearning.repositories.*;
 import com.in.jplearning.service.ReportService;
 import com.in.jplearning.utils.JPLearningUtils;
 import lombok.AllArgsConstructor;
@@ -20,10 +17,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -35,6 +34,14 @@ public class ReportServiceImpl implements ReportService {
     private final UserDAO userDAO;
     private final JwtAuthFilter jwtAuthFilter;
     private final PostDAO postDAO;
+
+    private final PostCommentDAO postCommentDAO;
+
+    private final PostLikeDAO postLikeDAO;
+
+    private final PostFavoriteDAO postFavoriteDAO;
+
+    private final NotificationDAO notificationDAO;
 
 
     @Override
@@ -89,16 +96,42 @@ public class ReportServiceImpl implements ReportService {
     public ResponseEntity<String> deleteReport(Long reportID) {
         try{
             //check if manager
-            if(jwtAuthFilter.isManager()){
-                //check if exist
-                if(reportDAO.findById(reportID).isPresent()) {
-                    reportDAO.deleteById(reportID);
-                    return JPLearningUtils.getResponseEntity("Xóa thành công", HttpStatus.OK);
-                }
-                return JPLearningUtils.getResponseEntity("Không tồn tại", HttpStatus.BAD_REQUEST);
+            if(!jwtAuthFilter.isManager()){
+                return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
             }
-            return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
+            List<Report> reportList = reportDAO.getByPostID(reportID);
+            reportDAO.deleteAll(reportList);
+            return JPLearningUtils.getResponseEntity("Xóa thành công", HttpStatus.OK);
         }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    @Transactional
+    @Override
+    public ResponseEntity<String> deleteTrainerPost(Long postId) {
+        try {
+            Optional<Post> optionalPost = postDAO.findById(postId);
+            if (optionalPost.isEmpty()) {
+                return JPLearningUtils.getResponseEntity("Không tim thấy bài đăng", HttpStatus.NOT_FOUND);
+            }
+            if(!jwtAuthFilter.isManager()){
+                return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
+            }
+            List<Report> reportList = reportDAO.getByPostID(postId);
+            List<PostComment> postCommentList = postCommentDAO.getByPostID(postId);
+            List<PostLike> postLikeList = postLikeDAO.getByPostID(postId);
+            List<PostFavorite> postFavorites = postFavoriteDAO.getByPostID(postId);
+            postFavoriteDAO.deleteAll(postFavorites);
+            postLikeDAO.deleteAll(postLikeList);
+            postCommentDAO.deleteAll(postCommentList);
+            reportDAO.deleteAll(reportList);
+            Notification notification = getFromMap(optionalPost.get());
+            notificationDAO.save(notification);
+            //delete all the constrain
+            postDAO.deleteById(postId);
+            return JPLearningUtils.getResponseEntity("Xóa thành công", HttpStatus.OK);
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -110,6 +143,17 @@ public class ReportServiceImpl implements ReportService {
         report.setReportType(ReportType.valueOf(reportDetails.get("reportType")));
         report.setCreatedAt(LocalDateTime.now());
         return report;
+    }
+    private Notification getFromMap(Post post) {
+        User sender = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
+        return Notification.builder()
+                .sender(sender)
+                .receiver(post.getUser())
+                .content("Bài viết của bạn đã bị xóa")
+                .notificationType(NotificationType.POST)
+                .createdTime(LocalDateTime.now())
+                .isRead(false)
+                .build();
     }
 }
 
