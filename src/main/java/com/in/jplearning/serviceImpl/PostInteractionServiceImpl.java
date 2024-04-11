@@ -235,6 +235,7 @@ public class PostInteractionServiceImpl implements PostInteractionService {
                 .sender(sender)
                 .isRead(false)
                 .createdTime(LocalDateTime.now())
+                .relatedPost(postOptional.get())
                 .build();
     }
 }

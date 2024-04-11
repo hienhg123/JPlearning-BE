@@ -3,6 +3,7 @@ package com.in.jplearning.serviceImpl;
 import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.constants.JPConstants;
 import com.in.jplearning.enums.ExerciseType;
+import com.in.jplearning.enums.QuestionType;
 import com.in.jplearning.model.Exercises;
 import com.in.jplearning.model.User;
 import com.in.jplearning.model.UserLessonProgress;
@@ -41,14 +42,13 @@ public class UserExerciseImpl implements UserExerciseService {
             User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
             int numberOfAttempts = 0;
             //check if user have done this exercise or not
-            log.info(requestMap.get("exerciseID"));
             List<User_Exercise> user_exercise = userExerciseDAO.getByUser(user.getUserID(),Long.parseLong(requestMap.get("exerciseID")));
             if( user_exercise!= null){
                 numberOfAttempts = user_exercise.size() + 1;
             }
             //save in database
             userExerciseDAO.save(getDataFromMap(requestMap,user.getUserID(),numberOfAttempts));
-            return JPLearningUtils.getResponseEntity("Successfully saved",HttpStatus.OK);
+            return JPLearningUtils.getResponseEntity("Nộp bài thành công",HttpStatus.OK);
 
         }catch (Exception ex){
             ex.printStackTrace();
@@ -64,6 +64,7 @@ public class UserExerciseImpl implements UserExerciseService {
             User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).orElse(null);
 
             if (user != null) {
+
                 List<User_Exercise> userExercises = userExerciseDAO.getUserExerciseInfo(user.getUserID());
 
                 // Group user exercises by title
@@ -88,6 +89,7 @@ public class UserExerciseImpl implements UserExerciseService {
                 }
 
                 return ResponseEntity.ok(userExerciseMap);
+
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.emptyMap());
             }
@@ -120,6 +122,46 @@ public class UserExerciseImpl implements UserExerciseService {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
     }
 
+    @Override
+    public ResponseEntity<String> submitJLPT(Map<String, String> requestMap) {
+        try{
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+            }
+            int numberOfAttempts = 0;
+            List<User_Exercise> userExerciseList = userExerciseDAO.getJLPTByUser(
+                    userOptional.get(),
+                    Long.parseLong(requestMap.get("exerciseID")),
+                    QuestionType.valueOf(requestMap.get("questionType"))
+            );
+            if( userExerciseList!= null){
+                numberOfAttempts = userExerciseList.size() + 1;
+            }
+            User_Exercise userExercise = getUserExerciseWithQuestionType(requestMap,userOptional.get(),numberOfAttempts);
+            userExerciseDAO.save(userExercise);
+            return JPLearningUtils.getResponseEntity("Nộp bài thành công",HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    private User_Exercise getUserExerciseWithQuestionType(Map<String, String> requestMap, User user, int numberOfAttempts) {
+        Exercises exercises = new Exercises();
+        exercises.setExercisesID(Long.parseLong(requestMap.get("exerciseID")));
+        Date submittedAt = parseDate(requestMap.get("submittedAt"));
+        return User_Exercise.builder()
+                .exercises(exercises)
+                .user(user)
+                .mark(Integer.parseInt(requestMap.get("mark")))
+                .maxPoint(Integer.parseInt(requestMap.get("maxPoint")))
+                .numberOfAttempts(numberOfAttempts)
+                .questionType(QuestionType.valueOf(requestMap.get("questionType")))
+                .submittedAt(submittedAt)
+                .build();
+    }
+
 
     private User_Exercise getDataFromMap(Map<String, String> requestMap, Long userID, int numberOfAttempts) {
         Exercises exercises = new Exercises();
@@ -131,6 +173,7 @@ public class UserExerciseImpl implements UserExerciseService {
                 .exercises(exercises)
                 .user(user)
                 .mark(Integer.parseInt(requestMap.get("mark")))
+                .maxPoint(Integer.parseInt(requestMap.get("maxPoint")))
                 .numberOfAttempts(numberOfAttempts)
                 .submittedAt(submittedAt)
                 .build();

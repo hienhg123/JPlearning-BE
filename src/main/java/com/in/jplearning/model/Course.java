@@ -12,6 +12,7 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -38,12 +39,13 @@ public class Course implements Serializable {
     private Boolean isFree;
     private Boolean isDraft;
     private String img;
+    private LocalDateTime createdAt;
     @JsonIgnoreProperties("course")
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)
     private List<Chapter> chapterList = new ArrayList<>();
 
     @OneToMany(mappedBy = "course")
-    private Set<CourseEnroll> courseEnrolls;
+    private List<CourseEnroll> courseEnrolls;
 
 
     @ManyToOne(fetch = FetchType.LAZY)

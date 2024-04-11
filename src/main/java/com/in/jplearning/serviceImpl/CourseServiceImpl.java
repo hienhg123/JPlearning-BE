@@ -10,6 +10,8 @@ import com.in.jplearning.service.CourseService;
 import com.in.jplearning.utils.JPLearningUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -60,6 +62,10 @@ public class CourseServiceImpl implements CourseService {
 
     private final String bucketName = "jplearning-lesson";
 
+    private final LessonDAO lessonDAO;
+
+    private static final Logger logger = LoggerFactory.getLogger(CourseServiceImpl.class);
+
 
     @Transactional
     @Override
@@ -85,6 +91,7 @@ public class CourseServiceImpl implements CourseService {
             }
             course.setChapterList(chapterList);
             course.setCreateBy(userOptional.get());
+            course.setCreatedAt(LocalDateTime.now());
             courseDAO.save(course);
             if (Boolean.parseBoolean(isDraft)) {
                 return JPLearningUtils.getResponseEntity("Tạo bản nháp thành công", HttpStatus.OK);
@@ -197,7 +204,8 @@ public class CourseServiceImpl implements CourseService {
     @Transactional
     @Override
     public ResponseEntity<?> updateCourse(String courseID, String courseName, String courseDescription, String courseLevel,
-                                          String isFree, String isDraft, List<MultipartFile> files, List<Map<String, Object>> chapters) {
+                                          String isFree, String isDraft, List<MultipartFile> files, List<Map<String, Object>> chapters,
+                                          List<Long> chapterIdList, List<Long> lessonIdList) {
         try {
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             Optional<Course> courseOptional = courseDAO.findById(Long.parseLong(courseID));
@@ -218,7 +226,8 @@ public class CourseServiceImpl implements CourseService {
             course.setCourseLevel(JLPTLevel.valueOf(courseLevel));
             course.setIsFree(Boolean.parseBoolean(isFree));
             course.setIsDraft(Boolean.parseBoolean(isDraft));
-            updateChaptersAndLessons(course, chapters, files);
+            course.setCreatedAt(LocalDateTime.now());
+            updateChaptersAndLessons(course, chapters, files,chapterIdList,lessonIdList);
             courseDAO.save(course);
             if (Boolean.parseBoolean(isDraft)) {
                 return JPLearningUtils.getResponseEntity("Tạo bản nháp thành công", HttpStatus.OK);
@@ -513,29 +522,10 @@ public class CourseServiceImpl implements CourseService {
         return lesson;
     }
 
-    private void uploadToS3(List<MultipartFile> files, String uuid, String courseName, String chapterTitles, String lessonTitles) {
-        List<CompletableFuture<PutObjectResponse>> uploadFutures = files.stream()
-                .map(file -> {
-                    try {
-                        return uploadToS3Async(file, uuid, courseName, chapterTitles, lessonTitles);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .collect(Collectors.toList());
-    }
-
-    private CompletableFuture<PutObjectResponse> uploadToS3Async(MultipartFile file, String uuid, String courseName, String chapterTitle, String lessonTitle) throws IOException {
-        String key = courseName + "/chapters/" + chapterTitle + "/" + lessonTitle + "/" + uuid + "_" + file.getOriginalFilename();
-        return s3AsyncClient.putObject(PutObjectRequest.builder()
-                        .bucket(bucketName)
-                        .key(key)
-                        .build(),
-                AsyncRequestBody.fromInputStream(file.getInputStream(), file.getSize(), executorService));
-    }
-
-    private void updateChaptersAndLessons(Course course, List<Map<String, Object>> chapters, List<MultipartFile> files) {
+    private void updateChaptersAndLessons(Course course, List<Map<String, Object>> chapters, List<MultipartFile> files,
+                                          List<Long> chapterIdList, List<Long> lessonIdList) {
         List<Chapter> existingChapters = course.getChapterList();
+        deleteChapters(course, chapterIdList);
         for (Map<String, Object> chapterMap : chapters) {
             //check if exist
             Optional<Chapter> existingChapterOptional = existingChapters.stream()
@@ -553,7 +543,7 @@ public class CourseServiceImpl implements CourseService {
             chapter.setChapterTitle(chapterMap.get("chapterTitle").toString());
             chapter.setChapterDescription(chapterMap.get("chapterDescription").toString());
             // Update lessons of the chapter
-            updateLessons(chapter, chapterMap, files,course.getCourseName());
+            updateLessons(chapter, chapterMap, files,course.getCourseName(),lessonIdList);
             if (existingChapterOptional.isEmpty()) {
                 // Add the new chapter to the course's chapter list
                 existingChapters.add(chapter);
@@ -561,10 +551,12 @@ public class CourseServiceImpl implements CourseService {
         }
     }
 
-    private void updateLessons(Chapter chapter, Map<String, Object> chapterMap, List<MultipartFile> files, String courseName) {
+    private void updateLessons(Chapter chapter, Map<String, Object> chapterMap, List<MultipartFile> files,
+                               String courseName, List<Long> lessonIdList) {
         List<Lesson> existingLessons = chapter.getLessonList();
         List<MultipartFile> upload = new ArrayList<>();
         List<Map<String, Object>> lessons = (List<Map<String, Object>>) chapterMap.get("lessonList");
+        deleteLessons(chapter,lessonIdList);
         for (Map<String, Object> lessonMap : lessons) {
             // Check if the lesson exists in the database
             Optional<Lesson> existingLessonOptional = existingLessons.stream()
@@ -590,7 +582,22 @@ public class CourseServiceImpl implements CourseService {
                 // Add the new lesson to the chapter's lesson list
                 existingLessons.add(lesson);
             }
-            uploadToS3(files,random,courseName,chapter.getChapterTitle(),lesson.getLessonTitle());
+            if(files != null){
+                for (MultipartFile file : files) {
+                    //loop to check each key
+                    for (String key : lessonMap.keySet()) {
+                        //check if equal
+                        if (Objects.equals(file.getOriginalFilename(), lessonMap.get(key))) {
+                            upload.add(file);
+                            break;
+                        }
+                    }
+                }
+            }
+            logger.info("Info message with value: {}",chapter.getChapterTitle());
+            logger.info("Info message with value: {}",lesson.getLessonTitle());
+            logger.info("Info message with value: {}",files);
+            uploadToS3(upload,random,courseName,chapter.getChapterTitle(),lesson.getLessonTitle());
         }
     }
     private String getMaterialUrl(String courseName,String random,String material, Chapter chapter, Lesson lesson) {
@@ -599,5 +606,61 @@ public class CourseServiceImpl implements CourseService {
             return key;
         }
         return null;
+    }
+    private void deleteChapters(Course course, List<Long> chapterIdList) {
+        List<Chapter> existingChapters = course.getChapterList();
+
+        // Iterate over the existing chapters
+        Iterator<Chapter> iterator = existingChapters.iterator();
+        while (iterator.hasNext()) {
+            Chapter chapter = iterator.next();
+            Long chapterId = chapter.getChapterID();
+
+            // Check if the chapter is in the list of chapters to delete
+            if (chapterIdList.contains(chapterId)) {
+                deleteAssociatedLessons(chapter);
+                iterator.remove();
+            }
+        }
+    }
+    private void deleteLessons(Chapter chapter, List<Long> lessonIdList){
+        List<Lesson> existingLesson = chapter.getLessonList();
+        Iterator<Lesson> iterator = existingLesson.iterator();
+        logger.info("Info message with value: {}",chapter.getChapterTitle());
+        while (iterator.hasNext()) {
+            Lesson lesson = iterator.next();
+            if (lessonIdList.contains(lesson.getLessonID())) {
+                logger.info("Info message with value: {}",lessonIdList.contains(lesson.getLessonID()) );
+                iterator.remove();
+            }
+        }
+    }
+    private void deleteAssociatedLessons(Chapter chapter) {
+        List<Lesson> lessons = chapter.getLessonList();
+
+        // Iterate over the lessons and delete each one
+        for (Lesson lesson : lessons) {
+            lessonDAO.delete(lesson);
+        }
+    }
+    private void uploadToS3(List<MultipartFile> files, String uuid, String courseName, String chapterTitles, String lessonTitles) {
+        List<CompletableFuture<PutObjectResponse>> uploadFutures = files.stream()
+                .map(file -> {
+                    try {
+                        return uploadToS3Async(file, uuid, courseName, chapterTitles, lessonTitles);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .collect(Collectors.toList());
+    }
+
+    private CompletableFuture<PutObjectResponse> uploadToS3Async(MultipartFile file, String uuid, String courseName, String chapterTitle, String lessonTitle) throws IOException {
+        String key = courseName + "/chapters/" + chapterTitle + "/" + lessonTitle + "/" + uuid + "_" + file.getOriginalFilename();
+        return s3AsyncClient.putObject(PutObjectRequest.builder()
+                        .bucket(bucketName)
+                        .key(key)
+                        .build(),
+                AsyncRequestBody.fromInputStream(file.getInputStream(), file.getSize(), executorService));
     }
 }

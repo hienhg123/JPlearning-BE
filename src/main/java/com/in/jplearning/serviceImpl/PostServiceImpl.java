@@ -198,6 +198,21 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    public ResponseEntity<?> getFeaturedPost() {
+        try{
+            List<Post> postList = postDAO.findAll();
+            List<Post> featuredPost = postList.stream()
+                    .sorted(Comparator.comparing(post -> post.getPostLikes().size(), Comparator.reverseOrder()))
+                    .limit(5)
+                    .collect(Collectors.toList());
+            return new ResponseEntity<>(featuredPost, HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
     public ResponseEntity<?> getByUserPostDraft(int pageNumber, int pageSize) {
         try{
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());

@@ -108,4 +108,13 @@ public class PostController {
         }
         return new ResponseEntity<>(new Post(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
+    @GetMapping(path = "/getFeaturedPost")
+    public ResponseEntity<?> getFeaturedPost(){
+        try{
+            return postService.getFeaturedPost();
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }
