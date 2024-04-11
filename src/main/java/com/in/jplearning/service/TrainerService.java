@@ -16,4 +16,6 @@ public interface TrainerService {
     ResponseEntity<String> updateTrainerStatus(Map<String, String> requestMap);
 
     ResponseEntity<String> checkTrainer();
+
+    ResponseEntity<String> checkOtherTrainer(Long userID);
 }

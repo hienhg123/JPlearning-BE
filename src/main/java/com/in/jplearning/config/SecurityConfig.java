@@ -27,7 +27,8 @@ public class SecurityConfig implements WebMvcConfigurer {
             , "/user/resetPassword", "course/getAllCourses", "course/getCourse/{courseID}", "/premium/getAllPremium"
             , "posts/uploadFile", "/posts/getPostById/{postID}", "/posts/getAllPost/{pageNumber}/{pageSize}"
             ,"/posts/getFeaturedPost", "/practice/exercise/getJLPTExercise","/payment/vnpay/paymentCallback"
-            , "/practice/exercise/getJLPTExercise", "/search/**","/user/profile"};
+            , "/search/**", "/trainer/getThatTrainerByUserId/{userID}","/course/getThatUserEnrollCourse/{userID}"};
+
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

@@ -205,6 +205,20 @@ public class PostInteractionServiceImpl implements PostInteractionService {
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @Override
+    public ResponseEntity<?> getCommentById(Long commentID) {
+        try{
+            Optional<PostComment> postCommentOptional = postCommentDAO.findById(commentID);
+            if(postCommentOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Không tìm thấy bình luận", HttpStatus.NOT_FOUND);
+            }
+            return new ResponseEntity<>(postCommentOptional.get(), HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     private PostComment getFromMapWithParentComment(Map<String, String> requestMap, Post post, User user, PostComment postComment) {
 
         return PostComment.builder()

@@ -50,6 +50,6 @@ public class PostComment implements Serializable {
     private List<PostComment> childComments = new ArrayList<>();
 
     @OneToMany(mappedBy = "postComment" , cascade = CascadeType.ALL)
-    private List<PostLike> postLikes = new ArrayList<>();
+    private List<PostLike> commentLikes = new ArrayList<>();
 
 }
