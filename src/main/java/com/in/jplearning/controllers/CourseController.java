@@ -123,6 +123,15 @@ public class CourseController {
             return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    @GetMapping(path = "/getThatUserEnrollCourse/{userID}")
+    public ResponseEntity<?> getThatUserEnrollCourse(@PathVariable Long userID) {
+        try {
+            return courseService.getThatUserEnrollCourse(userID);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
     @GetMapping(path = "/isEnroll/{courseID}")
     public ResponseEntity<?> isEnroll(@PathVariable Long courseID) {
         try {

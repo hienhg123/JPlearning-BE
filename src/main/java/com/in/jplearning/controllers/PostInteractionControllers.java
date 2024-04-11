@@ -45,7 +45,15 @@ public class PostInteractionControllers {
             ex.printStackTrace();
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
-
+    }
+    @GetMapping("/getCommentById/{commentID}")
+    public ResponseEntity<?> getCommentById(@PathVariable Long commentID){
+        try{
+            return postInteractionService.getCommentById(commentID);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
     @PostMapping("/favorite-post")
     public ResponseEntity<?> favoritePost(@RequestBody Map<String,String> requestMap){
