@@ -323,12 +323,36 @@ public class UserServiceImpl implements UserService {
                 userProfile.put("firstName", user.getFirstName());
                 userProfile.put("lastName", user.getLastName());
                 userProfile.put("phoneNumber", user.getPhoneNumber());
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-                String dobFormatted = sdf.format(user.getDob());
-                userProfile.put("dob", dobFormatted);
-                userProfile.put("level", user.getLevel());
-                userProfile.put("gender", user.getGender());
-                userProfile.put("userPicture", user.getUserPicture());
+
+                // Check if dob is not null before formatting
+                if (user.getDob() != null) {
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                    String dobFormatted = sdf.format(user.getDob());
+                    userProfile.put("dob", dobFormatted);
+                } else {
+                    userProfile.put("dob", null); // Or handle it as needed
+                }
+
+                // Check if level is not null before adding
+                if (user.getLevel() != null) {
+                    userProfile.put("level", user.getLevel());
+                } else {
+                    userProfile.put("level", null); // Or handle it as needed
+                }
+
+                // Check if gender is not null before adding
+                if (user.getGender() != null) {
+                    userProfile.put("gender", user.getGender());
+                } else {
+                    userProfile.put("gender", null); // Or handle it as needed
+                }
+
+                // Check if userPicture is not null before adding
+                if (user.getUserPicture() != null) {
+                    userProfile.put("userPicture", user.getUserPicture());
+                } else {
+                    userProfile.put("userPicture", null); // Or handle it as needed
+                }
 
                 return ResponseEntity.ok(userProfile);
             } else {
@@ -341,6 +365,7 @@ public class UserServiceImpl implements UserService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
 
 
     @Override
