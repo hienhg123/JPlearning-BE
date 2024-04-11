@@ -58,35 +58,48 @@ public class UserExerciseImpl implements UserExerciseService {
     }
 
     @Override
-    public ResponseEntity<List<Map<String, Object>>> getExerciseInfoByCurrentUser() {
+    public ResponseEntity<Map<String, List<Map<String, Object>>>> getExerciseInfoByCurrentUser() {
         try {
             // Get the current user
             User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).orElse(null);
 
             if (user != null) {
-                List<Object[]> result = userExerciseDAO.getUserExerciseInfo(user.getUserID());
+                List<User_Exercise> userExercises = userExerciseDAO.getUserExerciseInfo(user.getUserID());
 
-                // Process the result and create the desired response
-                List<Map<String, Object>> userExerciseList = result.stream()
-                        .map(entry -> {
-                            Map<String, Object> userExerciseInfo = new HashMap<>();
-                            userExerciseInfo.put("title", (String) entry[3]);
-                            userExerciseInfo.put("mark", (int) entry[0]);
-                            userExerciseInfo.put("submittedAt", (Date) entry[1]);
-                            userExerciseInfo.put("numberOfAttempts", (int) entry[2]);
-                            return userExerciseInfo;
-                        })
-                        .collect(Collectors.toList());
+                // Group user exercises by title
+                Map<String, List<User_Exercise>> exercisesMap = userExercises.stream()
+                        .collect(Collectors.groupingBy(userExercise -> userExercise.getExercises().getTitle()));
 
-                return ResponseEntity.ok(userExerciseList);
+                // Process the grouped exercises
+                Map<String, List<Map<String, Object>>> userExerciseMap = new HashMap<>();
+                for (Map.Entry<String, List<User_Exercise>> entry : exercisesMap.entrySet()) {
+                    List<Map<String, Object>> testParts = entry.getValue().stream()
+                            .map(userExercise -> {
+                                Map<String, Object> testPartInfo = new HashMap<>();
+                                testPartInfo.put("submittedAt", userExercise.getSubmittedAt());
+                                testPartInfo.put("questionType", userExercise.getQuestionType());
+                                testPartInfo.put("numberOfAttempts", userExercise.getNumberOfAttempts());
+                                testPartInfo.put("mark", userExercise.getMark());
+                                return testPartInfo;
+                            })
+                            .collect(Collectors.toList());
+
+                    userExerciseMap.put(entry.getKey(), testParts);
+                }
+
+                return ResponseEntity.ok(userExerciseMap);
             } else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.emptyList());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.emptyMap());
             }
         } catch (Exception ex) {
             ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyMap());
         }
     }
+
+
+
+
 
     @Override
     public ResponseEntity<?> getJLPTTestHistory() {

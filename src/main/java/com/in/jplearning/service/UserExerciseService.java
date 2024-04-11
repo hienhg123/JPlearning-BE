@@ -8,7 +8,7 @@ import java.util.Map;
 public interface UserExerciseService {
 
     ResponseEntity<String> submitExercise(Map<String, String> requestMap);
-    ResponseEntity<List<Map<String, Object>>> getExerciseInfoByCurrentUser();
+    ResponseEntity<Map<String, List<Map<String, Object>>>> getExerciseInfoByCurrentUser();
 
     ResponseEntity<?> getJLPTTestHistory();
 }
