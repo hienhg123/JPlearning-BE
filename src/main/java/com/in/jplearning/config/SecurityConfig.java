@@ -29,6 +29,7 @@ public class SecurityConfig implements WebMvcConfigurer {
             ,"/posts/getFeaturedPost", "/practice/exercise/getJLPTExercise","/payment/vnpay/paymentCallback"
             , "/search/**", "/trainer/getThatTrainerByUserId/{userID}","/course/getThatUserEnrollCourse/{userID}"};
 
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http

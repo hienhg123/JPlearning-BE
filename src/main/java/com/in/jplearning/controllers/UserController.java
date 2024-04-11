@@ -54,7 +54,7 @@ public class UserController {
     }
 
     @GetMapping(path = "/profile")
-    public ResponseEntity<String> getUserProfile() {
+    public ResponseEntity<Map<String, Object>> getUserProfile() {
 
         return userService.getUserProfile();
     }

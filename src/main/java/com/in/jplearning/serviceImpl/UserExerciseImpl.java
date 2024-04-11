@@ -81,6 +81,7 @@ public class UserExerciseImpl implements UserExerciseService {
                                 testPartInfo.put("questionType", userExercise.getQuestionType());
                                 testPartInfo.put("numberOfAttempts", userExercise.getNumberOfAttempts());
                                 testPartInfo.put("mark", userExercise.getMark());
+                                testPartInfo.put("maxPoint", userExercise.getMaxPoint());
                                 return testPartInfo;
                             })
                             .collect(Collectors.toList());
@@ -98,9 +99,6 @@ public class UserExerciseImpl implements UserExerciseService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyMap());
         }
     }
-
-
-
 
 
     @Override

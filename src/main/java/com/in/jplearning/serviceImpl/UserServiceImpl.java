@@ -18,6 +18,8 @@ import com.in.jplearning.utils.EmailUtils;
 import com.in.jplearning.utils.JPLearningUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -57,6 +59,9 @@ public class UserServiceImpl implements UserService {
     private final EmailUtils emailUtils;
 
     private final BillDAO billDAO;
+
+    private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
+
     private final String cloudFront = "https://ddzgswoq4gt6i.cloudfront.net/";
     @Override
     public ResponseEntity<String> register(Map<String, String> requestMap) {
@@ -301,9 +306,9 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public ResponseEntity<String> getUserProfile() {
+    public ResponseEntity<Map<String, Object>> getUserProfile() {
         try {
-            // Get the currently logged-in user's email (you might need to adjust this based on your authentication mechanism)
+            // Get the current user's email from JWT
             String userEmail = jwtAuthFilter.getCurrentUser();
 
             // Retrieve the user by email
@@ -312,34 +317,31 @@ public class UserServiceImpl implements UserService {
             // Check if the user exists
             if (userOptional.isPresent()) {
                 User user = userOptional.get();
-                SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
-                String formattedDOB = dateFormat.format(user.getDob());
-                if (user.getDob() != null) {
-                    formattedDOB = dateFormat.format(user.getDob());
-                }
-                // Create a Map with desired fields
+
+                // Create a map to hold user profile information
                 Map<String, Object> userProfile = new HashMap<>();
                 userProfile.put("firstName", user.getFirstName());
                 userProfile.put("lastName", user.getLastName());
                 userProfile.put("phoneNumber", user.getPhoneNumber());
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                String dobFormatted = sdf.format(user.getDob());
+                userProfile.put("dob", dobFormatted);
                 userProfile.put("level", user.getLevel());
                 userProfile.put("gender", user.getGender());
-                userProfile.put("dob", formattedDOB);
                 userProfile.put("userPicture", user.getUserPicture());
 
-                // Convert Map to JSON and return it
-                ObjectMapper objectMapper = new ObjectMapper();
-                String jsonProfile = objectMapper.writeValueAsString(userProfile);
-
-                return ResponseEntity.ok(jsonProfile);
+                return ResponseEntity.ok(userProfile);
             } else {
-                return ResponseEntity.badRequest().body(JPConstants.USER_NOT_FOUND);
+                // User not found with the given email
+                return ResponseEntity.notFound().build();
             }
         } catch (Exception ex) {
             ex.printStackTrace();
-            return ResponseEntity.badRequest().body(JPConstants.SOMETHING_WENT_WRONG);
+            // Handle unexpected errors
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
 
     @Override
     public ResponseEntity<String> updateProfile(MultipartFile userPicture, Map<String, String> requestMap) {
@@ -364,7 +366,10 @@ public class UserServiceImpl implements UserService {
             }
 
             if (requestMap.containsKey("dob")) {
+                logger.info("Info message with value: {}",requestMap.get("dob"));
                 user.setDob(parseDate(requestMap.get("dob")));
+                logger.info("dob sau khi parse: {}",parseDate(requestMap.get("dob")));
+
             }
 
             if (requestMap.containsKey("level")) {
@@ -384,6 +389,13 @@ public class UserServiceImpl implements UserService {
                 String userPictureUrl = saveUserPictureToS3(user.getUserID(), userPicture); // Use userId here
                 user.setUserPicture(userPictureUrl);
             }
+            logger.info("Info message with value: {}",user.getFirstName());
+            logger.info("Info message with value: {}",user.getLastName());
+            logger.info("Info message with value: {}",user.getDob());
+            logger.info("Info message with value: {}",user.getGender());
+            logger.info("Info message with value: {}",user.getLevel());
+            logger.info("Info message with value: {}",user.getUserPicture());
+            userDAO.save(user);
             return JPLearningUtils.getResponseEntity("Thay đổi thành công", HttpStatus.OK);
         } catch (Exception ex) {
             ex.printStackTrace();

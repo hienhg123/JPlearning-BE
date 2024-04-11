@@ -608,9 +608,7 @@ public class CourseServiceImpl implements CourseService {
                     }
                 }
             }
-            logger.info("Info message with value: {}",chapter.getChapterTitle());
-            logger.info("Info message with value: {}",lesson.getLessonTitle());
-            logger.info("Info message with value: {}",files);
+
             uploadToS3(upload,random,courseName,chapter.getChapterTitle(),lesson.getLessonTitle());
         }
     }
