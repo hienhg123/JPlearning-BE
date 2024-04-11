@@ -33,4 +33,5 @@ public interface ExerciseDAO extends JpaRepository<Exercises,Long> {
             "WHERE e.exercisesID = ?1 AND q.questionType = 'LISTENING'")
     Exercises getExerciseByIdWithListeningQuestion(Long exerciseID);
 
+
 }

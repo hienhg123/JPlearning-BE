@@ -33,6 +33,7 @@ public class Report implements Serializable {
     @Enumerated(EnumType.STRING)
     private ReportType reportType;
 
+    @Column(nullable = true)
     private String reportContent;
 
     @Temporal(TemporalType.TIMESTAMP)
