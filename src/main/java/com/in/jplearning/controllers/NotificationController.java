@@ -40,10 +40,19 @@ public class NotificationController {
         return JPLearningUtils.getResponseEntity("", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    @PutMapping(path = "/updateReadStatus")
+    @PutMapping(path = "/updateReadAllStatus")
     public ResponseEntity<String> updateAllReadStatus(@RequestBody List<Notification> notifications) {
         try {
             return notificationService.updateAllReadStatus(notifications);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity("", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    @PutMapping("/updateStatus")
+    public ResponseEntity<String> updateStatus(@RequestBody Notification notification) {
+        try {
+            return notificationService.updateStatus(notification);
         } catch (Exception ex) {
             ex.printStackTrace();
         }

@@ -16,4 +16,6 @@ public interface PostInteractionService {
     ResponseEntity<?> deleteComment(Long commentID);
 
     ResponseEntity<?> updateComment(Map<String, String> requestMap);
+
+    ResponseEntity<?> getCommentById(Long commentID);
 }

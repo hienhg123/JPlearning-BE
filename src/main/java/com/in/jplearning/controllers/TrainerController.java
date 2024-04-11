@@ -67,4 +67,13 @@ public class TrainerController {
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+    @GetMapping("/getThatTrainerByUserId/{userID}")
+    public ResponseEntity<String> checkOtherTrainer(@PathVariable Long userID){
+        try{
+            return trainerService.checkOtherTrainer(userID);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }
