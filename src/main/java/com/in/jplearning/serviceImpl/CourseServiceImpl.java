@@ -90,7 +90,7 @@ public class CourseServiceImpl implements CourseService {
                 chapterList.add(chapter);
             }
             course.setChapterList(chapterList);
-            course.setCreateBy(userOptional.get());
+            course.setCreateBy(trainer);
             course.setCreatedAt(LocalDateTime.now());
             courseDAO.save(course);
             if (Boolean.parseBoolean(isDraft)) {

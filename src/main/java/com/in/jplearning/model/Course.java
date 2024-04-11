@@ -49,8 +49,8 @@ public class Course implements Serializable {
 
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_fk",referencedColumnName = "user_ID")
-    private User createBy;
+    @JoinColumn(name = "trainer_fk",referencedColumnName = "trainer_ID")
+    private Trainer createBy;
 
     @OneToMany(mappedBy = "course")
     private Set<CourseFeedBack> courseFeedbacks;
