@@ -211,6 +211,24 @@ public class TrainerServiceImpl implements TrainerService {
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @Override
+    public ResponseEntity<String> checkOtherTrainer(Long userID) {
+        try{
+            Optional<User> userOptional = userDAO.findById(userID);
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Không tồn tại", HttpStatus.UNAUTHORIZED);
+            }
+            Trainer trainerOptional = trainerDAO.getByUserId(userID);
+            if(trainerOptional == null){
+                return JPLearningUtils.getResponseEntity("false", HttpStatus.OK);
+            }
+            return JPLearningUtils.getResponseEntity("true", HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     private Notification getNotificationFromMap(Long userID, String content) {
         User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
         User sender = User.builder()

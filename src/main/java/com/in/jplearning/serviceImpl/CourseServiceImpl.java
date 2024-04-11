@@ -240,6 +240,20 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
+    public ResponseEntity<?> getThatUserEnrollCourse(Long userID) {
+        try {
+            Optional<User> userOptional = userDAO.findById(userID);
+            if (userOptional.isEmpty()) {
+                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+            }
+            return new ResponseEntity<>(courseEnrollDAO.getCourseEnrollByUser(userOptional.get()), HttpStatus.OK);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
     public ResponseEntity<List<Course>> getAllCourse() {
         log.info("Inside getAllCourse");
         try {
