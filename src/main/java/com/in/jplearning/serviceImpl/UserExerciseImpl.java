@@ -3,12 +3,8 @@ package com.in.jplearning.serviceImpl;
 import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.constants.JPConstants;
 import com.in.jplearning.enums.QuestionType;
-import com.in.jplearning.model.Exercises;
-import com.in.jplearning.model.User;
-import com.in.jplearning.model.UserLessonProgress;
-import com.in.jplearning.model.User_Exercise;
-import com.in.jplearning.repositories.UserDAO;
-import com.in.jplearning.repositories.UserExerciseDAO;
+import com.in.jplearning.model.*;
+import com.in.jplearning.repositories.*;
 import com.in.jplearning.service.UserExerciseService;
 import com.in.jplearning.utils.JPLearningUtils;
 import lombok.AllArgsConstructor;
@@ -16,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -33,27 +30,75 @@ public class UserExerciseImpl implements UserExerciseService {
     
     private final UserDAO userDAO;
 
+    private final LessonDAO lessonDAO;
 
+    private final UserLessonProgressDAO userLessonProgressDAO;
+
+    private final UserChapterProgressDAO userChapterProgressDAO;
+
+
+    @Transactional
     @Override
     public ResponseEntity<String> submitExercise(Map<String, String> requestMap) {
         try{
-            //get current user
-            User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+            }
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            Optional<Lesson> lessonOptional = lessonDAO.findById(Long.parseLong(requestMap.get("lessonID")));
+            List<User_Exercise> user_exercise = userExerciseDAO.getByUser(userOptional.get().getUserID(), Long.parseLong(requestMap.get("exerciseID")));
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Tài khoản không tồn tại", HttpStatus.NOT_FOUND);
+            }
+            if(lessonOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Bài học không tồn tại", HttpStatus.NOT_FOUND);
+            }
+            Chapter chapter = lessonDAO.getChapterByLessonId(Long.parseLong(requestMap.get("lessonID")));
+            boolean isPass = isPass(requestMap);
+            UserLessonProgress userLessonProgress = UserLessonProgress.builder()
+                    .user(userOptional.get())
+                    .lesson(lessonOptional.get())
+                    .build();
+
+            if(isPass){
+                userLessonProgress.setIsFinished(true);
+            } else {
+                userLessonProgress.setIsFinished(false);
+            }
+            userLessonProgressDAO.save(userLessonProgress);
+            long count = userLessonProgressDAO.countFinishedByUserAndChapter(userOptional.get(),chapter);
+            UserChapterProgress userChapterProgress = UserChapterProgress.builder()
+                    .chapter(chapter)
+                    .user(userOptional.get())
+                    .build();
+            if(count == chapter.getLessonList().size()){
+                userChapterProgress.setIsFinished(true);
+            } else {
+                userChapterProgress.setIsFinished(false);
+            }
+            userChapterProgressDAO.save(userChapterProgress);
             int numberOfAttempts = 0;
-            //check if user have done this exercise or not
-            List<User_Exercise> user_exercise = userExerciseDAO.getByUser(user.getUserID(),Long.parseLong(requestMap.get("exerciseID")));
             if( user_exercise!= null){
                 numberOfAttempts = user_exercise.size() + 1;
             }
             //save in database
-            userExerciseDAO.save(getDataFromMap(requestMap,user.getUserID(),numberOfAttempts));
+            userExerciseDAO.save(getDataFromMap(requestMap,userOptional.get().getUserID(),numberOfAttempts));
             return JPLearningUtils.getResponseEntity("Nộp bài thành công",HttpStatus.OK);
-
         }catch (Exception ex){
             ex.printStackTrace();
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
 
+    }
+
+    private boolean isPass(Map<String, String> requestMap) {
+        int mark = Integer.parseInt(requestMap.get("mark"));
+        int maxPoint = Integer.parseInt(requestMap.get("maxPoint"));
+        long result = mark / maxPoint;
+        if(result >= 0.8){
+            return true;
+        }
+        return false;
     }
 
     @Override
