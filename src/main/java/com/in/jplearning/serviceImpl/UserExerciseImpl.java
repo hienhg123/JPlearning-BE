@@ -46,7 +46,8 @@ public class UserExerciseImpl implements UserExerciseService {
             }
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             Optional<Lesson> lessonOptional = lessonDAO.findById(Long.parseLong(requestMap.get("lessonID")));
-            List<User_Exercise> user_exercise = userExerciseDAO.getByUser(userOptional.get().getUserID(), Long.parseLong(requestMap.get("exerciseID")));
+            List<User_Exercise> user_exercise = userExerciseDAO.getByUser(userOptional.get().getUserID(),
+                    Long.parseLong(requestMap.get("exerciseID")));
             if(userOptional.isEmpty()){
                 return JPLearningUtils.getResponseEntity("Tài khoản không tồn tại", HttpStatus.NOT_FOUND);
             }
@@ -54,11 +55,20 @@ public class UserExerciseImpl implements UserExerciseService {
                 return JPLearningUtils.getResponseEntity("Bài học không tồn tại", HttpStatus.NOT_FOUND);
             }
             Chapter chapter = lessonDAO.getChapterByLessonId(Long.parseLong(requestMap.get("lessonID")));
+            Optional<UserLessonProgress> userLessonProgressOptional = userLessonProgressDAO.getByLessonId(Long.parseLong(requestMap.get("lessonID")),
+                    userOptional.get());
+            Optional<UserChapterProgress> userChapterProgressOptional = userChapterProgressDAO.getByUserAndExercise(userOptional.get(),
+                    chapter);
             boolean isPass = isPass(requestMap);
-            UserLessonProgress userLessonProgress = UserLessonProgress.builder()
-                    .user(userOptional.get())
-                    .lesson(lessonOptional.get())
-                    .build();
+            UserLessonProgress userLessonProgress;
+            if(userLessonProgressOptional.isEmpty()) {
+                userLessonProgress = UserLessonProgress.builder()
+                        .user(userOptional.get())
+                        .lesson(lessonOptional.get())
+                        .build();
+            } else {
+                userLessonProgress = userLessonProgressOptional.get();
+            }
 
             if(isPass){
                 userLessonProgress.setIsFinished(true);
@@ -67,10 +77,15 @@ public class UserExerciseImpl implements UserExerciseService {
             }
             userLessonProgressDAO.save(userLessonProgress);
             long count = userLessonProgressDAO.countFinishedByUserAndChapter(userOptional.get(),chapter);
-            UserChapterProgress userChapterProgress = UserChapterProgress.builder()
-                    .chapter(chapter)
-                    .user(userOptional.get())
-                    .build();
+            UserChapterProgress userChapterProgress;
+            if(userChapterProgressOptional.isEmpty()){
+                userChapterProgress = UserChapterProgress.builder()
+                        .chapter(chapter)
+                        .user(userOptional.get())
+                        .build();
+            } else {
+                userChapterProgress = userChapterProgressOptional.get();
+            }
             if(count == chapter.getLessonList().size()){
                 userChapterProgress.setIsFinished(true);
             } else {
