@@ -48,6 +48,7 @@ public class Course implements Serializable {
     private List<CourseEnroll> courseEnrolls;
 
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "trainer_fk",referencedColumnName = "trainer_ID")
     private Trainer createBy;
