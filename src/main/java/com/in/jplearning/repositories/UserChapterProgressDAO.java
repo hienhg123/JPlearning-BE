@@ -12,4 +12,6 @@ public interface UserChapterProgressDAO extends JpaRepository<UserChapterProgres
     @Query("SELECT ucp FROM UserChapterProgress ucp WHERE ucp.chapter = :chapter")
     List<UserChapterProgress> findByChapter(Chapter chapter);
 
+    @Query("select ucp from UserChapterProgress ucp where ucp.user =?1 and ucp.chapter =?2")
+    Optional<UserChapterProgress> getByUserAndExercise(User user, Chapter chapter);
 }

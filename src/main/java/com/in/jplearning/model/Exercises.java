@@ -37,7 +37,7 @@ public class Exercises implements Serializable {
     private String listeningUrl;
     private String readingUrl;
 
-
+    @JsonIgnore
     @OneToMany(mappedBy = "exercises")
     private List<User_Exercise> userExerciseList;
 

@@ -10,4 +10,9 @@ import java.util.Optional;
 
 public interface UserLessonProgressDAO extends JpaRepository<UserLessonProgress, Long> {
 
+    @Query("select p from UserLessonProgress p where p.lesson.lessonID=?1 and p.user =?2")
+    Optional<UserLessonProgress> getByLessonId(Long lessonID, User user);
+
+    @Query("select count(p) from UserLessonProgress p where p.user =?1 and p.lesson.chapter =?2 and p.isFinished = true")
+    long countFinishedByUserAndChapter(User user, Chapter chapter);
 }
