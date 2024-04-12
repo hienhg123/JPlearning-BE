@@ -2,7 +2,6 @@ package com.in.jplearning.serviceImpl;
 
 import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.constants.JPConstants;
-import com.in.jplearning.enums.ExerciseType;
 import com.in.jplearning.enums.QuestionType;
 import com.in.jplearning.model.Exercises;
 import com.in.jplearning.model.User;

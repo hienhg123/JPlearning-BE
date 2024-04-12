@@ -90,7 +90,7 @@ public class CourseServiceImpl implements CourseService {
                 chapterList.add(chapter);
             }
             course.setChapterList(chapterList);
-            course.setCreateBy(userOptional.get());
+            course.setCreateBy(trainer);
             course.setCreatedAt(LocalDateTime.now());
             courseDAO.save(course);
             if (Boolean.parseBoolean(isDraft)) {
@@ -148,7 +148,7 @@ public class CourseServiceImpl implements CourseService {
             if (!jwtAuthFilter.isManager() && trainer == null) {
                 return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
             }
-            return new ResponseEntity<>(courseDAO.getCreatedCourse(userOptional.get().getUserID()), HttpStatus.OK);
+            return new ResponseEntity<>(courseDAO.getCreatedCourse(trainer.getTrainerID()), HttpStatus.OK);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -167,7 +167,7 @@ public class CourseServiceImpl implements CourseService {
             if (!jwtAuthFilter.isManager() && trainer == null) {
                 return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
             }
-            return new ResponseEntity<>(courseDAO.getDraftCourse(userOptional.get().getUserID()), HttpStatus.OK);
+            return new ResponseEntity<>(courseDAO.getDraftCourse(trainer.getTrainerID()), HttpStatus.OK);
         } catch (Exception ex) {
             ex.printStackTrace();
         }

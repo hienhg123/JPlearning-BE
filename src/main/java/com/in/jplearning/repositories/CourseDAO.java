@@ -16,9 +16,9 @@ public interface CourseDAO extends JpaRepository<Course,Long> {
 
     List<Course> findAllByIsDraft(boolean isDraft);
 
-    @Query("select c from Course c where c.createBy.userID = ?1 and c.isDraft = true")
-    List<Course> getDraftCourse(Long userID);
-    @Query("select c from Course c where c.createBy.userID = ?1 and c.isDraft = false")
-    List<Course> getCreatedCourse(Long userID);
+    @Query("select c from Course c where c.createBy.trainerID = ?1 and c.isDraft = true")
+    List<Course> getDraftCourse(Long trainerID);
+    @Query("select c from Course c where c.createBy.trainerID = ?1 and c.isDraft = false")
+    List<Course> getCreatedCourse(Long trainerID);
 
 }

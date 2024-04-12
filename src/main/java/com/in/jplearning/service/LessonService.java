@@ -1,13 +1,14 @@
 package com.in.jplearning.service;
 
-import com.in.jplearning.model.Lesson;
 import org.springframework.http.ResponseEntity;
 
-import java.util.List;
+import java.util.Map;
 
 public interface LessonService {
 
-    ResponseEntity<?> getLesson(Long lessonID);
+    ResponseEntity<?> getLesson(String isFree, String lessonId);
 
     ResponseEntity<?> findCourseByLessonID(Long lessonID);
+
+
 }
