@@ -69,7 +69,8 @@ public class CourseServiceImpl implements CourseService {
 
     @Transactional
     @Override
-    public ResponseEntity<?> createCourse(String courseName, String courseDescription, String courseLevel, String isFree, String isDraft, List<MultipartFile> files, List<Map<String, Object>> chapters) {
+    public ResponseEntity<?> createCourse(String courseName, String courseDescription, String courseLevel, String isFree, String isDraft,
+                                          MultipartFile img, List<MultipartFile> files, List<Map<String, Object>> chapters) {
         try {
 
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
@@ -82,7 +83,7 @@ public class CourseServiceImpl implements CourseService {
                 return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
             }
             //get the course
-            Course course = getCourseFromMap(courseName, courseDescription, courseLevel, isFree, isDraft);
+            Course course = getCourseFromMap(courseName, courseDescription, courseLevel, isFree, isDraft,trainer);
             //get the course chapter
             List<Chapter> chapterList = new ArrayList<>();
             for (Map<String, Object> chapterMap : chapters) {
@@ -90,12 +91,31 @@ public class CourseServiceImpl implements CourseService {
                 chapterList.add(chapter);
             }
             course.setChapterList(chapterList);
-            course.setCreateBy(trainer);
-            course.setCreatedAt(LocalDateTime.now());
-            courseDAO.save(course);
+            if(img != null){
+                //check img type
+                if(!validateImg(img)){
+                    return JPLearningUtils.getResponseEntity("Định dạng ảnh chưa đúng", HttpStatus.BAD_REQUEST);
+                }
+                if (validateSize(img)) { // 500MB
+                    return JPLearningUtils.getResponseEntity("Dung lượng tối đa là 500MB", HttpStatus.BAD_REQUEST);
+                }
+                String uuid = UUID.randomUUID().toString();
+                String key = course.getCourseName() + "/" + uuid + "_" + img.getOriginalFilename();
+                s3AsyncClient.putObject(PutObjectRequest.builder()
+                                .bucket(bucketName)
+                                .key(key)
+                                .build(),
+                        AsyncRequestBody.fromInputStream(img.getInputStream(), img.getSize(), executorService));
+                course.setImg(cloudFront + "/" + key);
+            }
             if (Boolean.parseBoolean(isDraft)) {
+                courseDAO.save(course);
                 return JPLearningUtils.getResponseEntity("Tạo bản nháp thành công", HttpStatus.OK);
             }
+            if(!validateCourse(course)){
+                return JPLearningUtils.getResponseEntity("Phải có tối thiểu 1 chapter và 1 lesson để có thể xuất bản", HttpStatus.BAD_REQUEST);
+            }
+            courseDAO.save(course);
             return JPLearningUtils.getResponseEntity("Xuất bản thành công", HttpStatus.OK);
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -231,6 +251,9 @@ public class CourseServiceImpl implements CourseService {
             courseDAO.save(course);
             if (Boolean.parseBoolean(isDraft)) {
                 return JPLearningUtils.getResponseEntity("Tạo bản nháp thành công", HttpStatus.OK);
+            }
+            if(!validateCourse(course)){
+                return JPLearningUtils.getResponseEntity("Phải có tối thiểu 1 chapter và 1 lesson để có thể xuất bản", HttpStatus.BAD_REQUEST);
             }
             return JPLearningUtils.getResponseEntity("Xuất bản thành công", HttpStatus.OK);
         } catch (Exception ex) {
@@ -465,13 +488,15 @@ public class CourseServiceImpl implements CourseService {
         return bill.getExpireAt().isAfter(LocalDateTime.now());
     }
 
-    private Course getCourseFromMap(String courseName, String courseDescription, String courseLevel, String isFree, String isDraft) {
+    private Course getCourseFromMap(String courseName, String courseDescription, String courseLevel, String isFree, String isDraft, Trainer trainer) {
         return Course.builder()
                 .courseName(courseName)
                 .courseDescription(courseDescription)
                 .courseLevel(JLPTLevel.valueOf(courseLevel))
                 .isFree(Boolean.parseBoolean(isFree))
                 .isDraft(Boolean.parseBoolean(isDraft))
+                .createBy(trainer)
+                .createdAt(LocalDateTime.now())
                 .build();
 
     }
@@ -675,4 +700,31 @@ public class CourseServiceImpl implements CourseService {
                         .build(),
                 AsyncRequestBody.fromInputStream(file.getInputStream(), file.getSize(), executorService));
     }
+    private boolean validateCourse(Course course) {
+        // Check if the course contains at least one chapter
+        if (course.getChapterList().isEmpty()) {
+            return false;
+        }
+
+        // Check if each chapter contains at least one lesson
+        for (Chapter chapter : course.getChapterList()) {
+            if (chapter.getLessonList().isEmpty()) {
+                return false;
+            }
+        }
+        return true;
+    }
+    private boolean validateImg(MultipartFile file){
+        if (!(file.getContentType().endsWith("png") || file.getContentType().endsWith("jpeg"))) {
+            return false;
+        }
+        return true;
+    }
+    private boolean validateSize(MultipartFile file){
+        if (file.getSize() > 500 * 1024 * 1024) {
+            return true;
+        }
+        return false;
+    }
+
 }
