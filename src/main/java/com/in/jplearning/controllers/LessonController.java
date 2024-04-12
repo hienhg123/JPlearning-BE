@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @CrossOrigin("http://localhost:4200")
 @RestController
@@ -20,10 +21,10 @@ public class LessonController {
 
     private final LessonService lessonService;
 
-    @GetMapping(path = "/getLessonById/{lessonID}")
-    public ResponseEntity<?> getLesson(@PathVariable Long lessonID){
+    @GetMapping(path = "/getLessonById")
+    public ResponseEntity<?> getLesson(@RequestParam("isFree") String isFree, @RequestParam("lessonId") String lessonId){
         try{
-            return lessonService.getLesson(lessonID);
+            return lessonService.getLesson(isFree,lessonId);
         } catch (Exception ex){
             ex.printStackTrace();
         }
