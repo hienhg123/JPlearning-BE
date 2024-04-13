@@ -117,47 +117,47 @@ public class UserExerciseImpl implements UserExerciseService {
     }
 
     @Override
-    public ResponseEntity<Map<String, List<Map<String, Object>>>> getExerciseInfoByCurrentUser() {
+    public ResponseEntity<List<Map<String, Object>>> getExerciseInfoByCurrentUser() {
         try {
             // Get the current user
             User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).orElse(null);
 
             if (user != null) {
-
                 List<User_Exercise> userExercises = userExerciseDAO.getUserExerciseInfo(user.getUserID());
 
                 // Group user exercises by title
                 Map<String, List<User_Exercise>> exercisesMap = userExercises.stream()
-                        .collect(Collectors.groupingBy(userExercise -> userExercise.getExercises().getTitle()));
+                        .collect(Collectors.groupingBy(User_Exercise::getTitle));
 
                 // Process the grouped exercises
-                Map<String, List<Map<String, Object>>> userExerciseMap = new HashMap<>();
-                for (Map.Entry<String, List<User_Exercise>> entry : exercisesMap.entrySet()) {
-                    List<Map<String, Object>> testParts = entry.getValue().stream()
-                            .map(userExercise -> {
-                                Map<String, Object> testPartInfo = new HashMap<>();
-                                testPartInfo.put("submittedAt", userExercise.getSubmittedAt());
-                                testPartInfo.put("questionType", userExercise.getQuestionType());
-                                testPartInfo.put("numberOfAttempts", userExercise.getNumberOfAttempts());
-                                testPartInfo.put("mark", userExercise.getMark());
-                                testPartInfo.put("maxPoint", userExercise.getMaxPoint());
-                                return testPartInfo;
-                            })
-                            .collect(Collectors.toList());
-
-                    userExerciseMap.put(entry.getKey(), testParts);
+                List<Map<String, Object>> userExerciseList = new ArrayList<>();
+                for (List<User_Exercise> exercises : exercisesMap.values()) {
+                    Map<String, Object> exerciseInfo = new HashMap<>();
+                    exerciseInfo.put("title", exercises.get(0).getTitle());
+                    exerciseInfo.put("exercises", exercises.stream().map(this::mapToExerciseInfo).collect(Collectors.toList()));
+                    userExerciseList.add(exerciseInfo);
                 }
 
-                return ResponseEntity.ok(userExerciseMap);
-
+                return ResponseEntity.ok(userExerciseList);
             } else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.emptyMap());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.emptyList());
             }
         } catch (Exception ex) {
             ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyMap());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
         }
     }
+
+    private Map<String, Object> mapToExerciseInfo(User_Exercise exercise) {
+        Map<String, Object> exerciseInfo = new HashMap<>();
+        exerciseInfo.put("maxPoint", exercise.getMaxPoint());
+        exerciseInfo.put("numberOfAttempts", exercise.getNumberOfAttempts());
+        exerciseInfo.put("submittedAt", exercise.getSubmittedAt());
+        exerciseInfo.put("questionType", exercise.getQuestionType().toString());
+        exerciseInfo.put("mark", exercise.getMark());
+        return exerciseInfo;
+    }
+
 
 
     @Override
