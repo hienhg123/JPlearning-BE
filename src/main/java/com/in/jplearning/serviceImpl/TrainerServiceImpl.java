@@ -108,6 +108,10 @@ public class TrainerServiceImpl implements TrainerService {
                 if (!(multipartFile.getContentType().endsWith("png") || multipartFile.getContentType().endsWith("jpeg"))) {
                     return JPLearningUtils.getResponseEntity("Định dạng ảnh chưa đúng", HttpStatus.BAD_REQUEST);
                 }
+                if(multipartFile.getSize() > 500 * 1024 * 1024){
+                    return JPLearningUtils.getResponseEntity(
+                            multipartFile.getOriginalFilename() + "quá dung lượng cho phép, tối đa 500MB", HttpStatus.BAD_REQUEST);
+                }
             }
             //save into verify request table
             VerifyRequest verifyRequest = VerifyRequest.builder()

@@ -397,7 +397,7 @@ public class UserServiceImpl implements UserService {
 
             }
 
-            if (requestMap.containsKey("level")) {
+            if (!requestMap.get("level").isEmpty()) {
                 user.setLevel(JLPTLevel.valueOf(requestMap.get("level")));
             }
 
@@ -414,12 +414,6 @@ public class UserServiceImpl implements UserService {
                 String userPictureUrl = saveUserPictureToS3(user.getUserID(), userPicture); // Use userId here
                 user.setUserPicture(userPictureUrl);
             }
-            logger.info("Info message with value: {}",user.getFirstName());
-            logger.info("Info message with value: {}",user.getLastName());
-            logger.info("Info message with value: {}",user.getDob());
-            logger.info("Info message with value: {}",user.getGender());
-            logger.info("Info message with value: {}",user.getLevel());
-            logger.info("Info message with value: {}",user.getUserPicture());
             userDAO.save(user);
             return JPLearningUtils.getResponseEntity("Thay đổi thành công", HttpStatus.OK);
         } catch (Exception ex) {
