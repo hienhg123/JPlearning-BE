@@ -79,7 +79,7 @@ public class CourseServiceImpl implements CourseService {
             }
             Trainer trainer = trainerDAO.getByUserId(userOptional.get().getUserID());
             //check if manager or trainer
-            if (!jwtAuthFilter.isManager() && trainer == null) {
+            if (trainer == null) {
                 return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
             }
             //get the course
@@ -259,7 +259,7 @@ public class CourseServiceImpl implements CourseService {
             }
             Trainer trainer = trainerDAO.getByUserId(userOptional.get().getUserID());
             //check if manager or trainer
-            if (!jwtAuthFilter.isManager() && trainer == null) {
+            if (trainer == null) {
                 return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
             }
             Course course = courseOptional.get();
