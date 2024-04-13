@@ -77,14 +77,9 @@ public class CourseServiceImpl implements CourseService {
             if (userOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
             }
-            Trainer trainer = new Trainer();
-            if(jwtAuthFilter.isManager()){
-                trainer.setUser(userOptional.get());
-            } else {
-                trainer = trainerDAO.getByUserId(userOptional.get().getUserID());
-            }
+            Trainer trainer = trainerDAO.getByUserId(userOptional.get().getUserID());
             //check if manager or trainer
-            if (!jwtAuthFilter.isManager() && trainer == null) {
+            if (trainer == null) {
                 return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
             }
             //get the course
@@ -262,14 +257,9 @@ public class CourseServiceImpl implements CourseService {
             if (courseOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Khóa học không tồn tại", HttpStatus.NOT_FOUND);
             }
-            Trainer trainer = new Trainer();
-            if(jwtAuthFilter.isManager()){
-                trainer.setUser(userOptional.get());
-            } else {
-                trainer = trainerDAO.getByUserId(userOptional.get().getUserID());
-            }
+            Trainer trainer = trainerDAO.getByUserId(userOptional.get().getUserID());
             //check if manager or trainer
-            if (!jwtAuthFilter.isManager() && trainer == null) {
+            if (trainer == null) {
                 return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
             }
             Course course = courseOptional.get();
