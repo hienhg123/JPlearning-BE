@@ -97,7 +97,7 @@ public class CourseServiceImpl implements CourseService {
                     return JPLearningUtils.getResponseEntity("Định dạng ảnh chưa đúng", HttpStatus.BAD_REQUEST);
                 }
                 if (validateSize(img)) { // 500MB
-                    return JPLearningUtils.getResponseEntity("Dung lượng tối đa là 500MB", HttpStatus.BAD_REQUEST);
+                    return JPLearningUtils.getResponseEntity(img.getOriginalFilename() + "quá dung lượng cho phép, tối đa 500MB", HttpStatus.BAD_REQUEST);
                 }
                 String uuid = UUID.randomUUID().toString();
                 String key = course.getCourseName() + "/" + uuid + "_" + img.getOriginalFilename();
@@ -112,8 +112,31 @@ public class CourseServiceImpl implements CourseService {
                 courseDAO.save(course);
                 return JPLearningUtils.getResponseEntity("Tạo bản nháp thành công", HttpStatus.OK);
             }
-            if(!validateCourse(course)){
+            if(!validateCourseMinimum(course)){
                 return JPLearningUtils.getResponseEntity("Phải có tối thiểu 1 chapter và 1 lesson để có thể xuất bản", HttpStatus.BAD_REQUEST);
+            }
+            if(!validateMaximum(course)){
+                return JPLearningUtils.getResponseEntity("Tối đa 50 chapter hoặc 50 lesson", HttpStatus.BAD_REQUEST);
+            }
+            for(MultipartFile multipartFile : files){
+                //check what type
+                if(isImage(multipartFile)){
+                    //check type
+                    if(!validateImg(multipartFile)){
+                        return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
+                                " chưa đúng định dạng ảnh", HttpStatus.BAD_REQUEST);
+                    }
+                } else if(isVideo(multipartFile)) {
+                    if(!validateVideo(multipartFile)){
+                        return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
+                                " chưa đúng định dạng video", HttpStatus.BAD_REQUEST);
+                    }
+                }
+                //check size
+                if (validateSize(multipartFile)) { // 500MB
+                    return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
+                            " quá dung lượng cho phép, tối đa 500MB", HttpStatus.BAD_REQUEST);
+                }
             }
             courseDAO.save(course);
             return JPLearningUtils.getResponseEntity("Xuất bản thành công", HttpStatus.OK);
@@ -224,7 +247,7 @@ public class CourseServiceImpl implements CourseService {
     @Transactional
     @Override
     public ResponseEntity<?> updateCourse(String courseID, String courseName, String courseDescription, String courseLevel,
-                                          String isFree, String isDraft, List<MultipartFile> files, List<Map<String, Object>> chapters,
+                                          String isFree, String isDraft, MultipartFile img, List<MultipartFile> files, List<Map<String, Object>> chapters,
                                           List<Long> chapterIdList, List<Long> lessonIdList) {
         try {
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
@@ -247,13 +270,53 @@ public class CourseServiceImpl implements CourseService {
             course.setIsFree(Boolean.parseBoolean(isFree));
             course.setIsDraft(Boolean.parseBoolean(isDraft));
             course.setCreatedAt(LocalDateTime.now());
+            if(img != null){
+                //check img type
+                if(!validateImg(img)){
+                    return JPLearningUtils.getResponseEntity("Định dạng ảnh chưa đúng", HttpStatus.BAD_REQUEST);
+                }
+                if (validateSize(img)) { // 500MB
+                    return JPLearningUtils.getResponseEntity(img.getOriginalFilename() + "quá dung lượng cho phép, tối đa 500MB", HttpStatus.BAD_REQUEST);
+                }
+                String uuid = UUID.randomUUID().toString();
+                String key = course.getCourseName() + "/" + uuid + "_" + img.getOriginalFilename();
+                s3AsyncClient.putObject(PutObjectRequest.builder()
+                                .bucket(bucketName)
+                                .key(key)
+                                .build(),
+                        AsyncRequestBody.fromInputStream(img.getInputStream(), img.getSize(), executorService));
+                course.setImg(cloudFront + "/" + key);
+            }
+            for(MultipartFile multipartFile : files){
+                //check what type
+                if(isImage(multipartFile)){
+                    //check type
+                    if(!validateImg(multipartFile)){
+                        return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
+                                " chưa đúng định dạng ảnh", HttpStatus.BAD_REQUEST);
+                    }
+                } else if(isVideo(multipartFile)) {
+                    if(!validateVideo(multipartFile)){
+                        return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
+                                " chưa đúng định dạng video", HttpStatus.BAD_REQUEST);
+                    }
+                }
+                //check size
+                if (validateSize(multipartFile)) { // 500MB
+                    return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
+                            " quá dung lượng cho phép, tối đa 500MB", HttpStatus.BAD_REQUEST);
+                }
+            }
             updateChaptersAndLessons(course, chapters, files,chapterIdList,lessonIdList);
             courseDAO.save(course);
             if (Boolean.parseBoolean(isDraft)) {
                 return JPLearningUtils.getResponseEntity("Tạo bản nháp thành công", HttpStatus.OK);
             }
-            if(!validateCourse(course)){
+            if(!validateCourseMinimum(course)){
                 return JPLearningUtils.getResponseEntity("Phải có tối thiểu 1 chapter và 1 lesson để có thể xuất bản", HttpStatus.BAD_REQUEST);
+            }
+            if(!validateMaximum(course)){
+                return JPLearningUtils.getResponseEntity("Tối đa 50 chapter hoặc 50 lesson", HttpStatus.BAD_REQUEST);
             }
             return JPLearningUtils.getResponseEntity("Xuất bản thành công", HttpStatus.OK);
         } catch (Exception ex) {
@@ -700,7 +763,7 @@ public class CourseServiceImpl implements CourseService {
                         .build(),
                 AsyncRequestBody.fromInputStream(file.getInputStream(), file.getSize(), executorService));
     }
-    private boolean validateCourse(Course course) {
+    private boolean validateCourseMinimum(Course course) {
         // Check if the course contains at least one chapter
         if (course.getChapterList().isEmpty()) {
             return false;
@@ -714,8 +777,28 @@ public class CourseServiceImpl implements CourseService {
         }
         return true;
     }
+    private boolean validateMaximum(Course course) {
+        // Check if the course contains at least one chapter
+        if (course.getChapterList().size() > 50) {
+            return false;
+        }
+
+        // Check if each chapter contains at least one lesson
+        for (Chapter chapter : course.getChapterList()) {
+            if (chapter.getLessonList().size() > 50) {
+                return false;
+            }
+        }
+        return true;
+    }
     private boolean validateImg(MultipartFile file){
         if (!(file.getContentType().endsWith("png") || file.getContentType().endsWith("jpeg"))) {
+            return false;
+        }
+        return true;
+    }
+    private boolean validateVideo(MultipartFile file){
+        if(!(file.getContentType().endsWith("mp4"))){
             return false;
         }
         return true;
@@ -725,6 +808,15 @@ public class CourseServiceImpl implements CourseService {
             return true;
         }
         return false;
+    }
+    private boolean isImage(MultipartFile file) {
+        String contentType = file.getContentType();
+        return contentType != null && (contentType.startsWith("image/") || contentType.endsWith("image"));
+    }
+
+    private boolean isVideo(MultipartFile file) {
+        String contentType = file.getContentType();
+        return contentType != null && (contentType.startsWith("video/") || contentType.endsWith("video"));
     }
 
 }

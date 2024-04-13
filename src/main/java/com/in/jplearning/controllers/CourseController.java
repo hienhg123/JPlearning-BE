@@ -72,6 +72,7 @@ public class CourseController {
                                           @RequestParam("courseLevel") String courseLevel,
                                           @RequestParam("isFree") String isFree,
                                           @RequestParam("isDraft") String isDraft,
+                                          @RequestPart(value = "img",required = false) MultipartFile img,
                                           @RequestPart(value = "files", required = false) List<MultipartFile> files,
                                           @RequestParam("chapters") String chaptersJson,
                                           @RequestParam("chapterIdList") String chapterIdListJson,
@@ -83,7 +84,7 @@ public class CourseController {
             List<Long> chapterIdList = objectMapper.readValue(chapterIdListJson, new TypeReference<List<Long>>() {});
             List<Long> lessonIdList = objectMapper.readValue(lessonIdListJson, new TypeReference<List<Long>>() {});
             return courseService.updateCourse(courseID,courseName,courseDescription,courseLevel,isFree,
-                    isDraft,files,chapters,chapterIdList,lessonIdList);
+                    isDraft,img,files,chapters,chapterIdList,lessonIdList);
         }catch (Exception ex){
             ex.printStackTrace();
         }

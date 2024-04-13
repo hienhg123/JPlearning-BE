@@ -49,7 +49,7 @@ public class LessonServiceImpl implements LessonService {
             }
             Bill currentBill = billDao.getUserLatestBill(jwtAuthFilter.getCurrentUser(), PageRequest.of(0,1)).get(0);
             if(currentBill.getExpireAt().isBefore(LocalDateTime.now())){
-                return JPLearningUtils.getResponseEntity("Tài khoản của bạn đã hết hạn",HttpStatus.PAYMENT_REQUIRED);
+                return JPLearningUtils.getResponseEntity("Tài khoản của bạn chưa nâng cấp",HttpStatus.PAYMENT_REQUIRED);
             }
             return new ResponseEntity<>(lessonOptional.get(), HttpStatus.OK);
         }catch (Exception ex){
