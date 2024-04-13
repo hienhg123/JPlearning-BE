@@ -57,7 +57,7 @@ public class ChapterServiceImpl implements ChapterService {
                 courseDetails.put("enrolledUsersCount", enrollCount);
 
                 // Calculate the progress for each course
-                double progress = calculateCourseProgress(course);
+                double progress = calculateCourseProgress(course,user);
                 courseDetails.put("courseProgress", progress);
 
                 courseDetailsList.add(courseDetails);
@@ -84,7 +84,7 @@ public class ChapterServiceImpl implements ChapterService {
             if(courseOptional.isEmpty()){
                 return JPLearningUtils.getResponseEntity("Khóa học không tồn tại", HttpStatus.NOT_FOUND);
             }
-            double progress = calculateCourseProgress(courseOptional.get());
+            double progress = calculateCourseProgress(courseOptional.get(),userOptional.get());
             return new ResponseEntity<>(progress, HttpStatus.OK);
         }catch (Exception ex){
             ex.printStackTrace();
@@ -92,7 +92,7 @@ public class ChapterServiceImpl implements ChapterService {
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG,HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    private double calculateCourseProgress(Course course) {
+    private double calculateCourseProgress(Course course, User user) {
         int totalChapters = course.getChapterList().size();
         if (totalChapters == 0) {
             return 0.0;
@@ -101,13 +101,13 @@ public class ChapterServiceImpl implements ChapterService {
         int completedChapters = 0;
 
         for (Chapter chapter : course.getChapterList()) {
-            List<UserChapterProgress> userChapterProgressList = userChapterProgressDAO.findByChapter(chapter);
+            List<UserChapterProgress> userChapterProgressList = userChapterProgressDAO.findByChapterAndUser(chapter, user);
             boolean chapterCompleted = false;
 
             for (UserChapterProgress userChapterProgress : userChapterProgressList) {
                 if (userChapterProgress.getIsFinished()) {
                     chapterCompleted = true;
-                    break; // Break the loop if at least one user has finished the chapter
+                    break; // Break the loop if the user has finished the chapter
                 }
             }
 
@@ -122,6 +122,7 @@ public class ChapterServiceImpl implements ChapterService {
         // Round the capped progress to the nearest integer
         return Math.round(cappedProgress);
     }
+
 
 
 }
