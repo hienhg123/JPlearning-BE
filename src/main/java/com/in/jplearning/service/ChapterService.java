@@ -14,4 +14,5 @@ public interface ChapterService {
     ResponseEntity<Chapter> getChapterLesson(Long chapterID);
     ResponseEntity<List<Map<String, Object>>> progressTracking();
 
+    ResponseEntity<?> getCourseProgress(Long courseID);
 }

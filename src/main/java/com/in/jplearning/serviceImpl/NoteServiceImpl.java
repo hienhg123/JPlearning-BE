@@ -108,7 +108,7 @@ public class NoteServiceImpl implements NoteService {
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             //check if logon
             if(userOptional.isEmpty()){
-                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.UNAUTHORIZED);
             }
             return new ResponseEntity<>(noteDAO.getUserNoteByLessonID(userOptional.get().getUserID(),lessonID), HttpStatus.OK);
         }catch (Exception ex){

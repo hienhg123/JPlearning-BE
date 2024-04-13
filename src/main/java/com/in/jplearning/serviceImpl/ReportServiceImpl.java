@@ -51,7 +51,7 @@ public class ReportServiceImpl implements ReportService {
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             Optional<Post> postOptional = postDAO.findById(postId);
             if (userOptional.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.UNAUTHORIZED);
             }
             // Retrieve the post if postId is provided
             if(postOptional.isEmpty()){

@@ -1,9 +1,11 @@
 package com.in.jplearning.serviceImpl;
 
 import com.in.jplearning.config.JwtAuthFilter;
+import com.in.jplearning.constants.JPConstants;
 import com.in.jplearning.model.*;
 import com.in.jplearning.repositories.*;
 import com.in.jplearning.service.ChapterService;
+import com.in.jplearning.utils.JPLearningUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -66,6 +68,28 @@ public class ChapterServiceImpl implements ChapterService {
             ex.printStackTrace();
             return new ResponseEntity<>(Collections.emptyList(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @Override
+    public ResponseEntity<?> getCourseProgress(Long courseID) {
+        try{
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.UNAUTHORIZED);
+            }
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
+            }
+            Optional<Course> courseOptional = courseDAO.findById(courseID);
+            if(courseOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Khóa học không tồn tại", HttpStatus.NOT_FOUND);
+            }
+            double progress = calculateCourseProgress(courseOptional.get(),userOptional.get());
+            return new ResponseEntity<>(progress, HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG,HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     private double calculateCourseProgress(Course course, User user) {
