@@ -185,10 +185,12 @@ public class PostServiceImpl implements PostService {
             List<PostComment> postCommentList = postCommentDAO.getByPostID(postId);
             List<PostLike> postLikeList = postLikeDAO.getByPostID(postId);
             List<PostFavorite> postFavorites = postFavoriteDAO.getByPostID(postId);
+            List<Notification> notificationList = notificationDAO.getNotificationByPostID(postId);
             //delete all the constrain
             postFavoriteDAO.deleteAll(postFavorites);
             postLikeDAO.deleteAll(postLikeList);
             postCommentDAO.deleteAll(postCommentList);
+            notificationDAO.deleteAll(notificationList);
             postDAO.deleteById(postId);
             return JPLearningUtils.getResponseEntity("Xóa bài viết thành công", HttpStatus.OK);
         }catch (Exception ex){

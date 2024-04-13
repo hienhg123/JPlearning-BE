@@ -122,9 +122,11 @@ public class ReportServiceImpl implements ReportService {
             List<PostComment> postCommentList = postCommentDAO.getByPostID(postId);
             List<PostLike> postLikeList = postLikeDAO.getByPostID(postId);
             List<PostFavorite> postFavorites = postFavoriteDAO.getByPostID(postId);
+            List<Notification> notificationList = notificationDAO.getNotificationByPostID(postId);
             postFavoriteDAO.deleteAll(postFavorites);
             postLikeDAO.deleteAll(postLikeList);
             postCommentDAO.deleteAll(postCommentList);
+            notificationDAO.deleteAll(notificationList);
             reportDAO.deleteAll(reportList);
             Notification notification = getFromMap(optionalPost.get());
             notificationDAO.save(notification);
