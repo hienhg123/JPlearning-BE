@@ -167,7 +167,7 @@ public class TrainerServiceImpl implements TrainerService {
             //check if manager
             if (jwtAuthFilter.isManager()) {
                 Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("trainerID").descending());
-                return new ResponseEntity<>(trainerDAO.findAll(pageable), HttpStatus.OK);
+                return new ResponseEntity<>(trainerDAO.getAllTrainer(pageable), HttpStatus.OK);
             }
             return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
         } catch (Exception ex) {
