@@ -109,7 +109,7 @@ public class PostServiceImpl implements PostService {
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             Trainer trainer = trainerDAO.getByUserId(userOptional.get().getUserID());
             if(userOptional.isEmpty()){
-                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập",HttpStatus.UNAUTHORIZED);
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN,HttpStatus.UNAUTHORIZED);
             }
             if(postOptional.isEmpty()){
                 return JPLearningUtils.getResponseEntity("Bài đăng không tồn tại",HttpStatus.NOT_FOUND);
@@ -142,7 +142,7 @@ public class PostServiceImpl implements PostService {
         try{
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             if(userOptional.isEmpty()){
-                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.UNAUTHORIZED);
             }
             Pageable pageable = PageRequest.of(pageNumber, pageSize);
             return new ResponseEntity<>(postDAO.getByUserPostNotDraft(jwtAuthFilter.getCurrentUser(), pageable), HttpStatus.OK);
@@ -157,7 +157,7 @@ public class PostServiceImpl implements PostService {
         try {
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             if(userOptional.isEmpty()){
-                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.UNAUTHORIZED);
             }
             Pageable pageable = PageRequest.of(pageNumber, pageSize);
             return new ResponseEntity<>(postFavoriteDAO.findPostsByUserFavorite(userOptional.get(),pageable), HttpStatus.OK);
@@ -174,7 +174,7 @@ public class PostServiceImpl implements PostService {
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             Optional<Post> postOptional = postDAO.findById(postId);
             if(userOptional.isEmpty()){
-                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.UNAUTHORIZED);
             }
             if(postOptional.isEmpty()){
                 return JPLearningUtils.getResponseEntity("Bài đăng không tồn tại", HttpStatus.NOT_FOUND);
@@ -219,7 +219,7 @@ public class PostServiceImpl implements PostService {
         try{
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             if(userOptional.isEmpty()){
-                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.UNAUTHORIZED);
             }
             Pageable pageable = PageRequest.of(pageNumber, pageSize);
             return new ResponseEntity<>(postDAO.getByUserPostDraft(jwtAuthFilter.getCurrentUser(), pageable), HttpStatus.OK);

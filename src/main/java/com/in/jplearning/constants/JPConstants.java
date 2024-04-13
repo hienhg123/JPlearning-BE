@@ -9,4 +9,6 @@ public class JPConstants {
     public static final String UNAUTHORIZED_ACCESS = "Bạn không có quyền truy câp";
 
     public static final String USER_NOT_FOUND = "Tài khoản không tồn tại";
+
+    public static final String REQUIRED_LOGIN = "Vui lòng đăng nhập";
 }
