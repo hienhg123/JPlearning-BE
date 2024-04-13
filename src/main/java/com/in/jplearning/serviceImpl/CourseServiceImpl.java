@@ -108,10 +108,6 @@ public class CourseServiceImpl implements CourseService {
                         AsyncRequestBody.fromInputStream(img.getInputStream(), img.getSize(), executorService));
                 course.setImg(cloudFront + "/" + key);
             }
-            if (Boolean.parseBoolean(isDraft)) {
-                courseDAO.save(course);
-                return JPLearningUtils.getResponseEntity("Tạo bản nháp thành công", HttpStatus.OK);
-            }
             if(!validateCourseMinimum(course)){
                 return JPLearningUtils.getResponseEntity("Phải có tối thiểu 1 chapter và 1 lesson để có thể xuất bản", HttpStatus.BAD_REQUEST);
             }
@@ -139,6 +135,9 @@ public class CourseServiceImpl implements CourseService {
                 }
             }
             courseDAO.save(course);
+            if (Boolean.parseBoolean(isDraft)) {
+                return JPLearningUtils.getResponseEntity("Tạo bản nháp thành công", HttpStatus.OK);
+            }
             return JPLearningUtils.getResponseEntity("Xuất bản thành công", HttpStatus.OK);
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -308,15 +307,15 @@ public class CourseServiceImpl implements CourseService {
                 }
             }
             updateChaptersAndLessons(course, chapters, files,chapterIdList,lessonIdList);
-            courseDAO.save(course);
-            if (Boolean.parseBoolean(isDraft)) {
-                return JPLearningUtils.getResponseEntity("Tạo bản nháp thành công", HttpStatus.OK);
-            }
             if(!validateCourseMinimum(course)){
                 return JPLearningUtils.getResponseEntity("Phải có tối thiểu 1 chapter và 1 lesson để có thể xuất bản", HttpStatus.BAD_REQUEST);
             }
             if(!validateMaximum(course)){
                 return JPLearningUtils.getResponseEntity("Tối đa 50 chapter hoặc 50 lesson", HttpStatus.BAD_REQUEST);
+            }
+            courseDAO.save(course);
+            if (Boolean.parseBoolean(isDraft)) {
+                return JPLearningUtils.getResponseEntity("Tạo bản nháp thành công", HttpStatus.OK);
             }
             return JPLearningUtils.getResponseEntity("Xuất bản thành công", HttpStatus.OK);
         } catch (Exception ex) {
