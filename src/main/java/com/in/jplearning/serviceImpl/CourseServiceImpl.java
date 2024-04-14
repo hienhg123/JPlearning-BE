@@ -85,12 +85,6 @@ public class CourseServiceImpl implements CourseService {
             //get the course
             Course course = getCourseFromMap(courseName, courseDescription, courseLevel, isFree, isDraft,trainer);
             //get the course chapter
-            List<Chapter> chapterList = new ArrayList<>();
-            for (Map<String, Object> chapterMap : chapters) {
-                Chapter chapter = mapToChapter(chapterMap, course, files);
-                chapterList.add(chapter);
-            }
-            course.setChapterList(chapterList);
             if(img != null){
                 //check img type
                 if(!validateImg(img)){
@@ -108,31 +102,39 @@ public class CourseServiceImpl implements CourseService {
                         AsyncRequestBody.fromInputStream(img.getInputStream(), img.getSize(), executorService));
                 course.setImg(cloudFront + "/" + key);
             }
+            if(files != null){
+                for(MultipartFile multipartFile : files){
+                    //check what type
+                    if(isImage(multipartFile)){
+                        //check type
+                        if(!validateImg(multipartFile)){
+                            return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
+                                    " chưa đúng định dạng ảnh", HttpStatus.BAD_REQUEST);
+                        }
+                    } else if(isVideo(multipartFile)) {
+                        if(!validateVideo(multipartFile)){
+                            return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
+                                    " chưa đúng định dạng video", HttpStatus.BAD_REQUEST);
+                        }
+                    }
+                    //check size
+                    if (validateSize(multipartFile)) { // 500MB
+                        return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
+                                " quá dung lượng cho phép, tối đa 500MB", HttpStatus.BAD_REQUEST);
+                    }
+                }
+            }
+            List<Chapter> chapterList = new ArrayList<>();
+            for (Map<String, Object> chapterMap : chapters) {
+                Chapter chapter = mapToChapter(chapterMap, course, files);
+                chapterList.add(chapter);
+            }
+            course.setChapterList(chapterList);
             if(!validateCourseMinimum(course)){
                 return JPLearningUtils.getResponseEntity("Phải có tối thiểu 1 chapter và 1 bài học để có thể xuất bản", HttpStatus.BAD_REQUEST);
             }
             if(!validateMaximum(course)){
                 return JPLearningUtils.getResponseEntity("Tối đa 50 chương hoặc 50 bài học trong 1 chương", HttpStatus.BAD_REQUEST);
-            }
-            for(MultipartFile multipartFile : files){
-                //check what type
-                if(isImage(multipartFile)){
-                    //check type
-                    if(!validateImg(multipartFile)){
-                        return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
-                                " chưa đúng định dạng ảnh", HttpStatus.BAD_REQUEST);
-                    }
-                } else if(isVideo(multipartFile)) {
-                    if(!validateVideo(multipartFile)){
-                        return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
-                                " chưa đúng định dạng video", HttpStatus.BAD_REQUEST);
-                    }
-                }
-                //check size
-                if (validateSize(multipartFile)) { // 500MB
-                    return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
-                            " quá dung lượng cho phép, tối đa 500MB", HttpStatus.BAD_REQUEST);
-                }
             }
             courseDAO.save(course);
             if (Boolean.parseBoolean(isDraft)) {
@@ -286,24 +288,26 @@ public class CourseServiceImpl implements CourseService {
                         AsyncRequestBody.fromInputStream(img.getInputStream(), img.getSize(), executorService));
                 course.setImg(cloudFront + "/" + key);
             }
-            for(MultipartFile multipartFile : files){
-                //check what type
-                if(isImage(multipartFile)){
-                    //check type
-                    if(!validateImg(multipartFile)){
-                        return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
-                                " chưa đúng định dạng ảnh", HttpStatus.BAD_REQUEST);
+            if(files != null){
+                for(MultipartFile multipartFile : files){
+                    //check what type
+                    if(isImage(multipartFile)){
+                        //check type
+                        if(!validateImg(multipartFile)){
+                            return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
+                                    " chưa đúng định dạng ảnh", HttpStatus.BAD_REQUEST);
+                        }
+                    } else if(isVideo(multipartFile)) {
+                        if(!validateVideo(multipartFile)){
+                            return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
+                                    " chưa đúng định dạng video", HttpStatus.BAD_REQUEST);
+                        }
                     }
-                } else if(isVideo(multipartFile)) {
-                    if(!validateVideo(multipartFile)){
+                    //check size
+                    if (validateSize(multipartFile)) { // 500MB
                         return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
-                                " chưa đúng định dạng video", HttpStatus.BAD_REQUEST);
+                                " quá dung lượng cho phép, tối đa 500MB", HttpStatus.BAD_REQUEST);
                     }
-                }
-                //check size
-                if (validateSize(multipartFile)) { // 500MB
-                    return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
-                            " quá dung lượng cho phép, tối đa 500MB", HttpStatus.BAD_REQUEST);
                 }
             }
             updateChaptersAndLessons(course, chapters, files,chapterIdList,lessonIdList);
@@ -608,13 +612,15 @@ public class CourseServiceImpl implements CourseService {
             lesson.setVideoMaterial(key);
         }
         //loop throw each file
-        for (MultipartFile file : multipartFiles) {
-            //loop to check each key
-            for (String key : lessonMap.keySet()) {
-                //check if equal
-                if (Objects.equals(file.getOriginalFilename(), lessonMap.get(key))) {
-                    upload.add(file);
-                    break;
+        if(multipartFiles != null){
+            for (MultipartFile file : multipartFiles) {
+                //loop to check each key
+                for (String key : lessonMap.keySet()) {
+                    //check if equal
+                    if (Objects.equals(file.getOriginalFilename(), lessonMap.get(key))) {
+                        upload.add(file);
+                        break;
+                    }
                 }
             }
         }
