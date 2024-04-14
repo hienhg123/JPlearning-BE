@@ -131,10 +131,10 @@ public class CourseServiceImpl implements CourseService {
             }
             course.setChapterList(chapterList);
             if(!validateCourseMinimum(course)){
-                return JPLearningUtils.getResponseEntity("Phải có tối thiểu 1 chapter và 1 lesson để có thể xuất bản", HttpStatus.BAD_REQUEST);
+                return JPLearningUtils.getResponseEntity("Phải có tối thiểu 1 chapter và 1 bài học để có thể xuất bản", HttpStatus.BAD_REQUEST);
             }
             if(!validateMaximum(course)){
-                return JPLearningUtils.getResponseEntity("Tối đa 50 chapter hoặc 50 lesson", HttpStatus.BAD_REQUEST);
+                return JPLearningUtils.getResponseEntity("Tối đa 50 chương hoặc 50 bài học trong 1 chương", HttpStatus.BAD_REQUEST);
             }
             courseDAO.save(course);
             if (Boolean.parseBoolean(isDraft)) {
@@ -312,10 +312,10 @@ public class CourseServiceImpl implements CourseService {
             }
             updateChaptersAndLessons(course, chapters, files,chapterIdList,lessonIdList);
             if(!validateCourseMinimum(course)){
-                return JPLearningUtils.getResponseEntity("Phải có tối thiểu 1 chapter và 1 lesson để có thể xuất bản", HttpStatus.BAD_REQUEST);
+                return JPLearningUtils.getResponseEntity("Phải có tối thiểu 1 chương và 1 bài học để có thể xuất bản", HttpStatus.BAD_REQUEST);
             }
             if(!validateMaximum(course)){
-                return JPLearningUtils.getResponseEntity("Tối đa 50 chapter hoặc 50 lesson", HttpStatus.BAD_REQUEST);
+                return JPLearningUtils.getResponseEntity("Tối đa 50 chương hoặc 50 bài học trong 1 chương", HttpStatus.BAD_REQUEST);
             }
             courseDAO.save(course);
             if (Boolean.parseBoolean(isDraft)) {
