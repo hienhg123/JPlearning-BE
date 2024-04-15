@@ -53,6 +53,7 @@ public class CourseServiceImpl implements CourseService {
     private final CourseFeedbackDAO courseFeedbackDAO;
 
     private final TrainerDAO trainerDAO;
+    private final  NoteDAO noteDAO;
 
     private final S3AsyncClient s3AsyncClient;
 
@@ -225,6 +226,7 @@ public class CourseServiceImpl implements CourseService {
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             Optional<Course> courseOptional = courseDAO.findById(courseID);
             List<CourseEnroll> courseEnrolls = courseEnrollDAO.getByCourseID(courseID);
+            List<Note> noteList = noteDAO.getNoteByCourseID(courseID);
             if (userOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
             }
@@ -236,6 +238,7 @@ public class CourseServiceImpl implements CourseService {
             if (courseOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Khóa học không tồn tại", HttpStatus.NOT_FOUND);
             }
+            noteDAO.deleteAll(noteList);
             courseEnrollDAO.deleteAll(courseEnrolls);
             courseDAO.deleteById(courseID);
             return JPLearningUtils.getResponseEntity("Xóa thành công", HttpStatus.OK);
@@ -319,7 +322,7 @@ public class CourseServiceImpl implements CourseService {
             }
             courseDAO.save(course);
             if (Boolean.parseBoolean(isDraft)) {
-                return JPLearningUtils.getResponseEntity("Tạo bản nháp thành công", HttpStatus.OK);
+                return JPLearningUtils.getResponseEntity("Sửa bản nháp thành công", HttpStatus.OK);
             }
             return JPLearningUtils.getResponseEntity("Xuất bản thành công", HttpStatus.OK);
         } catch (Exception ex) {
@@ -619,7 +622,7 @@ public class CourseServiceImpl implements CourseService {
                     //check if equal
                     if (Objects.equals(file.getOriginalFilename(), lessonMap.get(key))) {
                         upload.add(file);
-                        break;
+
                     }
                 }
             }
@@ -635,9 +638,12 @@ public class CourseServiceImpl implements CourseService {
         deleteChapters(course, chapterIdList);
         for (Map<String, Object> chapterMap : chapters) {
             //check if exist
-            Optional<Chapter> existingChapterOptional = existingChapters.stream()
-                    .filter(chapter -> chapter.getChapterID().equals(Long.parseLong(chapterMap.get("chapterID").toString())))
-                    .findFirst();
+            Optional<Chapter> existingChapterOptional = Optional.empty();
+            if(chapterMap.get("chapterID") != null){
+                existingChapterOptional = existingChapters.stream()
+                        .filter(chapter -> chapter.getChapterID().equals(Long.parseLong(chapterMap.get("chapterID").toString())))
+                        .findFirst();
+            }
             Chapter chapter;
             if (existingChapterOptional.isPresent()) {
                 // Update existing chapter properties
@@ -666,9 +672,12 @@ public class CourseServiceImpl implements CourseService {
         deleteLessons(chapter,lessonIdList);
         for (Map<String, Object> lessonMap : lessons) {
             // Check if the lesson exists in the database
-            Optional<Lesson> existingLessonOptional = existingLessons.stream()
-                    .filter(lesson -> lesson.getLessonID().equals(Long.parseLong(lessonMap.get("lessonID").toString())))
-                    .findFirst();
+            Optional<Lesson> existingLessonOptional = Optional.empty();
+            if(lessonMap.get("lessonID") != null){
+                existingLessonOptional = existingLessons.stream()
+                        .filter(lesson -> lesson.getLessonID().equals(Long.parseLong(lessonMap.get("lessonID").toString())))
+                        .findFirst();
+            }
             Lesson lesson;
             String random = UUID.randomUUID().toString();
             if (existingLessonOptional.isPresent()) {
@@ -696,7 +705,7 @@ public class CourseServiceImpl implements CourseService {
                         //check if equal
                         if (Objects.equals(file.getOriginalFilename(), lessonMap.get(key))) {
                             upload.add(file);
-                            break;
+
                         }
                     }
                 }

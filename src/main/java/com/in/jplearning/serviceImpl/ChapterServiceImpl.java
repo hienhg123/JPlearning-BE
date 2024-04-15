@@ -51,7 +51,7 @@ public class ChapterServiceImpl implements ChapterService {
                 Map<String, Object> courseDetails = new HashMap<>();
                 courseDetails.put("courseID", course.getCourseID());
                 courseDetails.put("courseName", course.getCourseName());
-
+                courseDetails.put("img", course.getImg());
                 // Calculate the count of enrolled users for each course
                 Long enrollCount = courseEnrollDAO.countByCourse(course);
                 courseDetails.put("enrolledUsersCount", enrollCount);

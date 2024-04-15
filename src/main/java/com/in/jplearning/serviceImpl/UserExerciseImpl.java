@@ -106,15 +106,7 @@ public class UserExerciseImpl implements UserExerciseService {
 
     }
 
-    private boolean isPass(Map<String, String> requestMap) {
-        int mark = Integer.parseInt(requestMap.get("mark"));
-        int maxPoint = Integer.parseInt(requestMap.get("maxPoint"));
-        long result = mark / maxPoint;
-        if(result >= 0.8){
-            return true;
-        }
-        return false;
-    }
+
 
     @Override
     public ResponseEntity<List<Map<String, Object>>> getExerciseInfoByCurrentUser() {
@@ -153,7 +145,7 @@ public class UserExerciseImpl implements UserExerciseService {
         exerciseInfo.put("maxPoint", exercise.getMaxPoint());
         exerciseInfo.put("numberOfAttempts", exercise.getNumberOfAttempts());
         exerciseInfo.put("submittedAt", exercise.getSubmittedAt());
-        exerciseInfo.put("questionType", exercise.getQuestionType().toString());
+        exerciseInfo.put("questionType", exercise.getQuestionType());
         exerciseInfo.put("mark", exercise.getMark());
         return exerciseInfo;
     }
@@ -243,5 +235,11 @@ public class UserExerciseImpl implements UserExerciseService {
             e.printStackTrace();
             return null;
         }
+    }
+    private boolean isPass(Map<String, String> requestMap) {
+        int mark = Integer.parseInt(requestMap.get("mark"));
+        int maxPoint = Integer.parseInt(requestMap.get("maxPoint"));
+        double result = (double) mark / maxPoint;
+        return result >= 0.8;
     }
 }

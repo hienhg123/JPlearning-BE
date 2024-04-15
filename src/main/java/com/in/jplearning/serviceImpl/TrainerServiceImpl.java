@@ -145,7 +145,7 @@ public class TrainerServiceImpl implements TrainerService {
                     trainerDAO.updateStatus(Boolean.parseBoolean(requestMap.get("isVerify")), trainer.getTrainerID());
                     verifyRequestDAO.updateStatus(Status.valueOf(requestMap.get("status")), Long.parseLong(requestMap.get("requestID")));
                     //check if approve or reject
-                    if (requestMap.get("status").equals(Status.APPROVED)) {
+                    if (Status.valueOf(requestMap.get("status")).equals(Status.APPROVED)) {
                         notificationDAO.save(getNotificationFromMap(trainer.getUser().getUserID(), "Tài khoản của bạn đã được xác thực"));
                     } else {
                         notificationDAO.save(getNotificationFromMap(trainer.getUser().getUserID(), "Tài khoản của bạn không được chấp nhận"));
