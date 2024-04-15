@@ -74,7 +74,7 @@ public class FlashCardSetServiceImpl implements FlashCardSetService {
             FlashCardSet flashCardSet = flashCardSetOptional.get();
 
             // Retrieve all flashcards associated with the current flashCardSet
-            List<FlashCard> flashCards = flashCardDAO.findByFlashCardSet_FlashCardSetID(flashCardSetId);
+            List<FlashCard> flashCards = flashCardDAO.findByFlashCardSet(flashCardSetId);
 
             // Set the flashCardCount in the flashCardSet
             flashCardSet.setFlashCardCount(flashCards.size());
@@ -133,6 +133,10 @@ public class FlashCardSetServiceImpl implements FlashCardSetService {
     @Transactional
     public ResponseEntity<String> updateFlashcard(Long flashCardSetId, Map<String, Object> requestMap) {
         try {
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập",HttpStatus.UNAUTHORIZED);
+            }
             // Retrieve the existing FlashCardSet
             Optional<FlashCardSet> flashCardSetOptional = flashCardSetDAO.findById(flashCardSetId);
             if (flashCardSetOptional.isEmpty()) {
@@ -201,24 +205,19 @@ public class FlashCardSetServiceImpl implements FlashCardSetService {
         }
     }
 
-
-
-
-
-
-
     @Override
     @Transactional
     public ResponseEntity<String> createFlashcard(Map<String, Object> requestMap) {
         try {
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập",HttpStatus.UNAUTHORIZED);
+            }
             // Map form data to FlashCardSet
             FlashCardSet flashCardSet = new FlashCardSet();
 
             // Map form data to FlashCardSet
             mapToFlashCardSet(requestMap, flashCardSet);
-
-            // Save the FlashCardSet
-            flashCardSetDAO.save(flashCardSet);
 
             // Map form data to List of FlashCards
             List<Map<String, String>> flashCardDataList = (List<Map<String, String>>) requestMap.get("flashCards");
@@ -247,7 +246,7 @@ public class FlashCardSetServiceImpl implements FlashCardSetService {
 
             // Save the list of FlashCards
             flashCardDAO.saveAll(flashCards);
-
+            flashCardSetDAO.save(flashCardSet);
             return JPLearningUtils.getResponseEntity("Tạo thành công", HttpStatus.OK);
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -260,6 +259,10 @@ public class FlashCardSetServiceImpl implements FlashCardSetService {
     @Transactional
     public ResponseEntity<String> deleteFlashCardSet(Long flashCardSetId) {
         try {
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập",HttpStatus.UNAUTHORIZED);
+            }
             Optional<FlashCardSet> flashCardSetOptional = flashCardSetDAO.findById(flashCardSetId);
             if (flashCardSetOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("FlashCardSet không tồn tại", HttpStatus.NOT_FOUND);
