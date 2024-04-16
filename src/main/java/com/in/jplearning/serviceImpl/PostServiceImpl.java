@@ -58,14 +58,26 @@ public class PostServiceImpl implements PostService {
 
     private final NotificationDAO notificationDAO;
 
+    private static final int MAX_POST_CONTENT_SIZE = 16 * 1024 * 1024;
+
     @Override
     public ResponseEntity<String> createPost(Map<String, String> requestMap){
         try{
-            User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
+            }
+            User user = userOptional.get();
             //check if user is trainer
             Trainer trainer = trainerDAO.getByUserId(user.getUserID());
             if(trainer == null){
                 return JPLearningUtils.getResponseEntity("Chỉ có trainer mới được đăng bài", HttpStatus.BAD_REQUEST);
+            }
+            if(requestMap.get("postContent")!= null && requestMap.get("postContent").getBytes().length > MAX_POST_CONTENT_SIZE){
+                return JPLearningUtils.getResponseEntity("Bài đăng quá dài, vui lòng giảm bớt", HttpStatus.BAD_REQUEST);
             }
 
             Post post = getPostFromMap(requestMap,user);
@@ -106,17 +118,24 @@ public class PostServiceImpl implements PostService {
     public ResponseEntity<String> updatePost(Map<String, String> requestMap) {
         try {
             Optional<Post> postOptional = postDAO.findById(Long.parseLong(requestMap.get("postID")));
-            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
-            Trainer trainer = trainerDAO.getByUserId(userOptional.get().getUserID());
-            if(userOptional.isEmpty()){
-                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN,HttpStatus.UNAUTHORIZED);
+
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
             }
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
+            }
+            Trainer trainer = trainerDAO.getByUserId(userOptional.get().getUserID());
             if(postOptional.isEmpty()){
                 return JPLearningUtils.getResponseEntity("Bài đăng không tồn tại",HttpStatus.NOT_FOUND);
             }
             //check if user is trainer
             if(trainer == null){
                 return JPLearningUtils.getResponseEntity("Chỉ có trainer mới được đăng bài", HttpStatus.BAD_REQUEST);
+            }
+            if(requestMap.get("postContent")!= null && requestMap.get("postContent").getBytes().length > MAX_POST_CONTENT_SIZE){
+                return JPLearningUtils.getResponseEntity("Bài đăng quá dài, vui lòng giảm bớt", HttpStatus.BAD_REQUEST);
             }
             Post post = postOptional.get();
             post.setPostContent(requestMap.get("postContent"));
@@ -140,9 +159,12 @@ public class PostServiceImpl implements PostService {
     @Override
     public ResponseEntity<?> getByUserPostNotDraft(int pageNumber,int pageSize) {
         try{
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             if(userOptional.isEmpty()){
-                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.UNAUTHORIZED);
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
             }
             Pageable pageable = PageRequest.of(pageNumber, pageSize);
             return new ResponseEntity<>(postDAO.getByUserPostNotDraft(jwtAuthFilter.getCurrentUser(), pageable), HttpStatus.OK);
@@ -155,9 +177,12 @@ public class PostServiceImpl implements PostService {
     @Override
     public ResponseEntity<?> getUserFavorite(int pageNumber, int pageSize) {
         try {
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             if(userOptional.isEmpty()){
-                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.UNAUTHORIZED);
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
             }
             Pageable pageable = PageRequest.of(pageNumber, pageSize);
             return new ResponseEntity<>(postFavoriteDAO.findPostsByUserFavorite(userOptional.get(),pageable), HttpStatus.OK);
@@ -171,10 +196,13 @@ public class PostServiceImpl implements PostService {
     @Override
     public ResponseEntity<?> deletePost(Long postId) {
         try{
-            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             Optional<Post> postOptional = postDAO.findById(postId);
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             if(userOptional.isEmpty()){
-                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.UNAUTHORIZED);
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
             }
             if(postOptional.isEmpty()){
                 return JPLearningUtils.getResponseEntity("Bài đăng không tồn tại", HttpStatus.NOT_FOUND);
@@ -217,9 +245,12 @@ public class PostServiceImpl implements PostService {
     @Override
     public ResponseEntity<?> getByUserPostDraft(int pageNumber, int pageSize) {
         try{
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             if(userOptional.isEmpty()){
-                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.UNAUTHORIZED);
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
             }
             Pageable pageable = PageRequest.of(pageNumber, pageSize);
             return new ResponseEntity<>(postDAO.getByUserPostDraft(jwtAuthFilter.getCurrentUser(), pageable), HttpStatus.OK);

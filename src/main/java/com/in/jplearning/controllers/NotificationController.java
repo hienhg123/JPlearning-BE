@@ -21,7 +21,7 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @GetMapping(path = "/getNotification")
-    public ResponseEntity<List<Notification>> getAllNotification() {
+    public ResponseEntity<?> getAllNotification() {
         try {
             return notificationService.getUserNotification();
         } catch (Exception ex) {

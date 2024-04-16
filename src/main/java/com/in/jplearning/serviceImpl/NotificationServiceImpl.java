@@ -1,6 +1,7 @@
 package com.in.jplearning.serviceImpl;
 
 import com.in.jplearning.config.JwtAuthFilter;
+import com.in.jplearning.constants.JPConstants;
 import com.in.jplearning.enums.NotificationType;
 import com.in.jplearning.model.Notification;
 import com.in.jplearning.model.Post;
@@ -36,9 +37,16 @@ public class NotificationServiceImpl implements NotificationService {
     private final JwtAuthFilter jwtAuthFilter;
 
     @Override
-    public ResponseEntity<List<Notification>> getUserNotification() {
+    public ResponseEntity<?> getUserNotification() {
         try {
-            User receiver = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
+            }
+            User receiver = userOptional.get();
             List<Notification> notifications = notificationDAO.getByUser(receiver.getUserID());
             if (notifications.size() > 5) {
                 notifications = notifications.subList(0, 5);
@@ -74,6 +82,13 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public ResponseEntity<String> updateAllReadStatus(List<Notification> notifications) {
         try{
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
+            }
             //set all read to true
             for(Notification notification: notifications){
                 notification.setRead(true);

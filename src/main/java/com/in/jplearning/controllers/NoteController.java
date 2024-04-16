@@ -22,7 +22,7 @@ public class NoteController {
     private final NoteService noteService;
 
     @GetMapping("/getAll")
-    public ResponseEntity<List<Note>> getAllUserNote() {
+    public ResponseEntity<?> getAllUserNote() {
         try {
             return noteService.getAllUserNote();
         } catch (Exception ex) {

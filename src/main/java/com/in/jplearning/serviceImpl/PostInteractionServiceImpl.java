@@ -39,9 +39,12 @@ public class PostInteractionServiceImpl implements PostInteractionService {
     @Override
     public ResponseEntity<?> likePost(Map<String, String> requestMap) {
         try {
-            Optional<Post> postOptional = postDAO.findById(Long.parseLong(requestMap.get("postID")));
+            if (jwtAuthFilter.getCurrentUser().isEmpty()) {
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
-            Optional<PostLike> postLikeOptional = postLikeDAO.findByEmailAndPostId(jwtAuthFilter.getCurrentUser(),Long.parseLong(requestMap.get("postID")));
+            Optional<Post> postOptional = postDAO.findById(Long.parseLong(requestMap.get("postID")));
+            Optional<PostLike> postLikeOptional = postLikeDAO.findByEmailAndPostId(jwtAuthFilter.getCurrentUser(), Long.parseLong(requestMap.get("postID")));
             //check if exist
             if (postOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Bài viết không tồn tại", HttpStatus.NOT_FOUND);
@@ -51,7 +54,7 @@ public class PostInteractionServiceImpl implements PostInteractionService {
                 return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập để yêu thích bài viết", HttpStatus.UNAUTHORIZED);
             }
             //check if user have like the post
-            if(postLikeOptional.isPresent()){
+            if (postLikeOptional.isPresent()) {
                 postLikeDAO.deleteById(postLikeOptional.get().getLikeID());
                 return JPLearningUtils.getResponseEntity("", HttpStatus.OK);
             }
@@ -75,6 +78,10 @@ public class PostInteractionServiceImpl implements PostInteractionService {
     @Override
     public ResponseEntity<?> commentPost(Map<String, String> requestMap) {
         try {
+            if (jwtAuthFilter.getCurrentUser().isEmpty()) {
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
+
             Optional<Post> postOptional = postDAO.findById(Long.parseLong(requestMap.get("postID")));
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             //check if exist
@@ -113,6 +120,9 @@ public class PostInteractionServiceImpl implements PostInteractionService {
     @Override
     public ResponseEntity<?> favoritePost(Map<String, String> requestMap) {
         try {
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
             Optional<Post> postOptional = postDAO.findById(Long.parseLong(requestMap.get("postID")));
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             Optional<PostFavorite> postFavoriteOptional = postFavoriteDAO.findByUserEmailAndPostID(jwtAuthFilter.getCurrentUser(), Long.parseLong(requestMap.get("postID")));
@@ -146,9 +156,12 @@ public class PostInteractionServiceImpl implements PostInteractionService {
     @Override
     public ResponseEntity<?> likeComment(Map<String, String> requestMap) {
         try {
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             Optional<PostComment> postCommentOptional = postCommentDAO.findById(Long.parseLong(requestMap.get("commentID")));
-            Optional<PostLike> postLikeOptional = postLikeDAO.findByEmailAndCommentId(jwtAuthFilter.getCurrentUser(),Long.parseLong(requestMap.get("commentID")));
+            Optional<PostLike> postLikeOptional = postLikeDAO.findByEmailAndCommentId(jwtAuthFilter.getCurrentUser(), Long.parseLong(requestMap.get("commentID")));
             if (postCommentOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Bình luận không tồn tại", HttpStatus.NOT_FOUND);
             }
@@ -156,7 +169,7 @@ public class PostInteractionServiceImpl implements PostInteractionService {
             if (userOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
             }
-            if(postLikeOptional.isPresent()){
+            if (postLikeOptional.isPresent()) {
                 postLikeDAO.deleteById(postLikeOptional.get().getLikeID());
                 return JPLearningUtils.getResponseEntity("", HttpStatus.OK);
             }
@@ -175,14 +188,21 @@ public class PostInteractionServiceImpl implements PostInteractionService {
 
     @Override
     public ResponseEntity<?> deleteComment(Long commentID) {
-        try{
+        try {
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
+            }
             Optional<PostComment> postCommentOptional = postCommentDAO.findById(commentID);
-            if(postCommentOptional.isEmpty()){
+            if (postCommentOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Không tìm thấy bình luận", HttpStatus.NOT_FOUND);
             }
             postCommentDAO.deleteById(commentID);
-            return JPLearningUtils.getResponseEntity("",HttpStatus.OK);
-        }catch (Exception ex){
+            return JPLearningUtils.getResponseEntity("", HttpStatus.OK);
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -190,16 +210,23 @@ public class PostInteractionServiceImpl implements PostInteractionService {
 
     @Override
     public ResponseEntity<?> updateComment(Map<String, String> requestMap) {
-        try{
+        try {
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
+            }
             Optional<PostComment> postCommentOptional = postCommentDAO.findById(Long.parseLong(requestMap.get("commentID")));
-            if(postCommentOptional.isEmpty()){
+            if (postCommentOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Không tìm thấy bình luận", HttpStatus.NOT_FOUND);
             }
             PostComment postComment = postCommentOptional.get();
             postComment.setCommentContent(requestMap.get("commentContent"));
             postCommentDAO.save(postComment);
-            return JPLearningUtils.getResponseEntity("",HttpStatus.OK);
-        }catch (Exception ex){
+            return JPLearningUtils.getResponseEntity("", HttpStatus.OK);
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -207,13 +234,13 @@ public class PostInteractionServiceImpl implements PostInteractionService {
 
     @Override
     public ResponseEntity<?> getCommentById(Long commentID) {
-        try{
+        try {
             Optional<PostComment> postCommentOptional = postCommentDAO.findById(commentID);
-            if(postCommentOptional.isEmpty()){
+            if (postCommentOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Không tìm thấy bình luận", HttpStatus.NOT_FOUND);
             }
             return new ResponseEntity<>(postCommentOptional.get(), HttpStatus.OK);
-        }catch (Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
