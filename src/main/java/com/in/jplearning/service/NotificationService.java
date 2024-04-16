@@ -8,7 +8,7 @@ import java.util.Map;
 
 public interface NotificationService {
 
-    ResponseEntity<List<Notification>> getUserNotification();
+    ResponseEntity<?> getUserNotification();
 
     ResponseEntity<String> createPostNotification(Map<String, String> requestMap);
 

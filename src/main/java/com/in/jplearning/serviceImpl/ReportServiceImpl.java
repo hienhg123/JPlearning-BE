@@ -48,11 +48,14 @@ public class ReportServiceImpl implements ReportService {
     public ResponseEntity<String> createReport(Long postId, Map<String, String> reportDetails) {
         try {
             // Retrieve the user based on the current authentication
-            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
-            Optional<Post> postOptional = postDAO.findById(postId);
-            if (userOptional.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
             }
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
+            }
+            Optional<Post> postOptional = postDAO.findById(postId);
             // Retrieve the post if postId is provided
             if(postOptional.isEmpty()){
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy bài viết");
@@ -122,9 +125,11 @@ public class ReportServiceImpl implements ReportService {
             List<PostComment> postCommentList = postCommentDAO.getByPostID(postId);
             List<PostLike> postLikeList = postLikeDAO.getByPostID(postId);
             List<PostFavorite> postFavorites = postFavoriteDAO.getByPostID(postId);
+            List<Notification> notificationList = notificationDAO.getNotificationByPostID(postId);
             postFavoriteDAO.deleteAll(postFavorites);
             postLikeDAO.deleteAll(postLikeList);
             postCommentDAO.deleteAll(postCommentList);
+            notificationDAO.deleteAll(notificationList);
             reportDAO.deleteAll(reportList);
             Notification notification = getFromMap(optionalPost.get());
             notificationDAO.save(notification);

@@ -145,7 +145,7 @@ public class TrainerServiceImpl implements TrainerService {
                     trainerDAO.updateStatus(Boolean.parseBoolean(requestMap.get("isVerify")), trainer.getTrainerID());
                     verifyRequestDAO.updateStatus(Status.valueOf(requestMap.get("status")), Long.parseLong(requestMap.get("requestID")));
                     //check if approve or reject
-                    if (requestMap.get("status").equals(Status.APPROVED)) {
+                    if (Status.valueOf(requestMap.get("status")).equals(Status.APPROVED)) {
                         notificationDAO.save(getNotificationFromMap(trainer.getUser().getUserID(), "Tài khoản của bạn đã được xác thực"));
                     } else {
                         notificationDAO.save(getNotificationFromMap(trainer.getUser().getUserID(), "Tài khoản của bạn không được chấp nhận"));
@@ -167,7 +167,7 @@ public class TrainerServiceImpl implements TrainerService {
             //check if manager
             if (jwtAuthFilter.isManager()) {
                 Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("trainerID").descending());
-                return new ResponseEntity<>(trainerDAO.findAll(pageable), HttpStatus.OK);
+                return new ResponseEntity<>(trainerDAO.getAllTrainer(pageable), HttpStatus.OK);
             }
             return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
         } catch (Exception ex) {
@@ -200,9 +200,12 @@ public class TrainerServiceImpl implements TrainerService {
     @Override
     public ResponseEntity<String> checkTrainer() {
         try{
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             if(userOptional.isEmpty()){
-                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
             }
             Trainer trainerOptional = trainerDAO.getByUserId(userOptional.get().getUserID());
             if(trainerOptional == null){
@@ -218,9 +221,12 @@ public class TrainerServiceImpl implements TrainerService {
     @Override
     public ResponseEntity<String> checkOtherTrainer(Long userID) {
         try{
-            Optional<User> userOptional = userDAO.findById(userID);
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             if(userOptional.isEmpty()){
-                return JPLearningUtils.getResponseEntity("Không tồn tại", HttpStatus.UNAUTHORIZED);
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
             }
             Trainer trainerOptional = trainerDAO.getByUserId(userID);
             if(trainerOptional == null){

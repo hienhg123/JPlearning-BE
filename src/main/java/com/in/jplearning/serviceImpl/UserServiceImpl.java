@@ -372,9 +372,12 @@ public class UserServiceImpl implements UserService {
     public ResponseEntity<String> updateProfile(MultipartFile userPicture, Map<String, String> requestMap) {
         try {
             // Retrieve the user by email
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
-            if (userOptional.isEmpty()) {
-                return JPLearningUtils.getResponseEntity("Người dùng không tồn tại", HttpStatus.OK);
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
             }
             User user = userOptional.get();
             //check the request

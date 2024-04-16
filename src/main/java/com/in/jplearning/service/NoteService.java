@@ -8,7 +8,7 @@ import java.util.Map;
 
 public interface NoteService {
 
-    ResponseEntity<List<Note>> getAllUserNote();
+    ResponseEntity<?> getAllUserNote();
 
     ResponseEntity<String> saveNote(Map<String, String> requestMap);
 

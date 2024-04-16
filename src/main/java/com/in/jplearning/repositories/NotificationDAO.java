@@ -10,4 +10,7 @@ public interface NotificationDAO extends JpaRepository<Notification,Long> {
 
     @Query(value = "select n from Notification n where n.receiver.userID =?1 order by n.createdTime DESC")
     List<Notification> getByUser(Long userID);
+
+    @Query("select n from Notification n where n.relatedPost.postID = ?1")
+    List<Notification> getNotificationByPostID(Long postID);
 }

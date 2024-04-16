@@ -31,11 +31,17 @@ public class NoteServiceImpl implements NoteService {
     private final JwtAuthFilter jwtAuthFilter;
 
     @Override
-    public ResponseEntity<List<Note>> getAllUserNote() {
+    public ResponseEntity<?> getAllUserNote() {
         try {
             //get the current user
-            User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
-            return new ResponseEntity<>(noteDAO.getAllUserNote(user.getUserID()), HttpStatus.OK);
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
+            }
+            return new ResponseEntity<>(noteDAO.getAllUserNote(userOptional.get().getUserID()), HttpStatus.OK);
 
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -47,6 +53,13 @@ public class NoteServiceImpl implements NoteService {
     @Transactional
     public ResponseEntity<String> saveNote(Map<String, String> requestMap) {
         try {
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
+            }
             //get note from map
             Note note = mapToNote(requestMap);
             noteDAO.save(note);
@@ -60,6 +73,13 @@ public class NoteServiceImpl implements NoteService {
     @Override
     public ResponseEntity<String> updateNote(Map<String, String> requestMap) {
         try {
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
+            }
             //get the note
             Optional<Note> note = noteDAO.findById(Long.parseLong(requestMap.get("noteID")));
             //check if note is exist
@@ -89,6 +109,13 @@ public class NoteServiceImpl implements NoteService {
     @Override
     public ResponseEntity<String> deleteNote(Long noteID) {
         try {
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
+            }
             Optional<Note> note = noteDAO.findById(noteID);
             if(note.isEmpty()){
                 return JPLearningUtils.getResponseEntity("Ghi chú không tồn tại", HttpStatus.OK);
@@ -105,10 +132,12 @@ public class NoteServiceImpl implements NoteService {
     @Override
     public ResponseEntity<?> getByLesson(Long lessonID) {
         try{
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
-            //check if logon
             if(userOptional.isEmpty()){
-                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
             }
             return new ResponseEntity<>(noteDAO.getUserNoteByLessonID(userOptional.get().getUserID(),lessonID), HttpStatus.OK);
         }catch (Exception ex){

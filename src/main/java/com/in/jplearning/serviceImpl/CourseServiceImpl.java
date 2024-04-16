@@ -53,6 +53,7 @@ public class CourseServiceImpl implements CourseService {
     private final CourseFeedbackDAO courseFeedbackDAO;
 
     private final TrainerDAO trainerDAO;
+    private final  NoteDAO noteDAO;
 
     private final S3AsyncClient s3AsyncClient;
 
@@ -72,25 +73,21 @@ public class CourseServiceImpl implements CourseService {
     public ResponseEntity<?> createCourse(String courseName, String courseDescription, String courseLevel, String isFree, String isDraft,
                                           MultipartFile img, List<MultipartFile> files, List<Map<String, Object>> chapters) {
         try {
-
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
-            if (userOptional.isEmpty()) {
-                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
             }
             Trainer trainer = trainerDAO.getByUserId(userOptional.get().getUserID());
             //check if manager or trainer
-            if (!jwtAuthFilter.isManager() && trainer == null) {
+            if (trainer == null) {
                 return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
             }
             //get the course
             Course course = getCourseFromMap(courseName, courseDescription, courseLevel, isFree, isDraft,trainer);
             //get the course chapter
-            List<Chapter> chapterList = new ArrayList<>();
-            for (Map<String, Object> chapterMap : chapters) {
-                Chapter chapter = mapToChapter(chapterMap, course, files);
-                chapterList.add(chapter);
-            }
-            course.setChapterList(chapterList);
             if(img != null){
                 //check img type
                 if(!validateImg(img)){
@@ -108,31 +105,39 @@ public class CourseServiceImpl implements CourseService {
                         AsyncRequestBody.fromInputStream(img.getInputStream(), img.getSize(), executorService));
                 course.setImg(cloudFront + "/" + key);
             }
+            if(files != null){
+                for(MultipartFile multipartFile : files){
+                    //check what type
+                    if(isImage(multipartFile)){
+                        //check type
+                        if(!validateImg(multipartFile)){
+                            return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
+                                    " chưa đúng định dạng ảnh", HttpStatus.BAD_REQUEST);
+                        }
+                    } else if(isVideo(multipartFile)) {
+                        if(!validateVideo(multipartFile)){
+                            return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
+                                    " chưa đúng định dạng video", HttpStatus.BAD_REQUEST);
+                        }
+                    }
+                    //check size
+                    if (validateSize(multipartFile)) { // 500MB
+                        return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
+                                " quá dung lượng cho phép, tối đa 500MB", HttpStatus.BAD_REQUEST);
+                    }
+                }
+            }
+            List<Chapter> chapterList = new ArrayList<>();
+            for (Map<String, Object> chapterMap : chapters) {
+                Chapter chapter = mapToChapter(chapterMap, course, files);
+                chapterList.add(chapter);
+            }
+            course.setChapterList(chapterList);
             if(!validateCourseMinimum(course)){
                 return JPLearningUtils.getResponseEntity("Phải có tối thiểu 1 chapter và 1 bài học để có thể xuất bản", HttpStatus.BAD_REQUEST);
             }
             if(!validateMaximum(course)){
                 return JPLearningUtils.getResponseEntity("Tối đa 50 chương hoặc 50 bài học trong 1 chương", HttpStatus.BAD_REQUEST);
-            }
-            for(MultipartFile multipartFile : files){
-                //check what type
-                if(isImage(multipartFile)){
-                    //check type
-                    if(!validateImg(multipartFile)){
-                        return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
-                                " chưa đúng định dạng ảnh", HttpStatus.BAD_REQUEST);
-                    }
-                } else if(isVideo(multipartFile)) {
-                    if(!validateVideo(multipartFile)){
-                        return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
-                                " chưa đúng định dạng video", HttpStatus.BAD_REQUEST);
-                    }
-                }
-                //check size
-                if (validateSize(multipartFile)) { // 500MB
-                    return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
-                            " quá dung lượng cho phép, tối đa 500MB", HttpStatus.BAD_REQUEST);
-                }
             }
             courseDAO.save(course);
             if (Boolean.parseBoolean(isDraft)) {
@@ -149,9 +154,12 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public ResponseEntity<?> getUserEnrollCourse() {
         try {
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
-            if (userOptional.isEmpty()) {
-                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
             }
             return new ResponseEntity<>(courseEnrollDAO.getCourseEnrollByUser(userOptional.get()), HttpStatus.OK);
         } catch (Exception ex) {
@@ -163,9 +171,12 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public ResponseEntity<?> isEnroll(Long courseID) {
         try {
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
-            if (userOptional.isEmpty()) {
-                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
             }
             Optional<CourseEnroll> courseEnroll = courseEnrollDAO.findByUserAndCourse(userOptional.get().getUserID(), courseID);
             if (courseEnroll.isEmpty()) {
@@ -181,9 +192,12 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public ResponseEntity<?> getCreatedCourse() {
         try {
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
-            if (userOptional.isEmpty()) {
-                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
             }
             Trainer trainer = trainerDAO.getByUserId(userOptional.get().getUserID());
             //check if manager or trainer
@@ -200,9 +214,12 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public ResponseEntity<?> getDraftCourse() {
         try {
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
-            if (userOptional.isEmpty()) {
-                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
             }
             Trainer trainer = trainerDAO.getByUserId(userOptional.get().getUserID());
             //check if manager or trainer
@@ -223,8 +240,12 @@ public class CourseServiceImpl implements CourseService {
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             Optional<Course> courseOptional = courseDAO.findById(courseID);
             List<CourseEnroll> courseEnrolls = courseEnrollDAO.getByCourseID(courseID);
-            if (userOptional.isEmpty()) {
-                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+            List<Note> noteList = noteDAO.getNoteByCourseID(courseID);
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
             }
             Trainer trainer = trainerDAO.getByUserId(userOptional.get().getUserID());
             //check if manager or trainer
@@ -234,6 +255,7 @@ public class CourseServiceImpl implements CourseService {
             if (courseOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Khóa học không tồn tại", HttpStatus.NOT_FOUND);
             }
+            noteDAO.deleteAll(noteList);
             courseEnrollDAO.deleteAll(courseEnrolls);
             courseDAO.deleteById(courseID);
             return JPLearningUtils.getResponseEntity("Xóa thành công", HttpStatus.OK);
@@ -249,17 +271,20 @@ public class CourseServiceImpl implements CourseService {
                                           String isFree, String isDraft, MultipartFile img, List<MultipartFile> files, List<Map<String, Object>> chapters,
                                           List<Long> chapterIdList, List<Long> lessonIdList) {
         try {
-            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             Optional<Course> courseOptional = courseDAO.findById(Long.parseLong(courseID));
-            if (userOptional.isEmpty()) {
-                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
             }
             if (courseOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Khóa học không tồn tại", HttpStatus.NOT_FOUND);
             }
             Trainer trainer = trainerDAO.getByUserId(userOptional.get().getUserID());
             //check if manager or trainer
-            if (!jwtAuthFilter.isManager() && trainer == null) {
+            if (trainer == null) {
                 return JPLearningUtils.getResponseEntity(JPConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
             }
             Course course = courseOptional.get();
@@ -286,24 +311,26 @@ public class CourseServiceImpl implements CourseService {
                         AsyncRequestBody.fromInputStream(img.getInputStream(), img.getSize(), executorService));
                 course.setImg(cloudFront + "/" + key);
             }
-            for(MultipartFile multipartFile : files){
-                //check what type
-                if(isImage(multipartFile)){
-                    //check type
-                    if(!validateImg(multipartFile)){
-                        return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
-                                " chưa đúng định dạng ảnh", HttpStatus.BAD_REQUEST);
+            if(files != null){
+                for(MultipartFile multipartFile : files){
+                    //check what type
+                    if(isImage(multipartFile)){
+                        //check type
+                        if(!validateImg(multipartFile)){
+                            return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
+                                    " chưa đúng định dạng ảnh", HttpStatus.BAD_REQUEST);
+                        }
+                    } else if(isVideo(multipartFile)) {
+                        if(!validateVideo(multipartFile)){
+                            return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
+                                    " chưa đúng định dạng video", HttpStatus.BAD_REQUEST);
+                        }
                     }
-                } else if(isVideo(multipartFile)) {
-                    if(!validateVideo(multipartFile)){
+                    //check size
+                    if (validateSize(multipartFile)) { // 500MB
                         return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
-                                " chưa đúng định dạng video", HttpStatus.BAD_REQUEST);
+                                " quá dung lượng cho phép, tối đa 500MB", HttpStatus.BAD_REQUEST);
                     }
-                }
-                //check size
-                if (validateSize(multipartFile)) { // 500MB
-                    return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
-                            " quá dung lượng cho phép, tối đa 500MB", HttpStatus.BAD_REQUEST);
                 }
             }
             updateChaptersAndLessons(course, chapters, files,chapterIdList,lessonIdList);
@@ -315,7 +342,7 @@ public class CourseServiceImpl implements CourseService {
             }
             courseDAO.save(course);
             if (Boolean.parseBoolean(isDraft)) {
-                return JPLearningUtils.getResponseEntity("Tạo bản nháp thành công", HttpStatus.OK);
+                return JPLearningUtils.getResponseEntity("Sửa bản nháp thành công", HttpStatus.OK);
             }
             return JPLearningUtils.getResponseEntity("Xuất bản thành công", HttpStatus.OK);
         } catch (Exception ex) {
@@ -588,33 +615,35 @@ public class CourseServiceImpl implements CourseService {
         lesson.setLessonDescription(lessonMap.get("lessonDescription").toString());
         List<MultipartFile> upload = new ArrayList<>();
         //get the file of each if not null then set
-        if (lessonMap.get("vocabularyMaterial") != null) {
+        if (lessonMap.get("vocabularyMaterial") != "") {
             String key = cloudFront + "/" + courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("vocabularyMaterial");
             lesson.setVocabularyMaterial(key);
         }
         //check listening
-        if (lessonMap.get("listeningMaterial") != null) {
+        if (lessonMap.get("listeningMaterial") != "") {
             String key = cloudFront + "/" + courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("listeningMaterial");
             lesson.setListeningMaterial(key);
         }
         //check grammar
-        if (lessonMap.get("grammarMaterial") != null) {
+        if (lessonMap.get("grammarMaterial") != "") {
             String key = cloudFront + "/" + courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("grammarMaterial");
             lesson.setGrammarMaterial(key);
         }
         //check video
-        if (lessonMap.get("videoMaterial") != null) {
+        if (lessonMap.get("videoMaterial") != "") {
             String key = cloudFront + "/" + courseName + "/chapters/" + chapter.getChapterTitle() + "/" + lesson.getLessonTitle() + "/" + random + "_" + lessonMap.get("videoMaterial");
             lesson.setVideoMaterial(key);
         }
         //loop throw each file
-        for (MultipartFile file : multipartFiles) {
-            //loop to check each key
-            for (String key : lessonMap.keySet()) {
-                //check if equal
-                if (Objects.equals(file.getOriginalFilename(), lessonMap.get(key))) {
-                    upload.add(file);
-                    break;
+        if(multipartFiles != null){
+            for (MultipartFile file : multipartFiles) {
+                //loop to check each key
+                for (String key : lessonMap.keySet()) {
+                    //check if equal
+                    if (Objects.equals(file.getOriginalFilename(), lessonMap.get(key))) {
+                        upload.add(file);
+
+                    }
                 }
             }
         }
@@ -629,9 +658,12 @@ public class CourseServiceImpl implements CourseService {
         deleteChapters(course, chapterIdList);
         for (Map<String, Object> chapterMap : chapters) {
             //check if exist
-            Optional<Chapter> existingChapterOptional = existingChapters.stream()
-                    .filter(chapter -> chapter.getChapterID().equals(Long.parseLong(chapterMap.get("chapterID").toString())))
-                    .findFirst();
+            Optional<Chapter> existingChapterOptional = Optional.empty();
+            if(chapterMap.get("chapterID") != null){
+                existingChapterOptional = existingChapters.stream()
+                        .filter(chapter -> chapter.getChapterID().equals(Long.parseLong(chapterMap.get("chapterID").toString())))
+                        .findFirst();
+            }
             Chapter chapter;
             if (existingChapterOptional.isPresent()) {
                 // Update existing chapter properties
@@ -660,9 +692,12 @@ public class CourseServiceImpl implements CourseService {
         deleteLessons(chapter,lessonIdList);
         for (Map<String, Object> lessonMap : lessons) {
             // Check if the lesson exists in the database
-            Optional<Lesson> existingLessonOptional = existingLessons.stream()
-                    .filter(lesson -> lesson.getLessonID().equals(Long.parseLong(lessonMap.get("lessonID").toString())))
-                    .findFirst();
+            Optional<Lesson> existingLessonOptional = Optional.empty();
+            if(lessonMap.get("lessonID") != null){
+                existingLessonOptional = existingLessons.stream()
+                        .filter(lesson -> lesson.getLessonID().equals(Long.parseLong(lessonMap.get("lessonID").toString())))
+                        .findFirst();
+            }
             Lesson lesson;
             String random = UUID.randomUUID().toString();
             if (existingLessonOptional.isPresent()) {
@@ -675,10 +710,22 @@ public class CourseServiceImpl implements CourseService {
             }
             lesson.setLessonTitle(lessonMap.get("lessonTitle").toString());
             lesson.setLessonDescription(lessonMap.get("lessonDescription").toString());
-            lesson.setVocabularyMaterial(getMaterialUrl(courseName,random,lessonMap.get("vocabularyMaterial").toString(), chapter, lesson));
-            lesson.setListeningMaterial(getMaterialUrl(courseName,random,lessonMap.get("listeningMaterial").toString(), chapter, lesson));
-            lesson.setGrammarMaterial(getMaterialUrl(courseName,random,lessonMap.get("grammarMaterial").toString(), chapter, lesson));
-            lesson.setVideoMaterial(getMaterialUrl(courseName,random,lessonMap.get("videoMaterial").toString(), chapter, lesson));
+            if (lessonMap.get("vocabularyMaterial") != "" && !lessonMap.get("vocabularyMaterial").equals(extractMaterialName(lesson.getVocabularyMaterial()) )) {
+                lesson.setVocabularyMaterial(getMaterialUrl(courseName,random,lessonMap.get("vocabularyMaterial").toString(), chapter, lesson));
+            }
+            //check listening
+            if (lessonMap.get("listeningMaterial") != "" && !lessonMap.get("listeningMaterial").equals(extractMaterialName(lesson.getListeningMaterial()))) {
+                lesson.setListeningMaterial(getMaterialUrl(courseName,random,lessonMap.get("listeningMaterial").toString(), chapter, lesson));
+            }
+            //check grammar
+            if (lessonMap.get("grammarMaterial") != "" && !lessonMap.get("grammarMaterial").equals(extractMaterialName(lesson.getGrammarMaterial()))) {
+                lesson.setGrammarMaterial(getMaterialUrl(courseName,random,lessonMap.get("grammarMaterial").toString(), chapter, lesson));
+            }
+            //check video
+            logger.info("value video {}",lessonMap.get("videoMaterial") != extractMaterialName(lesson.getVideoMaterial()) );
+            if (lessonMap.get("videoMaterial") != "" && !lessonMap.get("videoMaterial").equals(extractMaterialName(lesson.getVideoMaterial()))) {
+                lesson.setVideoMaterial(getMaterialUrl(courseName,random,lessonMap.get("videoMaterial").toString(), chapter, lesson));
+            }
             if (existingLessonOptional.isEmpty()) {
                 // Add the new lesson to the chapter's lesson list
                 existingLessons.add(lesson);
@@ -690,7 +737,7 @@ public class CourseServiceImpl implements CourseService {
                         //check if equal
                         if (Objects.equals(file.getOriginalFilename(), lessonMap.get(key))) {
                             upload.add(file);
-                            break;
+
                         }
                     }
                 }
@@ -816,6 +863,15 @@ public class CourseServiceImpl implements CourseService {
     private boolean isVideo(MultipartFile file) {
         String contentType = file.getContentType();
         return contentType != null && (contentType.startsWith("video/") || contentType.endsWith("video"));
+    }
+    public String extractMaterialName(String url) {
+        if (url != null) {
+            String[] parts = url.split("_", 2);
+            if (parts.length > 1) {
+                return parts[1]; // Remove the file extension
+            }
+        }
+        return "";
     }
 
 }

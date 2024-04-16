@@ -1,10 +1,12 @@
 package com.in.jplearning.controllers;
 
 import com.in.jplearning.config.JwtAuthFilter;
+import com.in.jplearning.constants.JPConstants;
 import com.in.jplearning.model.Chapter;
 import com.in.jplearning.model.Course;
 import com.in.jplearning.model.User;
 import com.in.jplearning.service.ChapterService;
+import com.in.jplearning.utils.JPLearningUtils;
 import lombok.AllArgsConstructor;
 import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
@@ -39,6 +41,16 @@ public class ChapterController {
     @GetMapping("/progressTracking")
     public ResponseEntity<List<Map<String, Object>>> progressTracking() {
         return chapterService.progressTracking();
+    }
+    @GetMapping("/getCourseProgress/{courseID}")
+    public ResponseEntity<?> getCourseProgress(@PathVariable Long courseID) {
+
+        try {
+            return chapterService.getCourseProgress(courseID);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG,HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
 }

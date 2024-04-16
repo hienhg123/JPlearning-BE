@@ -51,10 +51,12 @@ public class ExerciseServiceImpl implements ExerciseService {
     @Override
     public ResponseEntity<?> getExerciseByIdWithGrammarQuestion(Long exerciseID) {
         try{
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
-            //check if user login or not
             if(userOptional.isEmpty()){
-                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
             }
             return new ResponseEntity<>(exerciseDAO.getExerciseByIdWithGrammarQuestion(exerciseID), HttpStatus.OK);
         }catch (Exception ex){
@@ -66,10 +68,12 @@ public class ExerciseServiceImpl implements ExerciseService {
     @Override
     public ResponseEntity<?> getExerciseByIdWithReadingQuestion(Long exerciseID) {
         try{
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
-            //check if user login or not
             if(userOptional.isEmpty()){
-                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
             }
             return new ResponseEntity<>(exerciseDAO.getExerciseByIdWithReadingQuestion(exerciseID), HttpStatus.OK);
         }catch (Exception ex){
@@ -81,10 +85,12 @@ public class ExerciseServiceImpl implements ExerciseService {
     @Override
     public ResponseEntity<?> getExerciseByIdWithListeningQuestion(Long exerciseID) {
         try{
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
-            //check if user login or not
             if(userOptional.isEmpty()){
-                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
             }
             return new ResponseEntity<>(exerciseDAO.getExerciseByIdWithListeningQuestion(exerciseID), HttpStatus.OK);
         }catch (Exception ex){
