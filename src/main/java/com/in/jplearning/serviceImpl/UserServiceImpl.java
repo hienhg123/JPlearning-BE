@@ -71,7 +71,7 @@ public class UserServiceImpl implements UserService {
             if (validateSignUpMap(requestMap)) {
                 // Check if email already exists
                 if (userDAO.findByEmail(requestMap.get("email")).isPresent()) {
-                    return JPLearningUtils.getResponseEntity("Email đã tồn tại", HttpStatus.BAD_REQUEST);
+                    return JPLearningUtils.getResponseEntity("Email đã được sử dụng.Xin sử dụng email khác ", HttpStatus.BAD_REQUEST);
                 }
                 userDAO.save(getUserFromMap(requestMap));
                 return JPLearningUtils.getResponseEntity("Đăng kí thành công", HttpStatus.OK);
@@ -158,6 +158,74 @@ public class UserServiceImpl implements UserService {
     public ResponseEntity<?> checkPremium() {
         try{
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+            }
+            return new ResponseEntity<>(isPremiumExpire(userOptional.get()), HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
+    public ResponseEntity<?> getThatUserProfile(Long userID) {
+        try{
+            Optional<User> userOptional = userDAO.findById(userID);
+            if (userOptional.isPresent()) {
+                User user = userOptional.get();
+
+                // Create a map to hold user profile information
+                Map<String, Object> userProfile = new HashMap<>();
+                userProfile.put("firstName", user.getFirstName());
+                userProfile.put("lastName", user.getLastName());
+                userProfile.put("phoneNumber", user.getPhoneNumber());
+
+                // Check if dob is not null before formatting
+                if (user.getDob() != null) {
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                    String dobFormatted = sdf.format(user.getDob());
+                    userProfile.put("dob", dobFormatted);
+                } else {
+                    userProfile.put("dob", null); // Or handle it as needed
+                }
+
+                // Check if level is not null before adding
+                if (user.getLevel() != null) {
+                    userProfile.put("level", user.getLevel());
+                } else {
+                    userProfile.put("level", null); // Or handle it as needed
+                }
+
+                // Check if gender is not null before adding
+                if (user.getGender() != null) {
+                    userProfile.put("gender", user.getGender());
+                } else {
+                    userProfile.put("gender", null); // Or handle it as needed
+                }
+
+                // Check if userPicture is not null before adding
+                if (user.getUserPicture() != null) {
+                    userProfile.put("userPicture", user.getUserPicture());
+                } else {
+                    userProfile.put("userPicture", null); // Or handle it as needed
+                }
+
+                return ResponseEntity.ok(userProfile);
+            } else {
+                // User not found with the given email
+                return ResponseEntity.notFound().build();
+            }
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
+    public ResponseEntity<?> checkThatUserPremium(Long userID) {
+        try{
+            Optional<User> userOptional = userDAO.findById(userID);
             if(userOptional.isEmpty()){
                 return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
             }
@@ -263,47 +331,6 @@ public class UserServiceImpl implements UserService {
         }
         return new ResponseEntity<>(response,HttpStatus.INTERNAL_SERVER_ERROR);
     }
-
-    @Override
-    public ResponseEntity<String> validateOtp(Map<String, String> requestMap) {
-        try{
-            //get otp that user enter and generated otp
-            String otp = requestMap.get("otp");
-            String generatedOtp = requestMap.get("generatedOtp");
-            //check credentials
-            if(!otp.isEmpty()){
-                //validate otp
-                if(otp.equals(generatedOtp)){
-                    return JPLearningUtils.getResponseEntity("",HttpStatus.OK);
-                } else {
-                    return JPLearningUtils.getResponseEntity("Sai mã OTP",HttpStatus.OK);
-                }
-            } else {
-                return JPLearningUtils.getResponseEntity(JPConstants.INVALID_DATA,HttpStatus.BAD_REQUEST);
-            }
-
-
-        }catch (Exception ex){
-            ex.printStackTrace();
-        }
-        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG,HttpStatus.OK);
-    }
-
-    @Override
-    public ResponseEntity<String> resetPassword(Map<String, String> requestMap) {
-        try{
-            //get user
-            User user = userDAO.findByEmail(requestMap.get("email")).get();
-            //update new password
-            user.setPassword(passwordEncoder.encode(requestMap.get("password")));
-            userDAO.save(user);
-            return JPLearningUtils.getResponseEntity("Reset password thành công",HttpStatus.OK);
-        }catch (Exception ex){
-            ex.printStackTrace();
-        }
-        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG,HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
 
     @Override
     public ResponseEntity<Map<String, Object>> getUserProfile() {
