@@ -74,7 +74,7 @@ public class FlashCardSetServiceImpl implements FlashCardSetService {
             FlashCardSet flashCardSet = flashCardSetOptional.get();
 
             // Retrieve all flashcards associated with the current flashCardSet
-            List<FlashCard> flashCards = flashCardDAO.findByFlashCardSet_FlashCardSetID(flashCardSetId);
+            List<FlashCard> flashCards = flashCardDAO.findByFlashCardSet(flashCardSet);
 
             // Set the flashCardCount in the flashCardSet
             flashCardSet.setFlashCardCount(flashCards.size());
@@ -133,6 +133,10 @@ public class FlashCardSetServiceImpl implements FlashCardSetService {
     @Transactional
     public ResponseEntity<String> updateFlashcard(Long flashCardSetId, Map<String, Object> requestMap) {
         try {
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập",HttpStatus.UNAUTHORIZED);
+            }
             // Retrieve the existing FlashCardSet
             Optional<FlashCardSet> flashCardSetOptional = flashCardSetDAO.findById(flashCardSetId);
             if (flashCardSetOptional.isEmpty()) {
@@ -146,6 +150,11 @@ public class FlashCardSetServiceImpl implements FlashCardSetService {
 
             // Map form data to List of FlashCards
             List<Map<String, String>> flashCardDataList = (List<Map<String, String>>) requestMap.get("flashCards");
+
+            // Validate maximum number of flashcards
+            if (flashCardDataList.size() + flashCardSet.getFlashCards().size() > 100) {
+                return JPLearningUtils.getResponseEntity("Không thể cập nhật quá 100 thẻ flashcard trong một bộ flashcard", HttpStatus.BAD_REQUEST);
+            }
 
             // Update existing FlashCards or add new ones
             for (Map<String, String> flashCardData : flashCardDataList) {
@@ -190,6 +199,10 @@ public class FlashCardSetServiceImpl implements FlashCardSetService {
                     // Handle case where question or answer is missing
                     return JPLearningUtils.getResponseEntity("Câu hỏi và câu trả lời không thể để trống", HttpStatus.BAD_REQUEST);
                 }
+                // Validate length of question and answer
+                if (question.length() > 200 || answer.length() > 200) {
+                    return JPLearningUtils.getResponseEntity("Câu hỏi hoặc câu trả lời không được vượt quá 200 ký tự", HttpStatus.BAD_REQUEST);
+                }
             }
             // Save the updated FlashCardSet
             flashCardSetDAO.save(flashCardSet);
@@ -201,34 +214,47 @@ public class FlashCardSetServiceImpl implements FlashCardSetService {
         }
     }
 
-
-
-
-
-
-
     @Override
     @Transactional
     public ResponseEntity<String> createFlashcard(Map<String, Object> requestMap) {
         try {
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập",HttpStatus.UNAUTHORIZED);
+            }
             // Map form data to FlashCardSet
             FlashCardSet flashCardSet = new FlashCardSet();
 
             // Map form data to FlashCardSet
             mapToFlashCardSet(requestMap, flashCardSet);
 
-            // Save the FlashCardSet
-            flashCardSetDAO.save(flashCardSet);
+            // Validate length of FlashCardSetName and FlashCardDescription
+            String flashCardSetName = flashCardSet.getFlashCardSetName();
+            String flashCardSetDescription = flashCardSet.getFlashCardDescription();
+            if (flashCardSetName != null && flashCardSetName.length() > 200) {
+                return JPLearningUtils.getResponseEntity("Tên bộ flashcard không được vượt quá 200 ký tự", HttpStatus.BAD_REQUEST);
+            }
+            if (flashCardSetDescription != null && flashCardSetDescription.length() > 200) {
+                return JPLearningUtils.getResponseEntity("Mô tả bộ flashcard không được vượt quá 200 ký tự", HttpStatus.BAD_REQUEST);
+            }
 
             // Map form data to List of FlashCards
             List<Map<String, String>> flashCardDataList = (List<Map<String, String>>) requestMap.get("flashCards");
             List<FlashCard> flashCards = new ArrayList<>();
+            // Validate maximum number of flashcards
+            if (flashCardDataList.size() > 100) {
+                return JPLearningUtils.getResponseEntity("Không thể tạo quá 100 thẻ flashcard trong một bộ flashcard", HttpStatus.BAD_REQUEST);
+            }
 
             for (Map<String, String> flashCardData : flashCardDataList) {
                 // Check if both question and answer are provided
                 String question = flashCardData.get("question");
                 String answer = flashCardData.get("answer");
                 if (question != null && answer != null && !question.isEmpty() && !answer.isEmpty()) {
+                    // Validate length of question and answer
+                    if (question.length() > 200 || answer.length() > 200) {
+                        return JPLearningUtils.getResponseEntity("Câu hỏi hoặc câu trả lời không được vượt quá 200 ký tự", HttpStatus.BAD_REQUEST);
+                    }
                     FlashCard flashCard = mapToFlashCard(flashCardData);
                     if (flashCard != null) {
                         flashCard.setFlashCardSet(flashCardSet);
@@ -247,7 +273,7 @@ public class FlashCardSetServiceImpl implements FlashCardSetService {
 
             // Save the list of FlashCards
             flashCardDAO.saveAll(flashCards);
-
+            flashCardSetDAO.save(flashCardSet);
             return JPLearningUtils.getResponseEntity("Tạo thành công", HttpStatus.OK);
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -260,6 +286,10 @@ public class FlashCardSetServiceImpl implements FlashCardSetService {
     @Transactional
     public ResponseEntity<String> deleteFlashCardSet(Long flashCardSetId) {
         try {
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Vui lòng đăng nhập",HttpStatus.UNAUTHORIZED);
+            }
             Optional<FlashCardSet> flashCardSetOptional = flashCardSetDAO.findById(flashCardSetId);
             if (flashCardSetOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("FlashCardSet không tồn tại", HttpStatus.NOT_FOUND);

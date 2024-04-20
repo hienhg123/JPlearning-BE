@@ -49,7 +49,7 @@ public class FlashCardServiceImpl implements FlashCardService {
             FlashCardSet flashCardSet = flashCardSetOptional.get();
 
             // Retrieve all flashcards associated with the current flashCardSet
-            List<FlashCard> flashCards = flashCardDAO.findByFlashCardSet_FlashCardSetID(flashCardSetId);
+            List<FlashCard> flashCards = flashCardDAO.findByFlashCardSet(flashCardSet);
 
             // Set the flashCardCount in the flashCardSet
             flashCardSet.setFlashCardCount(flashCards.size());

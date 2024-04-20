@@ -127,10 +127,20 @@ public class UserExerciseImpl implements UserExerciseService {
                 // Process the grouped exercises
                 List<Map<String, Object>> userExerciseList = new ArrayList<>();
                 for (List<User_Exercise> exercises : exercisesMap.values()) {
-                    Map<String, Object> exerciseInfo = new HashMap<>();
-                    exerciseInfo.put("title", exercises.get(0).getTitle());
-                    exerciseInfo.put("exercises", exercises.stream().map(this::mapToExerciseInfo).collect(Collectors.toList()));
-                    userExerciseList.add(exerciseInfo);
+                    // Find the exercise with the highest numberOfAttempts
+                    Optional<User_Exercise> highestAttemptsExercise = exercises.stream()
+                            .max(Comparator.comparingInt(User_Exercise::getNumberOfAttempts));
+
+                    highestAttemptsExercise.ifPresent(highest -> {
+                        Map<String, Object> exerciseInfo = new HashMap<>();
+                        exerciseInfo.put("title", highest.getTitle());
+                        exerciseInfo.put("numberOfAttempts", highest.getNumberOfAttempts());
+                        exerciseInfo.put("exercises", exercises.stream()
+                                .filter(e -> e.getNumberOfAttempts() == highest.getNumberOfAttempts())
+                                .map(this::mapToExerciseInfo)
+                                .collect(Collectors.toList()));
+                        userExerciseList.add(exerciseInfo);
+                    });
                 }
 
                 return ResponseEntity.ok(userExerciseList);
@@ -142,6 +152,7 @@ public class UserExerciseImpl implements UserExerciseService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
         }
     }
+
 
     private Map<String, Object> mapToExerciseInfo(User_Exercise exercise) {
         Map<String, Object> exerciseInfo = new HashMap<>();

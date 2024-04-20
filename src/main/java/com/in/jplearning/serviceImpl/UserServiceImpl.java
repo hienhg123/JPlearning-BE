@@ -228,7 +228,7 @@ public class UserServiceImpl implements UserService {
                     return JPLearningUtils.getResponseEntity("Mật khẩu cũ sai ", HttpStatus.BAD_GATEWAY);
                 }
             } else {
-                return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+                return JPLearningUtils.getResponseEntity("Xin hãy đăng nhập", HttpStatus.INTERNAL_SERVER_ERROR);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -394,10 +394,7 @@ public class UserServiceImpl implements UserService {
             }
 
             if (requestMap.containsKey("dob")) {
-                logger.info("Info message with value: {}",requestMap.get("dob"));
                 user.setDob(parseDate(requestMap.get("dob")));
-                logger.info("dob sau khi parse: {}",parseDate(requestMap.get("dob")));
-
             }
 
             if (!requestMap.get("level").isEmpty()) {
