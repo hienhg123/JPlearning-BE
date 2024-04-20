@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 public interface FlashCardDAO extends JpaRepository<FlashCard, Long> {
-    List<FlashCard> findByFlashCardSet(Long flashCardSetId);
+    List<FlashCard> findByFlashCardSet(FlashCardSet flashCardSet );
 
     @Modifying
     @Transactional
