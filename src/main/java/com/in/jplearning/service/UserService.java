@@ -20,10 +20,12 @@ public interface UserService {
     ResponseEntity<String> changePassword(Map<String, String> requestMap);
     ResponseEntity<Map<String,String>> forgetPassword(Map<String, String> requestMap);
     ResponseEntity<String> updateProfile(MultipartFile userPicture, Map<String, String> requestMap);
-    ResponseEntity<String> validateOtp(Map<String, String> requestMap);
-    ResponseEntity<String> resetPassword(Map<String, String> requestMap);
 
     ResponseEntity<String> updateUser(Map<String, String> requestMap);
 
     ResponseEntity<?> checkPremium();
+
+    ResponseEntity<?> getThatUserProfile(Long userID);
+
+    ResponseEntity<?> checkThatUserPremium(Long userID);
 }

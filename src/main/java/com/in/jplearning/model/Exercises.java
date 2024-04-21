@@ -29,12 +29,12 @@ public class Exercises implements Serializable {
     private Long exercisesID;
     private String title;
     private String description;
-    private int duration;
     @Enumerated(EnumType.STRING)
     private ExerciseType exerciseType;
     @Enumerated(EnumType.STRING)
     private JLPTLevel jlptLevel;
     private String listeningUrl;
+    @Column(columnDefinition = "LONGTEXT")
     private String readingUrl;
 
     @JsonIgnore

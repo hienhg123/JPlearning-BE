@@ -89,15 +89,6 @@ public class TrainerServiceImpl implements TrainerService {
             if (checkExist(user)) {
                 return JPLearningUtils.getResponseEntity("Bạn đã là trainer", HttpStatus.BAD_REQUEST);
             }
-            //save user in trainer table
-            Trainer trainer = Trainer.builder()
-                    .isVerify(false)
-                    .user(user)
-                    .currentJob(requestMap.get("currentJob"))
-                    .jlptLevel(JLPTLevel.valueOf(requestMap.get("jlptLevel")))
-                    .fullName(requestMap.get("fullName"))
-                    .dob(parseDate(requestMap.get("dob")))
-                    .build();
             //get the certificate picture and push to aws s3
             if (pictureFiles == null || pictureFiles.isEmpty()) {
                 return JPLearningUtils.getResponseEntity("Không tìm thấy ảnh", HttpStatus.BAD_REQUEST);
@@ -113,6 +104,23 @@ public class TrainerServiceImpl implements TrainerService {
                             multipartFile.getOriginalFilename() + "quá dung lượng cho phép, tối đa 500MB", HttpStatus.BAD_REQUEST);
                 }
             }
+            Trainer trainer;
+            //check if user have ever sent the request and got reject
+            VerifyRequest latestRequest = verifyRequestDAO.getUserLatestRequest(user.getUserID(),PageRequest.of(0,1)).get(0);
+            if(latestRequest.getStatus().equals(Status.REJECT)){
+                trainer = latestRequest.getTrainer();
+            } else {
+                trainer = Trainer.builder()
+                        .isVerify(false)
+                        .user(user)
+                        .currentJob(requestMap.get("currentJob"))
+                        .jlptLevel(JLPTLevel.valueOf(requestMap.get("jlptLevel")))
+                        .fullName(requestMap.get("fullName"))
+                        .dob(parseDate(requestMap.get("dob")))
+                        .build();
+            }
+            //save user in trainer table
+
             //save into verify request table
             VerifyRequest verifyRequest = VerifyRequest.builder()
                     .verificationType(VerificationType.JLPT_CERTIFICATE_VERIFICATION)

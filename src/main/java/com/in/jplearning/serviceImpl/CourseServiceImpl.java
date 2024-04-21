@@ -133,8 +133,12 @@ public class CourseServiceImpl implements CourseService {
                 chapterList.add(chapter);
             }
             course.setChapterList(chapterList);
-            if(!validateCourseMinimum(course)){
-                return JPLearningUtils.getResponseEntity("Phải có tối thiểu 1 chapter và 1 bài học để có thể xuất bản", HttpStatus.BAD_REQUEST);
+            //check if not draft
+            if(!Boolean.parseBoolean(isDraft)){
+                //check content
+                if(!validateCourseMinimum(course)){
+                    return JPLearningUtils.getResponseEntity("Phải có tối thiểu 1 chapter và 1 bài học để có thể xuất bản", HttpStatus.BAD_REQUEST);
+                }
             }
             if(!validateMaximum(course)){
                 return JPLearningUtils.getResponseEntity("Tối đa 50 chương hoặc 50 bài học trong 1 chương", HttpStatus.BAD_REQUEST);
@@ -237,13 +241,13 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public ResponseEntity<?> deleteCourse(Long courseID) {
         try {
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
+            }
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
             Optional<Course> courseOptional = courseDAO.findById(courseID);
             List<CourseEnroll> courseEnrolls = courseEnrollDAO.getByCourseID(courseID);
             List<Note> noteList = noteDAO.getNoteByCourseID(courseID);
-            if(jwtAuthFilter.getCurrentUser().isEmpty()){
-                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
-            }
             if(userOptional.isEmpty()){
                 return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
             }
@@ -325,17 +329,18 @@ public class CourseServiceImpl implements CourseService {
                             return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
                                     " chưa đúng định dạng video", HttpStatus.BAD_REQUEST);
                         }
-                    }
-                    //check size
-                    if (validateSize(multipartFile)) { // 500MB
+                    } else if (validateSize(multipartFile)) {       //check size 500MB
                         return JPLearningUtils.getResponseEntity(multipartFile.getOriginalFilename() +
                                 " quá dung lượng cho phép, tối đa 500MB", HttpStatus.BAD_REQUEST);
                     }
                 }
             }
             updateChaptersAndLessons(course, chapters, files,chapterIdList,lessonIdList);
-            if(!validateCourseMinimum(course)){
-                return JPLearningUtils.getResponseEntity("Phải có tối thiểu 1 chương và 1 bài học để có thể xuất bản", HttpStatus.BAD_REQUEST);
+            if(!Boolean.parseBoolean(isDraft)){
+                //check content
+                if(!validateCourseMinimum(course)){
+                    return JPLearningUtils.getResponseEntity("Phải có tối thiểu 1 chapter và 1 bài học để có thể xuất bản", HttpStatus.BAD_REQUEST);
+                }
             }
             if(!validateMaximum(course)){
                 return JPLearningUtils.getResponseEntity("Tối đa 50 chương hoặc 50 bài học trong 1 chương", HttpStatus.BAD_REQUEST);
@@ -838,7 +843,7 @@ public class CourseServiceImpl implements CourseService {
         return true;
     }
     private boolean validateImg(MultipartFile file){
-        if (!(file.getContentType().endsWith("png") || file.getContentType().endsWith("jpeg"))) {
+        if (!(file.getContentType().endsWith("png") || file.getContentType().endsWith("jpeg") || file.getContentType().endsWith("jpg"))) {
             return false;
         }
         return true;
