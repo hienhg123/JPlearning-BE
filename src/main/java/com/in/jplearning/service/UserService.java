@@ -18,7 +18,7 @@ public interface UserService {
     ResponseEntity<Map<String, Object>> getUserProfile();
     ResponseEntity<String> checkToken();
     ResponseEntity<String> changePassword(Map<String, String> requestMap);
-    ResponseEntity<Map<String,String>> forgetPassword(Map<String, String> requestMap);
+    ResponseEntity<?> forgetPassword(Map<String, String> requestMap);
     ResponseEntity<String> updateProfile(MultipartFile userPicture, Map<String, String> requestMap);
 
     ResponseEntity<String> updateUser(Map<String, String> requestMap);
