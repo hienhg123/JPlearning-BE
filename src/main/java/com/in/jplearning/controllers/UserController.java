@@ -66,15 +66,13 @@ public class UserController {
     }
 
     @PostMapping(path = "/forgetPassword")
-    public ResponseEntity<Map<String, String>> forgetPassword(@RequestBody Map<String, String> requestMap) {
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Something went wrong");
+    public ResponseEntity<?> forgetPassword(@RequestBody Map<String, String> requestMap) {
         try {
             return userService.forgetPassword(requestMap);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+       return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @PutMapping("/changePassword")

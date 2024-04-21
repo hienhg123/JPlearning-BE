@@ -14,13 +14,13 @@ public class EmailUtils {
     private final String email = "jplearning.noreply@gmail.com";
     private final JavaMailSender emailSender;
 
-    public void sendVerifyCode(String to, String verification_code, String code) throws MessagingException {
+    public void sendPassword(String to, String subject, String password) throws MessagingException {
         MimeMessage message = emailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message,true);
         helper.setFrom(email);
         helper.setTo(to);
-        helper.setSubject(verification_code);
-        String htmlMsg = "<p>Your verification code is : <b>"+ code +"</b></p>";
+        helper.setSubject(subject);
+        String htmlMsg = "<p>Mật khẩu mới : <b>"+ password +"</b></p>";
         message.setContent(htmlMsg,"text/html");
         emailSender.send(message);
     }

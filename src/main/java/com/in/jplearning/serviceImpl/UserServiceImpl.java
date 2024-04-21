@@ -57,6 +57,8 @@ public class UserServiceImpl implements UserService {
     private final AuthenticationManager authenticationManager;
     private final S3Config s3Config;
     private final EmailUtils emailUtils;
+    private static final String CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    private static final Random RANDOM = new Random();
 
     private final BillDAO billDAO;
 
@@ -307,29 +309,22 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public ResponseEntity<Map<String,String>> forgetPassword(Map<String, String> requestMap) {
-        Map<String, String> response = new HashMap<>();
-        response.put("message","Something went wrong");
+    public ResponseEntity<?> forgetPassword(Map<String, String> requestMap) {
         try{
-            User user = userDAO.findByEmail(requestMap.get("email")).get();
-            //check if user exist
-            if(!user.equals(null)){
-                response.put("message","Check your email for verification code");
-                response.put("email", user.getEmail());
-                //create verify code
-                String otp = generateVerifyCode();
-                //set expire time
-                long expirationTime = System.currentTimeMillis() + 10 * 60 * 1000;
-                //send verify code to email
-//                emailUtils.sendVerifyCode(user.getEmail(),"Verification Code",code);
-                response.put("expirationTime",String.valueOf(expirationTime));
-                response.put("generatedOtp",otp);
+            Optional<User> userOptional = userDAO.findByEmail(requestMap.get("email"));
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity("Vui lòng kiểm trả email", HttpStatus.OK);
             }
-            return new ResponseEntity<>(response,HttpStatus.OK);
+            User user = userOptional.get();
+            String randomPassword = generateRandomString(8);
+            user.setPassword(passwordEncoder.encode(randomPassword));
+            userDAO.save(user);
+            emailUtils.sendPassword(user.getEmail(),"Đặt lại mật khẩu",randomPassword);
+            return JPLearningUtils.getResponseEntity("Vui lòng kiểm trả email", HttpStatus.OK);
         }catch (Exception ex){
             ex.printStackTrace();
         }
-        return new ResponseEntity<>(response,HttpStatus.INTERNAL_SERVER_ERROR);
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG,HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
@@ -555,6 +550,41 @@ public class UserServiceImpl implements UserService {
         }
         //check if bill is expire or not
         return bill.getExpireAt().isAfter(LocalDateTime.now());
+    }
+    public static String generateRandomString(int length) {
+        StringBuilder sb = new StringBuilder(length);
+        boolean hasChar = false;
+        boolean hasDigit = false;
+
+        for (int i = 0; i < length; i++) {
+            char randomChar = CHARACTERS.charAt(RANDOM.nextInt(CHARACTERS.length()));
+            sb.append(randomChar);
+
+            if (Character.isLetter(randomChar)) {
+                hasChar = true;
+            } else if (Character.isDigit(randomChar)) {
+                hasDigit = true;
+            }
+        }
+
+        // Ensure at least one character and one digit
+        if (!hasChar || !hasDigit) {
+            // Replace the last character with a digit if no digit is present
+            if (!hasDigit) {
+                int randomIndex = RANDOM.nextInt(length);
+                char randomDigit = (char) ('0' + RANDOM.nextInt(10));
+                sb.setCharAt(randomIndex, randomDigit);
+            }
+
+            // Replace a random character with a letter if no character is present
+            if (!hasChar) {
+                int randomIndex = RANDOM.nextInt(length);
+                char randomChar = CHARACTERS.charAt(RANDOM.nextInt(52)); // Indexes 0-51 are letters
+                sb.setCharAt(randomIndex, randomChar);
+            }
+        }
+
+        return sb.toString();
     }
 
 
