@@ -34,6 +34,7 @@ public class Exercises implements Serializable {
     @Enumerated(EnumType.STRING)
     private JLPTLevel jlptLevel;
     private String listeningUrl;
+    @Column(columnDefinition = "LONGTEXT")
     private String readingUrl;
 
     @JsonIgnore
