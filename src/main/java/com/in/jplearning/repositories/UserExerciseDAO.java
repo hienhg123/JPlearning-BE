@@ -23,4 +23,6 @@ public interface UserExerciseDAO extends JpaRepository<User_Exercise,Long> {
     @Query("select ue from User_Exercise ue where ue.user =?1 and ue.exercises.exercisesID=?2 and ue.questionType =?3")
     List<User_Exercise> getJLPTByUser(User user, Long exerciseID, QuestionType questionType);
 
+    @Query("select ue from User_Exercise ue where ue.user =?1 and ue.exercises.exercisesID=?2")
+    List<User_Exercise> getJLPTHistoryById(User user, Long exerciseID);
 }

@@ -152,20 +152,6 @@ public class UserExerciseImpl implements UserExerciseService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
         }
     }
-
-
-    private Map<String, Object> mapToExerciseInfo(User_Exercise exercise) {
-        Map<String, Object> exerciseInfo = new HashMap<>();
-        exerciseInfo.put("maxPoint", exercise.getMaxPoint());
-        exerciseInfo.put("numberOfAttempts", exercise.getNumberOfAttempts());
-        exerciseInfo.put("submittedAt", exercise.getSubmittedAt());
-        exerciseInfo.put("questionType", exercise.getQuestionType());
-        exerciseInfo.put("mark", exercise.getMark());
-        return exerciseInfo;
-    }
-
-
-
     @Override
     public ResponseEntity<?> getJLPTTestHistory() {
         try{
@@ -219,6 +205,43 @@ public class UserExerciseImpl implements UserExerciseService {
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @Override
+    public ResponseEntity<?> getJLPTHistoryById(Long exerciseID) {
+        try{
+            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.UNAUTHORIZED);
+            }
+            Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
+            if(userOptional.isEmpty()){
+                return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
+            }
+            List<User_Exercise> userExerciseList = userExerciseDAO.getJLPTHistoryById(userOptional.get(),exerciseID);
+            Map<QuestionType, List<User_Exercise>> exercisesMap = userExerciseList.stream()
+                    .collect(Collectors.groupingBy(User_Exercise::getQuestionType));
+            List<Map<String, Object>> historyInfo = new ArrayList<>();
+            for (List<User_Exercise> exercises : exercisesMap.values()) {
+                // Find the exercise with the highest numberOfAttempts
+                Optional<User_Exercise> highestAttemptsExercise = exercises.stream()
+                        .max(Comparator.comparingInt(User_Exercise::getNumberOfAttempts));
+
+                highestAttemptsExercise.ifPresent(highest -> {
+                    Map<String, Object> exerciseInfo = new HashMap<>();
+                    exerciseInfo.put("title", highest.getTitle());
+                    exerciseInfo.put("numberOfAttempts", highest.getNumberOfAttempts());
+                    exerciseInfo.put("exercises", exercises.stream()
+                            .filter(e -> e.getNumberOfAttempts() == highest.getNumberOfAttempts())
+                            .map(this::mapToExerciseInfo)
+                            .collect(Collectors.toList()));
+                    historyInfo.add(exerciseInfo);
+                });
+            }
+            return new ResponseEntity<>(historyInfo, HttpStatus.OK);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     private User_Exercise getUserExerciseWithQuestionType(Map<String, String> requestMap, User user, int numberOfAttempts) {
         Exercises exercises = new Exercises();
         exercises.setExercisesID(Long.parseLong(requestMap.get("exerciseID")));
@@ -264,5 +287,14 @@ public class UserExerciseImpl implements UserExerciseService {
         int maxPoint = Integer.parseInt(requestMap.get("maxPoint"));
         double result = (double) mark / maxPoint;
         return result >= 0.8;
+    }
+    private Map<String, Object> mapToExerciseInfo(User_Exercise exercise) {
+        Map<String, Object> exerciseInfo = new HashMap<>();
+        exerciseInfo.put("maxPoint", exercise.getMaxPoint());
+        exerciseInfo.put("numberOfAttempts", exercise.getNumberOfAttempts());
+        exerciseInfo.put("submittedAt", exercise.getSubmittedAt());
+        exerciseInfo.put("questionType", exercise.getQuestionType());
+        exerciseInfo.put("mark", exercise.getMark());
+        return exerciseInfo;
     }
 }
