@@ -52,6 +52,15 @@ public class UserExerciseController {
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+    @GetMapping("/getJLPTHistoryById/{exerciseID}")
+    public ResponseEntity<?> getJLPTHistoryById(@PathVariable Long exerciseID){
+        try{
+            return userExerciseService.getJLPTHistoryById(exerciseID);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
 
 }

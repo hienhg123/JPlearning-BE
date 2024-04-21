@@ -13,4 +13,6 @@ public interface UserExerciseService {
     ResponseEntity<?> getJLPTTestHistory();
 
     ResponseEntity<String> submitJLPT(Map<String, String> requestMap);
+
+    ResponseEntity<?> getJLPTHistoryById(Long exerciseID);
 }
