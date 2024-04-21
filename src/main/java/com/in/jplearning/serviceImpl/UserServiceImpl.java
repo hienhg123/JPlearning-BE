@@ -272,37 +272,37 @@ public class UserServiceImpl implements UserService {
         return JPLearningUtils.getResponseEntity("true", HttpStatus.OK);
     }
 
-    @Override
-    public ResponseEntity<String> changePassword(Map<String, String> requestMap) {
-        try {
-            User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
-            // check user null or not
-            if (user != null) {
-                // check old password
-                if (passwordEncoder.matches(requestMap.get("password"), user.getPassword())) {
-                    String newPassword = requestMap.get("newPassword");
-                    String encodedNewPassword = passwordEncoder.encode(newPassword);
+        @Override
+        public ResponseEntity<String> changePassword(Map<String, String> requestMap) {
+            try {
+                User user = userDAO.findByEmail(jwtAuthFilter.getCurrentUser()).get();
+                // check user null or not
+                if (user != null) {
+                    // check old password
+                    if (passwordEncoder.matches(requestMap.get("password"), user.getPassword())) {
+                        String newPassword = requestMap.get("newPassword");
+                        String encodedNewPassword = passwordEncoder.encode(newPassword);
 
-                    // Log statements for debugging
-                    System.out.println("Old Password: " + requestMap.get("password"));
-                    System.out.println("Stored Password: " + user.getPassword());
-                    System.out.println("New Password: " + newPassword);
-                    System.out.println("Encoded New Password: " + encodedNewPassword);
+                        // Log statements for debugging
+                        System.out.println("Old Password: " + requestMap.get("password"));
+                        System.out.println("Stored Password: " + user.getPassword());
+                        System.out.println("New Password: " + newPassword);
+                        System.out.println("Encoded New Password: " + encodedNewPassword);
 
-                    user.setPassword(encodedNewPassword);
-                    userDAO.save(user);
-                    return JPLearningUtils.getResponseEntity("Cập nhật mật khẩu thành công", HttpStatus.OK);
+                        user.setPassword(encodedNewPassword);
+                        userDAO.save(user);
+                        return JPLearningUtils.getResponseEntity("Cập nhật mật khẩu thành công", HttpStatus.OK);
+                    } else {
+                        return JPLearningUtils.getResponseEntity("Mật khẩu cũ sai ", HttpStatus.BAD_GATEWAY);
+                    }
                 } else {
-                    return JPLearningUtils.getResponseEntity("Mật khẩu cũ sai ", HttpStatus.BAD_GATEWAY);
+                    return JPLearningUtils.getResponseEntity("Xin hãy đăng nhập", HttpStatus.INTERNAL_SERVER_ERROR);
                 }
-            } else {
-                return JPLearningUtils.getResponseEntity("Xin hãy đăng nhập", HttpStatus.INTERNAL_SERVER_ERROR);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
             }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }
 
 
 
@@ -409,15 +409,41 @@ public class UserServiceImpl implements UserService {
             User user = userOptional.get();
             //check the request
             if (requestMap.containsKey("firstName")) {
-                user.setFirstName(requestMap.get("firstName"));
+                String firstName = requestMap.get("firstName").trim(); // Trim to remove leading and trailing spaces
+                if (firstName == null || firstName.isEmpty()) {
+                    return JPLearningUtils.getResponseEntity("Không được để trống", HttpStatus.BAD_REQUEST);
+                } else if (firstName.length() < 2) {
+                    return JPLearningUtils.getResponseEntity("Độ dài tối thiểu là 2 ký tự", HttpStatus.BAD_REQUEST);
+                } else if (firstName.length() > 20) {
+                    return JPLearningUtils.getResponseEntity("Độ dài tối đa là 20 ký tự", HttpStatus.BAD_REQUEST);
+                } else if (!firstName.matches("[\\p{L}\\s]{2,20}")) {
+                    return JPLearningUtils.getResponseEntity("Không được có ký tự đặc biệt trong tên", HttpStatus.BAD_REQUEST);
+                }
+                user.setFirstName(firstName);
             }
 
             if (requestMap.containsKey("lastName")) {
-                user.setLastName(requestMap.get("lastName"));
+                String lastName = requestMap.get("lastName").trim(); // Trim to remove leading and trailing spaces
+                if (lastName == null || lastName.isEmpty()) {
+                    return JPLearningUtils.getResponseEntity("Không được để trống", HttpStatus.BAD_REQUEST);
+                } else if (lastName.length() < 2) {
+                    return JPLearningUtils.getResponseEntity("Độ dài tối thiểu là 2 ký tự", HttpStatus.BAD_REQUEST);
+                } else if (lastName.length() > 20) {
+                    return JPLearningUtils.getResponseEntity("Độ dài tối đa là 20 ký tự", HttpStatus.BAD_REQUEST);
+                } else if (!lastName.matches("[\\p{L}\\s]{2,20}")) {
+                    return JPLearningUtils.getResponseEntity("Không được có ký tự đặc biệt trong tên", HttpStatus.BAD_REQUEST);
+                }
+                user.setLastName(lastName);
             }
 
             if (requestMap.containsKey("phoneNumber")) {
-                user.setPhoneNumber(requestMap.get("phoneNumber"));
+                String phoneNumber = requestMap.get("phoneNumber").trim();
+                if (phoneNumber == null || phoneNumber.isEmpty()) {
+                    return JPLearningUtils.getResponseEntity("Không được để trống", HttpStatus.BAD_REQUEST);
+                } else if (!phoneNumber.matches("\\d{10,11}")) {
+                    return JPLearningUtils.getResponseEntity("Số điện thoại phải có 10 hoặc 11 chữ số", HttpStatus.BAD_REQUEST);
+                }
+                user.setPhoneNumber(phoneNumber);
             }
 
             if (requestMap.containsKey("dob")) {
