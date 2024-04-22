@@ -79,7 +79,7 @@ public class TrainerServiceImpl implements TrainerService {
             User user = userOptional.get();
             List<VerifyRequest> verifyRequestList = verifyRequestDAO.getByUserId(userOptional.get().getUserID());
             //check if user have sent the request
-            if(!verifyRequestList.isEmpty()){
+            if(verifyRequestList.isEmpty()){
                 VerifyRequest verifyRequest = verifyRequestList.get(verifyRequestList.size()-1);
                 if(verifyRequest.getStatus().equals(Status.PENDING)){
                     return JPLearningUtils.getResponseEntity("Yêu cầu của bạn đang chờ được xử lí", HttpStatus.BAD_REQUEST);

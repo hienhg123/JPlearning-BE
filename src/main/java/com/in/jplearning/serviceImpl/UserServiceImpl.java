@@ -484,8 +484,6 @@ public class UserServiceImpl implements UserService {
             // Check if the user exists
             if (userOptional.isPresent()) {
                 User user = userOptional.get();
-
-
                 String email = user.getEmail();
                 String phoneNumber = user.getPhoneNumber();
 
