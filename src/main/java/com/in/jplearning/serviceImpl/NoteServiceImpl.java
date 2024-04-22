@@ -2,9 +2,11 @@ package com.in.jplearning.serviceImpl;
 
 import com.in.jplearning.config.JwtAuthFilter;
 import com.in.jplearning.constants.JPConstants;
+import com.in.jplearning.model.Course;
 import com.in.jplearning.model.Lesson;
 import com.in.jplearning.model.Note;
 import com.in.jplearning.model.User;
+import com.in.jplearning.repositories.CourseEnrollDAO;
 import com.in.jplearning.repositories.NoteDAO;
 import com.in.jplearning.repositories.UserDAO;
 import com.in.jplearning.service.NoteService;
@@ -16,10 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -29,6 +28,8 @@ public class NoteServiceImpl implements NoteService {
     private final NoteDAO noteDAO;
     private final UserDAO userDAO;
     private final JwtAuthFilter jwtAuthFilter;
+
+    private final CourseEnrollDAO courseEnrollDAO;
 
     @Override
     public ResponseEntity<?> getAllUserNote() {
@@ -41,8 +42,30 @@ public class NoteServiceImpl implements NoteService {
             if(userOptional.isEmpty()){
                 return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
             }
-            return new ResponseEntity<>(noteDAO.getAllUserNote(userOptional.get().getUserID()), HttpStatus.OK);
+            //get all the course id that user have enroll
+            List<Course> courseList = courseEnrollDAO.getCourseEnrollByUser(userOptional.get());
+            List<Long> courseIDList = new ArrayList<>();
+            for(Course course : courseList){
+                courseIDList.add(course.getCourseID());
+            }
+            List<Note> noteList = noteDAO.getAllUserNoteWithEnrolledCourse(courseIDList);
+            Map<String, List<Note>> courseNotesMap = new HashMap<>();
+            for (Note note : noteList) {
+               //get the course name
+                String courseName = note.getLesson().getChapter().getCourse().getCourseName();
 
+                // check if added
+                if (courseNotesMap.containsKey(courseName)) {
+                    // if added ad the new note
+                    courseNotesMap.get(courseName).add(note);
+                } else {
+                    //create new map
+                    List<Note> courseNotesList = new ArrayList<>();
+                    courseNotesList.add(note);
+                    courseNotesMap.put(courseName, courseNotesList);
+                }
+            }
+            return new ResponseEntity<>(courseNotesMap, HttpStatus.OK);
         } catch (Exception ex) {
             ex.printStackTrace();
         }

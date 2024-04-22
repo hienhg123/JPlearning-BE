@@ -15,4 +15,7 @@ public interface NoteDAO extends JpaRepository<Note,Long> {
     List<Note> getUserNoteByLessonID(Long userID, Long lessonID);
     @Query("select n from Note n where n.lesson.chapter.course.courseID = ?1")
     List<Note> getNoteByCourseID(Long courseID);
+
+    @Query("select n from Note n where n.lesson.chapter.course.courseID IN ?1")
+    List<Note> getAllUserNoteWithEnrolledCourse(List<Long> courseID);
 }
