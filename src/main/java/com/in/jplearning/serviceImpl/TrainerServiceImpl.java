@@ -79,9 +79,9 @@ public class TrainerServiceImpl implements TrainerService {
             User user = userOptional.get();
             List<VerifyRequest> verifyRequestList = verifyRequestDAO.getByUserId(userOptional.get().getUserID());
             //check if user have sent the request
-            if(!verifyRequestList.isEmpty()){
-                VerifyRequest verifyRequest = verifyRequestList.get(verifyRequestList.size()-1);
-                if(verifyRequest.getStatus().equals(Status.PENDING)){
+            if (!verifyRequestList.isEmpty()) {
+                VerifyRequest verifyRequest = verifyRequestList.get(verifyRequestList.size() - 1);
+                if (verifyRequest.getStatus().equals(Status.PENDING)) {
                     return JPLearningUtils.getResponseEntity("Yêu cầu của bạn đang chờ được xử lí", HttpStatus.BAD_REQUEST);
                 }
             }
@@ -99,28 +99,32 @@ public class TrainerServiceImpl implements TrainerService {
                 if (!(multipartFile.getContentType().endsWith("png") || multipartFile.getContentType().endsWith("jpeg"))) {
                     return JPLearningUtils.getResponseEntity("Định dạng ảnh chưa đúng", HttpStatus.BAD_REQUEST);
                 }
-                if(multipartFile.getSize() > 500 * 1024 * 1024){
+                if (multipartFile.getSize() > 500 * 1024 * 1024) {
                     return JPLearningUtils.getResponseEntity(
                             multipartFile.getOriginalFilename() + "quá dung lượng cho phép, tối đa 500MB", HttpStatus.BAD_REQUEST);
                 }
             }
-            Trainer trainer;
+            Trainer trainer = null;
             //check if user have ever sent the request and got reject
-            VerifyRequest latestRequest = verifyRequestDAO.getUserLatestRequest(user.getUserID(),PageRequest.of(0,1)).get(0);
-            if(latestRequest.getStatus().equals(Status.REJECT)){
-                trainer = latestRequest.getTrainer();
-            } else {
-                trainer = Trainer.builder()
-                        .isVerify(false)
-                        .user(user)
-                        .currentJob(requestMap.get("currentJob"))
-                        .jlptLevel(JLPTLevel.valueOf(requestMap.get("jlptLevel")))
-                        .fullName(requestMap.get("fullName"))
-                        .dob(parseDate(requestMap.get("dob")))
-                        .build();
+            List<VerifyRequest> latestRequestList = verifyRequestDAO.getUserLatestRequest(user.getUserID(), PageRequest.of(0, 1));
+            VerifyRequest latestRequest = null;
+            if (!latestRequestList.isEmpty()) {
+                latestRequest = latestRequestList.get(0);
             }
-            //save user in trainer table
-
+            if (latestRequest != null) {
+                if (latestRequest.getStatus().equals(Status.REJECT)) {
+                    trainer = latestRequest.getTrainer();
+                }
+            } else{
+                    trainer = Trainer.builder()
+                            .isVerify(false)
+                            .user(user)
+                            .currentJob(requestMap.get("currentJob"))
+                            .jlptLevel(JLPTLevel.valueOf(requestMap.get("jlptLevel")))
+                            .fullName(requestMap.get("fullName"))
+                            .dob(parseDate(requestMap.get("dob")))
+                            .build();
+            }
             //save into verify request table
             VerifyRequest verifyRequest = VerifyRequest.builder()
                     .verificationType(VerificationType.JLPT_CERTIFICATE_VERIFICATION)
@@ -196,6 +200,11 @@ public class TrainerServiceImpl implements TrainerService {
                 return JPLearningUtils.getResponseEntity("Không tìm thấy", HttpStatus.NOT_FOUND);
             }
             optionalTrainer.get().setVerify(Boolean.parseBoolean(requestMap.get("isVerify")));
+            if (Boolean.parseBoolean(requestMap.get("isVerify"))) {
+                notificationDAO.save(getNotificationFromMap(optionalTrainer.get().getTrainerID(), "Tài khoản của bạn đã được mở khóa chức năng của trainer"));
+            } else {
+                notificationDAO.save(getNotificationFromMap(optionalTrainer.get().getTrainerID(), "Tài khoản của bạn đã bị khóa chức năng của trainer"));
+            }
             trainerDAO.save(optionalTrainer.get());
             return JPLearningUtils.getResponseEntity("Cập nhật thành công", HttpStatus.OK);
 
@@ -207,20 +216,20 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     public ResponseEntity<String> checkTrainer() {
-        try{
-            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+        try {
+            if (jwtAuthFilter.getCurrentUser().isEmpty()) {
                 return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
             }
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
-            if(userOptional.isEmpty()){
+            if (userOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
             }
             Trainer trainerOptional = trainerDAO.getByUserId(userOptional.get().getUserID());
-            if(trainerOptional == null){
+            if (trainerOptional == null) {
                 return JPLearningUtils.getResponseEntity("false", HttpStatus.OK);
             }
             return JPLearningUtils.getResponseEntity("true", HttpStatus.OK);
-        }catch (Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -228,20 +237,20 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     public ResponseEntity<String> checkOtherTrainer(Long userID) {
-        try{
-            if(jwtAuthFilter.getCurrentUser().isEmpty()){
+        try {
+            if (jwtAuthFilter.getCurrentUser().isEmpty()) {
                 return JPLearningUtils.getResponseEntity(JPConstants.REQUIRED_LOGIN, HttpStatus.BAD_REQUEST);
             }
             Optional<User> userOptional = userDAO.findByEmail(jwtAuthFilter.getCurrentUser());
-            if(userOptional.isEmpty()){
+            if (userOptional.isEmpty()) {
                 return JPLearningUtils.getResponseEntity(JPConstants.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
             }
             Trainer trainerOptional = trainerDAO.getByUserId(userID);
-            if(trainerOptional == null){
+            if (trainerOptional == null) {
                 return JPLearningUtils.getResponseEntity("false", HttpStatus.OK);
             }
             return JPLearningUtils.getResponseEntity("true", HttpStatus.OK);
-        }catch (Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         return JPLearningUtils.getResponseEntity(JPConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
